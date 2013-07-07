@@ -16,7 +16,6 @@
   (display "/")
   (display (denom x)))
 
-
 (define (add-rat x y)
   (make-rat (+ (* (numer x) (denom y))
                (* (numer y) (denom x)))
@@ -40,22 +39,35 @@
      (* (numer y) (denom x))))
 
 
+(define one-half (make-rat 1 2))
+(print-rat one-half)
+
+(define one-third (make-rat 1 3))
+(print-rat (add-rat one-half one-third)
+		   
 (define (gcd a b)
   (if (= b 0)
       a
       (gcd b (remainder a b))))
+
 (define (make-rat n d)
   (let ((g (gcd n d)))
     (cons (/ n g) (/ d g))))
 
+(print-rat (add-rat one-third one-third)
 
 ;; exercise 2.1
 (define (make-rat n d)
   (cond
    ((and (> n 0) (> d 0)) (cons n d))
-   ((and (> n 0) (<= d 0)) (cons (- n) (- d)))
+   ((and (< n 0) (< d 0)) (cons (- n) (- d)))
+   ((and (< n 0) (> d 0)) (cons n d))
    (else (cons (- n) (- d)))))
 
+(make-rat -1  2)
+(make-rat -1  -2)
+(make-rat 1 -2)
+(make-rat 1 2)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 2.1.2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
