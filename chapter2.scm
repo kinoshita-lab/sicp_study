@@ -182,19 +182,22 @@
 (perimeter rectangle1)
 (area rectangle1)
 
-;; (define (cons x y)
-;;   (define (dispatch m)
-;;     (cond ((= m 0) x)
-;;           ((= m 1) y)
-;;           (else (error "hoge"))))
-;;   dispatch)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 2.1.3
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (cons x y)
+  (define (dispatch m)
+	(cond ((= m 0) x)
+		  ((= m 1) y)
+		  (else (error "Argument not 0 or 1 -- CONS" m))))
+  dispatch)
 
-;; (define (car z) (z 0))
-;; (define (cdr z) (z 1))
+(define (car z) (z 0))
+(define (cdr z) (z 1))
 
-;; (define h (cons 1 2))
-;; (car h)
-;; (cdr h)
+(define hoge (cons 1 2))
+(car hoge)
+(cdr hoge)
 
 ;;; exercise 2.4
 (define (cons x y)
@@ -212,7 +215,7 @@
 
 (car (cons x y))
 
-
+; car
 (z (lambda (p q) p))
 ((cons x y) (lambda (p q) p))
 ((lambda (m) (m x y)) (lambda (p q) p))
@@ -220,7 +223,6 @@
 x
 
 ;;;;;;; 2.5
-
 (define (cons a b)
   (* (expt 2 a)
      (expt 3 b)))
@@ -239,6 +241,10 @@ x
 (define (cdr x)
   (factorize-with x 3))
 
+(define test-data (cons 2 3))
+(car test-data)
+(cdr test-data)
+
 
 ;;; 2.6
 (define zero (lambda (f) (lambda (x) x)))
@@ -254,6 +260,13 @@ x
 
 (add-1 (add-1 zero))
 (lambda (f) (lambda (f) (lambda (f) (lambda (x) x))))
+
+;;;;;;;;;;
+;;; 2.1.4
+;;;;;;;;;
+;omit..
+
+
 ;;;;;;;;;;
 ;;; 2.2
 ;;;;;;;;;
