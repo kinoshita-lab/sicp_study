@@ -505,7 +505,7 @@ one-through-four
 
 (for-each (lambda (x) (newline) (display x))
           (list 57 321 88))
-;;;
+;;; 2.2.2
 (cons (list 1 2) (list 3 4))
 
 (define x (cons (list 1 2) (list 3 4)))
@@ -518,8 +518,13 @@ one-through-four
                  (count-leaves (cdr x))))))
 (count-leaves x)
 
+(list x x)
+(length (list x x))
+(count-leaves (list x x))
+
 ;; 2.24
 (list 1 (list 2 (list 3 4)))
+; got: gosh> (1 (2 (3 4)))
 
 ;; 2.25
 (define list1 (list 1 3 (list 5 7) 9))
@@ -537,15 +542,18 @@ one-through-four
 (define y (list 4 5 6))
 
 (display (append x y))
-(newline)
+; got: gosh> (1 2 3 4 5 6)#<undef>
+
 (display (cons x y))
-(newline)
+; got: gosh> ((1 2 3) 4 5 6)#<undef>
+
 (display (list x y))
+; got: gosh> ((1 2 3) (4 5 6))#<undef>
 
 ;; 2.27
 ;; 2.18を修正しようとしてあきらめた！
 ;; 再帰で書いたほうが修正らくっぽいね。
-;; すぐ思いつかなかったので解凍みてみた。再帰でやってるやつ発見した。
+;; すぐ思いつかなかったので回答みてみた。再帰でやってるやつ発見した。
 ;; http://www.billthelizard.com/2010/12/sicp-218-reversing-list.html
 (define (reverse items)
   (if (null? items)
@@ -574,7 +582,7 @@ one-through-four
 (newline)
 (display (fringe (list x x)))
 
-;; SICP 2.29
+;; 2.29
 (define (make-mobile left right)
   (list left right))
 
@@ -615,7 +623,7 @@ one-through-four
       #f))
 
 ;; 木の写像
-(define (scale-tree factor)
+(define (scale-tree tree factor)
   (cond ((null? tree) '())
         ((not (pair? tree)) (* tree factor))
         (else (cons (scale-tree (car tree) factor)
@@ -682,7 +690,7 @@ one-through-four
 
 ;;;;;;;;;;;;;
 ;; 2.31
-(define scalee-list (list 1 (list 2 (list 3 4) 5) (list 6 7)))
+(define scale-list (list 1 (list 2 (list 3 4) 5) (list 6 7)))
 (define (tree-map function tree)
   (map (lambda (sub-tree)
          (if (pair? sub-tree)
