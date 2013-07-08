@@ -494,7 +494,7 @@ one-through-four
           (list 57 321 88))
 ;; gaucheだとfor-eachは最初から実装されてるみたいで↑動いた。
 
-(define (for-each proc items)
+(define (my-for-each proc items)
   (define (iter proc remain)
     (if (null? remain)
         #t ;; 「任意のものであっていい」ってことでこうした。
