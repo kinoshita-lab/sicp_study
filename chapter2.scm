@@ -277,6 +277,7 @@ x
                   (cons 4 nil))))
 
 (define one-through-four (list 1 2 3 4))
+one-through-four
 (car one-through-four)
 (cdr one-through-four)
 (car (cdr one-through-four))
@@ -363,6 +364,13 @@ x
 (display (cc 100 us-coins))
 (display (cc 100 uk-coins))
 
+(define us-coins (list 50 25 10 5 1))
+(display (cc 100 us-coins))
+(define us-coins (list 1 5 10 25 50))
+(display (cc 100 us-coins))
+
+;; coinsの全種類の組み合わせを操作しているから順番は関係ないのではないか。
+
 ;; 2.20
 (define (same-parity . items)
   (let ((parity (mod (car items) 2)))
@@ -378,9 +386,11 @@ x
 (newline)
 (display (same-parity 2 3 4 5 6))
 
+;;; リストの写像
+(define nil '())
 (define (scale-list items factor)
   (if (null? items)
-      '()
+      nil
       (cons (* (car items) factor)
             (scale-list (cdr items) factor))))
 
@@ -388,22 +398,25 @@ x
 
 (define (map proc items)
   (if (null? items)
-      '()
+      nil
       (cons (proc (car items))
             (map proc (cdr items)))))
 (map abs (list -10 2.5 -11.6 17))
+
+(map (lambda (x) (* x x))
+	 (list 1 2 3 4))
 
 (define (scale-list items factor)
   (map (lambda (x) (* x factor))
        items))
 
-
 (scale-list (list 1 2 3 4 5) 10)
 
 ;;2.21
+(define nil '())
 (define (square-list items)
   (if (null? items)
-      '()
+      nil
       (cons (* (car items) (car items))
             (square-list (cdr items)))))
 
