@@ -794,8 +794,11 @@ one-through-four
 
 (define hoge (list 1 2 3 4))
 (define (map p sequence)
-  (accumulate (lambda (x y)
+  (accumlate (lambda (x y)
                 (cons (p x) y))  nil sequence))
+(define (square x)
+  (* x x))
+(map square hoge)
 
 (define (append seq1 seq2)
   (accumulate cons seq1 seq2))
