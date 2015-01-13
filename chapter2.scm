@@ -734,6 +734,10 @@ one-through-four
               (next (+ k 1))))))
   (next 0))
 
+; 並びの演算
+(define (square x)
+  (* x x))
+
 (map square (list 1 2 3 4 5))
 
 (define (filter predicate sequence)
@@ -762,4 +766,199 @@ one-through-four
       nil
       (cons low (enumerate-interval (+ low 1) high))))
 (enumerate-interval 2 7)
-                
+
+(define (enumerate-tree tree)
+  (cond ((null? tree) tree)
+		((not (pair? tree)) (list tree))
+		(else (append (enumerate-tree (car tree))
+					  (enumerate-tree (cdr tree))))))
+(enumerate-tree (list 1 (list 2 (list 3 4)) 5))
+
+
+(define (sum-odd-squares tree)
+  (accumlate +
+			  0
+			  (map square
+				   (filter odd?
+						    (enumerate-tree tree)))))
+
+(define tmpTree (list 1 (list 2 (list 3 4)) 5))
+(sum-odd-squares tmpTree)
+
+(define nil '())
+(define (fib n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib (- n 1))
+                 (fib (- n 2))))))
+(define (even-fibs n)
+  (accumlate cons
+			  nil
+			  (filter even?
+					  (map fib
+					   (enumerate-interval 0 n)))))
+(even-fibs 10)
+
+(define (list-fib-squares n)
+  (accumlate cons
+			  nil
+			  (map square
+				   (map fib
+						(enumerate-interval 0 n)))))
+(list-fib-squares 10)
+
+(define (product-of-squares-of-odd-elements sequence)
+  (accumlate *
+			  1
+			  (map square
+				   (filter odd? sequence))))
+(product-of-squares-of-odd-elements (list 1 2 3 4 5))
+
+(define (salary-of-highest-paid-programmer records)
+  (accumlate max
+			  0
+			  (map salary
+				   (filter programmer? records))))
+; ↑は実行出来ない。
+
+; excersize 2.33
+;; (define (map proc items)
+;;   (if (null? items)
+;;       nil
+;;       (cons (proc (car items))
+;;             (map proc (cdr items)))))
+(define (accumlate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumlate op initial (cdr sequence)))))
+
+(define nil '())
+(define (map p sequence)
+  (accumlate (lambda (x y)
+			   (cons (p x) y))
+			 nil
+			 sequence))
+
+(map odd? (list 1 2 3 4 5))
+
+(define (append seq1 seq2)
+  (accumlate cons seq2
+			 seq1))
+(append (list 1 2 3) (list 4 5 6))
+
+(define (length sequence)
+  (accumlate (lambda (x y)
+			   (+ 1 y))
+			 0
+			 sequence))
+(length (list 1 2 3))
+
+
+;2.34
+(define (horner-eval x coefficient-sequence)
+  (accumlate (lambda (this-coeff higher-terms)
+                (+ (* x higher-terms)
+                   this-coeff))
+             0
+             coefficient-sequence))
+(horner-eval 2 (list 1 3 0 5 0 1))
+
+;2.35
+;; 2.2.2のcount-leaves
+;; (define (count-leaves x)
+;;   (cond ((null? x) 0)
+;;         ((not (pair? x)) 1)
+;;         (else (+ (count-leaves (car x))
+;;                  (count-leaves (cdr x))))))
+(define (map p sequence)
+  (accumlate (lambda (x y)
+			   (cons (p x) y))
+			 nil
+			 sequence))
+(define (accumlate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumlate op initial (cdr sequence)))))
+(define (count-leaves t)
+  (define (map_func l)
+    (cond ((null? l) 0)
+          ((not (pair? l)) 1)
+          (else (count-leaves l))))
+  (accumlate + 0  (map map_func t)))
+(define y (cons (list 1 2) (list 3 4)))
+(count-leaves y)
+
+;; 2.36
+(define (accumlate-n op init seqs)
+  (if (null? (car seqs))
+      nil
+      (cons (accumlate op init (map car seqs))
+            (accumlate-n op init (map cdr seqs)))))
+(define s (list (list 1 2 3) (list 4 5 6) (list 7 8 9) (list 10 11 12)))
+(accumlate-n + 0 s)
+
+;; 2.37
+;; http://www.billthelizard.com/2011/04/sicp-236-237-matrix-algebra.html
+(define v (list (list 1 2 3 4) (list 4 5 6 6) (list 6 7 8 9)))
+(define (dot-product v w)
+  (accumlate + 0 (map * v w)))
+(define (matrix-*vector m v)
+  (map (lambda (row) (dot-product row v)) m))
+(define (transpose mat)
+  (accumlate-n cons nil mat))
+(transpose v)
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (row) (matrix-*vector cols row)) m)))
+
+ 
+;; 2.38
+(define (fold-right op initial sequence)
+(define (fold-right op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumlate op initial (cdr sequence)))))
+(define (fold-left op initial sequence)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter initial sequence))
+
+(fold-right / 1 (list 1 2 3))
+; gosh> 3/2 (/ 3 (/ 2 1))
+(fold-left / 1 (list 1 2 3))
+; gosh> 1/6 (/ 1 (/ 2 3))
+
+(fold-right list nil (list 1 2 3))
+; gosh> (1 (2 (3 ())))
+(fold-left list nil (list 1 2 3))
+; gosh> (((() 1) 2) 3)
+
+;; 交換法則が成り立つ？
+
+;; 2.39(define (reverse items)
+;; 2.18
+;; (define (reverse-iter reversed items)
+;;   (if (null? items)
+;;       reversed
+;;       (reverse-iter (append (list (car items)) reversed) (cdr items))))
+;; (reverse-iter '() items))
+
+(define (reverse sequence)
+  (fold-right (lambda (x y)
+                (append y (list x)))
+              nil sequence))
+(define hoge (list 1 2 3 4))
+(reverse hoge)
+
+(define (reverse sequence)
+  (fold-left (lambda (x y)
+               (cons y x))
+             nil sequence))
+(reverse hoge)
+ 
