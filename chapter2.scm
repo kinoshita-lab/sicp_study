@@ -961,4 +961,71 @@ one-through-four
                (cons y x))
              nil sequence))
 (reverse hoge)
- 
+
+(define (enumerate-interval low high)
+  (if (> low high)
+      nil
+      (cons low (enumerate-interval (+ low 1) high))))
+(define (flatmap proc seq)
+  (accumlate append nil (map proc seq)))
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+(define (make-pair-sum pair)
+  (list (car pair) (cadr pair) (+ (car pair) (cadr pair))))
+(define nil '())
+(define (accumlate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumlate op initial (cdr sequence)))))
+(define (prime-sum-pairs n)
+  (map (make-pair-sum
+        (filter prime-sum?
+                (flatmap
+                 (lambda (i)
+                   (map (lambda (j) (list i j))
+                        (enumerate-interval 1 (- i 1))))
+                 (enumerate-interval 1 n))))))
+(prime-sum-pairs 10)
+
+(define (remove item sequence)
+  (filter (lambda (x) (not (= x item)))
+          sequence))
+  
+(define (permutations s)
+  (if (null? s)
+      (list nil)
+      (flatmap (lambda (x)
+                 (map (lambda (p) (cons x p))
+                      (permutations (remove x s))))
+               s)))
+
+
+;; 2.40
+(define (unique-pairs n)
+  (define (flatmap proc seq)
+    (accumlate append nil (map proc seq)))
+  (define (enumerate-interval low high)
+    (if (> low high)
+        nil
+        (cons low (enumerate-interval (+ low 1) high))))
+  (flatmap (lambda (i)
+             (map (lambda (j) (list j i))
+                  (enumerate-interval 1 (- i 1))))
+           (enumerate-interval 1 n)))
+(unique-pairs 10)
+;((1 2) (1 3) (2 3) (1 4) (2 4) (3 4) (1 5) (2 5) (3 5) (4 5) (1 6) (2 6) (3 6) (4 6) (5 6) (1 7) (2 7) (3 7) (4 7) (5 7) (6 7) (1 8) (2 8) (3 8) (4 8) (5 8) (6 8) (7 8) (1 9) (2 9) (3 9) (4 9) (5 9) (6 9) (7 9) (8 9) (1 10) (2 10) (3 10) (4 10) (5 10) (6 10) (7 10) (8 10) (9 10))
+;; 良さげだけどこれでいいのかな？
+(define (prime-sum-pairs n)
+  (map (make-pair-sum
+        (filter prime-sum?  
+                (unique-pairs n)))))
+;; 簡単にはなった。
+;; 2.41
+;; 2.40ベースで unique-triplesを作る必要ありそう
+
+
+
+  
+  
+
