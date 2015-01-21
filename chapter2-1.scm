@@ -1003,6 +1003,7 @@ one-through-four
 
 ;; 2.40
 (define (unique-pairs n)
+  (define (nil '()))
   (define (flatmap proc seq)
     (accumlate append nil (map proc seq)))
   (define (enumerate-interval low high)
@@ -1023,9 +1024,91 @@ one-through-four
 ;; 簡単にはなった。
 ;; 2.41
 ;; 2.40ベースで unique-triplesを作る必要ありそう
+;; わからん動かんので
+;; http://www.billthelizard.com/2011/05/sicp-240-241-nested-mappings.html
+(define (ordered-triples n)
+  (define (nil '()))
+  (define (accumlate op initial sequence)
+    (if (null? sequence)
+        initial
+        (op (car sequence)
+            (accumlate op initial (cdr sequence)))))
+  (define (flatmap proc seq)
+    (accumlate append nil (map proc seq)))
+  (define (enumerate-interval low high)
+    (if (> low high)
+        nil
+        (cons low (enumerate-interval (+ low 1) high))))
+  (flatmap (lambda (i)
+             (flatmap (lambda (j)
+                        (map (lambda (k)
+                               (list i j k))
+                             (enumerate-interval 1 (- j 1))))
+                      (enumerate-interval 1 (- i 1))))
+           (enumerate-interval 1 n)))
+(define (ordered-triple-sum n s)
+   (define (triple-sum? triple)
+     (= s (accumulate + 0 triple)))
+   (map make-triple-sum
+        (filter triple-sum?
+                (ordered-triples n))))
+(ordered-triples 6)
+
+;; 2.42
+;; もはや写経
+;; http://d.hatena.ne.jp/awacio/20100519/1274273076
+(define (queens board-size)
+  (define (enumerate-interval low high)
+    (if (> low high)
+        nil
+        (cons low (enumerate-interval (+ low 1) high))))
+  (define (queen-cols k)
+    (if (= k 0)
+        (list empty-board)
+        (filter
+         (lambda (positions) (safe? k positions))
+         (flatmap
+          (lambda (rest-of-queens)
+            (map (lambda (new-row)
+                   (adjoin-position new-row
+                                    k
+                                    rest-of-queens))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (- k 1))))))
+  (queen-cols board-size))
+ (define (enumerate-interval low high)
+    (if (> low high)
+        nil
+        (cons low (enumerate-interval (+ low 1) high))))
+(define empty-board '())
+(define nil '())
+(define (safe? k lis)
+  (if (null? lis)
+      #t
+      (let loop ((head (car lis))
+		 (body (cdr lis))
+		 (count 1))
+	(cond ((null? body) #t)
+	      ((or (= head (car body))
+		   (= head (+ (car body) count))
+		   (= head (- (car body) count)))
+	       #f)
+	      (else
+	       (loop head (cdr body) (+ 1 count)))))))
+
+(define (adjoin-position new-row k rest-of-queens)
+  (cons new-row rest-of-queens))
+ (define (accumlate op initial sequence)
+    (if (null? sequence)
+        initial
+        (op (car sequence)
+            (accumlate op initial (cdr sequence)))))
+  (define (flatmap proc seq)
+    (accumlate append nil (map proc seq)))
+(queens 10)
 
 
-
-  
-  
-
+;; 2.43
+;; はあ http://www.serendip.ws/archives/798
+;; Louisのやつは board-size * board-sizeかかる
+;; 普通のやつはboard-size回かかる？  
