@@ -118,3 +118,34 @@
 
 (paint right-split)
 (paint up-split)
+
+;; ここからgosh
+;; 2.46
+(define (make-vect x y)
+  (cons x y))
+(make-vect 1 2)
+
+(define (xcor-vect vect)
+  (car vect))
+(define (ycor-vect vect)
+  (cdr vect))
+
+(define (add-vect vect1 vect2)
+  (make-vect (+ (xcor-vect vect1) (xcor-vect vect2))
+             (+ (ycor-vect vect1) (ycor-vect vect2))))
+(define (sub-vect vect1 vect2)
+  (make-vect (- (xcor-vect vect1) (xcor-vect vect2))
+             (- (ycor-vect vect1) (ycor-vect vect2))))
+(define (scale-vect vect scale)
+  (make-vect (* (xcor-vect vect) scale)
+             (* (ycor-vect vect) scale)))
+
+(define vect-1 (make-vect 1 2))
+(define vect-2 (make-vect 3 4))
+
+(add-vect vect-1 vect-2)
+;gosh> (4 . 6)
+(sub-vect vect-1 vect-2)
+;gosh> (-2 . -2)
+(scale-vect vect-1 3.0)
+;gosh> (3.0 . 6.0)
