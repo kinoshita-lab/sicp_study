@@ -471,6 +471,7 @@ f1
   (rotate90 (beside (rotete270 painter1) (rotete270 painter2))))
 
 ;2.52
+; 成層設計のどこのレイヤーの作業かを意識したほうがいいな。
 ;a. 問題2.49の基本的waveペインタに(例えば笑っているような)線分を加えよ. 
 ;d. waveペインタ. 
 (define (wave-painter frame)
@@ -502,7 +503,14 @@ f1
         (p20 (make-draw-point-vector z     vect2   0  0.6))  ; 股-1
         (p21 (make-draw-point-vector vect1 vect2 0.2  0.5))  ; 股-2
         (p22 (make-draw-point-vector z     vect2   0  0.3))  ; 股-3
-    
+        ; ここから追加
+        (p23 (make-draw-point-vector vect1 vect2 0.8  0.4))  ; 右
+        (p24 (make-draw-point-vector vect1 vect2 0.8  0.475)); 目
+        (p25 (make-draw-point-vector vect1 vect2 0.8  0.5125)); 左 
+        (p26 (make-draw-point-vector vect1 vect2 0.8  0.6))   ; 目
+        (p27 (make-draw-point-vector vect1 vect2 0.7 0.475)); く
+        (p28 (make-draw-point-vector vect1 vect2 0.7 0.5125))); ち
+        
     (segments->painter
      (list (list p1 p2) ; 線その1
            (list p2 p3)
@@ -521,12 +529,27 @@ f1
            (list p17 p18)
            (list p18 p19)
            (list p20 p21) ;線その4
-           (list p21 p22)))))
+           (list p21 p22)
+           (list p23 p24) ;線その５
+           (list p25 p26) ; 線その6
+           (list p27 p28) ; 線その7
+           ))))
 (wave-painter f1)
 
-;b. corner-splitで構成されるパターンを(例えば二つでなく, up-splitとright-splitのコピーを使うことで)変更せよ. 
+;b. corner-splitで構成されるパターンを(例えば二つでなく, up-splitとright-splitのコピーを使うことで)変更せよ.
+; 問題の意味がよくわからない
+(define (corner-split painter n)
+  (if (= n 0)
+      painter
+      (let ((up (up-split painter (- n 1)))
+            (right (right-split painter (- n 1))))
+        (let ((corner (corner-split painter (- n 1))))
+          (beside (below painter up)
+                  (below right corner)))))) 
+
 ;c. square-limitでsquare-of-fourを使う版を, 隅を異るパターン(例えばRogers氏を, 四角の隅では外側を向せるように)修正せよ. 
+; こんなかな
 (define (square-limit painter n)
-  (let ((quarter (corner-split painter n)))
+  (let ((quarter (rotate180 (corner-split painter n))))
     (let ((half (beside (flip-horiz quarter) quarter)))
       (below (flip-vert half) half))))
