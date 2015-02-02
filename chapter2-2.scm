@@ -232,7 +232,7 @@ gosh> ((1 . 4) (2 . 5) 3 . 6)
         ((frame-coord-map frame) (start-segment segment))
         ((frame-coord-map frame) (end-segment segment))))
      segment-list)))
-;↑いろいろとたりてないけど動く前提で (for-eachってなんだよ
+;↑いろいろとたりてないけど動く前提で
 (define (segments->painter segment-list)
 ;  (define (draw-line start-segment end-segment)
 ;    )                  
