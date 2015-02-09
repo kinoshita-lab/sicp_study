@@ -146,3 +146,18 @@
 
 (encode-message '(A D A B B C A) sample-tree)
 ; gosh> (0 1 1 0 0 1 0 1 0 1 1 1 0)  
+;
+; そもそも題意を間違えている
+; ここだけでOK
+(define (encode-symbol letter subtree)
+  (define (iter bits letter subtree)
+    (if (leaf? subtree)
+        bits
+        (cond ((has-symbol letter (symbols (left-branch subtree)))
+               (iter (append bits '(0)) letter (left-branch subtree)))
+              ((has-symbol letter (symbols (right-branch subtree)))
+               (iter (append bits '(1)) letter (right-branch subtree)))
+              (else (error "bad bit -- ENCODE-SYMBOL" bit)))))
+
+  (iter '() letter subtree))
+
