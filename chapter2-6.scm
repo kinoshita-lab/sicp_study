@@ -503,8 +503,185 @@ put-lists
 
 ;; a. 本部のために, 指定した従業員ファイルから, 指定した従業員のレコードを検索するget-record手続きを実装せよ. この手続きはどの事業所のファイルに対しても使えなければならない. それぞれの事業所ファイルはどう構造化すべきか説明せよ. 特にどんな型情報が追加されるべきか. 
 
+;まずどんな感じか、2種類考えないとだ
+; tokyo 
+;(('namae (saita kazuki)) ('juusho asakusa) ('kyuuryou 10)) ; こんな感じ
+; ny
+; ( ('name (saita kazuki)) ('salary 20) ('address (central-park))
+;とかなってるとして
+
+;;; 東京編
+(define (make-tokyo-employee name juusho kyuuryou)
+  (list
+   (cons 'namae (list name))
+   (cons 'juusho (list juusho))
+   (cons 'kyuuryou (list kyuuryou))))
+
+(define tokyo-employee-record 
+  (list
+   (make-tokyo-employee 'kazbo 'asakusa 10)
+   (make-tokyo-employee 'hogefuga 'piyo 5)
+   (make-tokyo-employee 'unko 'akihabara 20)))
+
+tokyo-employee-record
+  
+(define (find-tag tagname record)
+  (if (null?  record) #f
+      (if (eq? tagname (car (car record))) (cadr (car record))
+          (find-tag tagname (cdr record)))))
+
+(define (get-record name employee-record)
+  (if (null? employee-record) #f
+      (let ((top (car employee-record)))
+        (if (eq? name (find-tag 'namae top)) top
+            (get-record name (cdr employee-record))))))
+
+;; NY編
+(define (make-ny-employee name juusho kyuuryou)
+  (list
+   (cons 'name (list name))
+   (cons 'address (list juusho))
+   (cons 'salary (list kyuuryou))))
+
+(define ny-employee-record 
+  (list
+   (make-ny-employee 'john 'central-park 1000) ;ドル建て
+   (make-ny-employee 'michael 'brooklin 500)
+   (make-ny-employee 'unko 'somewhere 200)))
+
+(define (find-tag tagname record)
+  (if (null?  record) #f
+      (if (eq? tagname (car (car record))) (cadr (car record))
+          (find-tag tagname (cdr record)))))
+
+(define (get-record name employee-record)
+  (if (null? employee-record) #f
+      (let ((top (car employee-record)))
+        (if (eq? name (find-tag 'name top)) top
+            (get-record name (cdr employee-record))))))
+
+(get-record 'john ny-employee-record)
+
+;;リストの頭にタグを付ける改造を各社にやってもらう
+(define (make-tokyo-employee name juusho kyuuryou)
+  (list
+   (cons 'namae (list name))
+   (cons 'juusho (list juusho))
+   (cons 'kyuuryou (list kyuuryou))))
+
+(define tokyo-employee-record 
+    (list 'tokyo
+     (make-tokyo-employee 'kazbo 'asakusa 10)
+     (make-tokyo-employee 'hogefuga 'piyo 5)
+     (make-tokyo-employee 'unko 'akihabara 20)))
+
+
+(define ny-employee-record 
+  (list 'ny
+   (make-ny-employee 'john 'central-park 1000) ;ドル建て
+   (make-ny-employee 'michael 'brooklin 500)
+   (make-ny-employee 'unko 'somewhere 200)))
+
+
+;; バラのやつはできた。
+(define (install-tokyo-package)
+  (define (find-tag tagname record)
+    (if (null?  record) #f
+        (if (eq? tagname (car (car record))) (cadr (car record))
+            (find-tag tagname (cdr record)))))
+  
+  (define (get-record name employee-record)
+    (if (null? employee-record) #f
+        (let ((top (car employee-record)))
+          (if (eq? name (find-tag 'namae top)) top
+              (get-record name (cdr employee-record))))))
+
+; bで足した
+  (define (show-salary name employee-record)
+    (let ((member (get-record name employee-record)))
+      (list name (find-tag 'kyuuryou member))))
+
+   ;; システムの他の部分とのインターフェース
+  (put 'get-record 'tokyo get-record)
+  (put 'get-salary 'tokyo show-salary)
+  'done)
+
+
+(define (install-ny-package)
+  (define (find-tag tagname record)
+    (if (null?  record) #f
+        (if (eq? tagname (car (car record))) (cadr (car record))
+            (find-tag tagname (cdr record)))))
+
+  (define (get-record name employee-record)
+    (if (null? employee-record) #f
+        (let ((top (car employee-record)))
+          (if (eq? name (find-tag 'name top)) top
+              (get-record name (cdr employee-record))))))
+
+  (define (show-salary name employee-record)
+    (let ((member (get-record name employee-record)))
+      (list name (find-tag 'salary member))))
+  
+   ;; システムの他の部分とのインターフェース
+  (put 'get-record 'ny get-record)
+  (put 'get-salary 'ny show-salary)
+  'done)
+tokyo-employee-record
+(clear-putlist)
+(install-tokyo-package)
+(install-ny-package)
+(define (global-get-record name employee-record)
+  (let ((division-tag (car employee-record)))
+        ((get 'get-record division-tag) name (cdr employee-record))))
+
+(global-get-record 'kazbo tokyo-employee-record)
+; ((namae kazbo) (juusho asakusa) (kyuuryou 10))
+
+(global-get-record 'john ny-employee-record)
+; ((name john) (address central-park) (salary 1000))
+
+;; とりあえずこんなもんか。
+
+
 ;; b. 本部のために, いずれの事業所の従業員ファイルからでも与えられた従業員のレコードから, 給与の情報を返すget-salary手続きを実装せよ. この演算が働くためには, レコードをどう構造化すべきか. 
+; めんどいからうえのパッケージに追加
+(define (global-get-salary name employee-record)
+  (let ((division-tag (car employee-record)))
+        ((get 'get-salary division-tag) name (cdr employee-record))))
+(clear-putlist)
+(install-tokyo-package)
+(install-ny-package)
+(global-get-salary 'kazbo tokyo-employee-record)
+; gosh> (kazbo 10)
+(global-get-salary 'john ny-employee-record)
+; gosh>  (john 1000)
 
 ;; c. 本部のために, find-employee-record手続きを実装せよ. すべての事業所ファイルから与えられた従業員のレコードを探し, それを返すものとする. この手続きは引数として従業員の名前と全事業所ファイルのリストをとるものと仮定せよ. 
+; cのぶんも
+(define (find-employee-record name . employee-list)
+  (if (null? employee-list) #f
+      (let ((top-list (car employee-list)))
+        (let ((division-tag (car top-list)))
+          (let ((get-result ((get 'get-record division-tag) name (cdr top-list))))
+            (if get-result get-result (find-employee-record name (cadr employee-list))))))))
+
+(find-employee-record 'kazbo tokyo-employee-record ny-employee-record)
+;gosh > ((namae kazbo) (juusho asakusa) (kyuuryou 10))
+(find-employee-record 'john tokyo-employee-record ny-employee-record)
+;gosh > ((name john) (address central-park) (salary 1000))
 
 ;; d. この企業が, 別の会社を合併した時, 新しい従業員情報を中央システムに組み込むには, どういう変更をすべきか. 
+
+;; a~cでやったみたいに
+;; - 自分のところのデータベースにタグを付けてもらう
+;; - データの捜索用パッケージを作ってもらう
+;; - find-employee-recordのリストに追加してもらう
+;; という作業をしてもらう必要がある。
+
+
+
+
+
+
+
