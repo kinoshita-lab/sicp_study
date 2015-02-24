@@ -680,8 +680,69 @@ tokyo-employee-record
 ;; という作業をしてもらう必要がある。
 
 
+;;; メッセージパッシング
+(define (square x) (* x x))
+(define (make-from-real-imag x y)
+  (define (dispatch op)
+    (cond ((eq? op 'real-part) x)
+          ((eq? op 'imag-part) y)
+          ((eq? op 'magnitude)
+           (sqrt (+ (square x) (square y))))
+          ((eq? op 'angle) (atan y x))
+          (else
+           (error "Unknown op -- MAKE_FROM_REAL_IMAG" op))))
+  dispatch)
 
+(define a (make-from-real-imag 1 2))
+(a 'real-part)
+;gosh> 1
+(a 'imag-part)
+;gosh> 2
+(a 'magnitude)
+;gosh> 2.23606797749979
+(a 'angle)
+;gosh> 1.1071487177940904
+;; へーおもしろい
 
+;; 2.75
+;; alyssaのベースで
+(define (make-from-mag-ang r theta)
+  (define (dispatch op)
+    (cond ((eq? op 'magnitude) r)
+          ((eq? op 'angle) theta)
+          ((eq? op 'real-part)
+           (* r (cos theta))) 
+          ((eq? op 'imag-part)
+           (* r (sin theta)))
+          (else
+           (error "Unknown op -- MAKE_FROM_REAL_IMAG" op))))
+  dispatch)
+(define b (make-from-mag-ang 1 0.2))
 
+(b 'magnitude)
+;gosh> 1
+(b 'angle)
+;gosh> 0.2
+(b 'real-part)
+;gosh> 0.9800665778412416
+(b 'imag-part)
+;gosh> 0.19866933079506122
+(b 'hoge)
+;gosh> *** ERROR: Unknown op -- MAKE_FROM_REAL_IMAG hoge
 
+;; できたっぽい
 
+;;; 2.76
+
+;明白な振分けを持つ汎用演算
+; すべての演算ごとに新しい追加が必要になる。新しい演算を定義した時には振り分けの分だけ作る必要がある。
+
+; データ主導流
+; 表を埋めていく方式。ここの例だと新しい型ができた場合には型とその演算をまとめて追加できた。
+; 新しい演算を定義した時にはやっぱり全部のまとまりに追加して、表を更新する必要がある。
+
+; メッセージパッシング流
+; 1コずつの型が独立している。ラベル('real-partとか)さえ合っていれば新しいかどうかを気にしないで使えるのは便利。今どのくらいの型があるのかなど全体を知るのが難しいのではないかとは思うけど管理の「表」すら不要で新しい型を定義できるのはいいのかも。
+
+;  新しい演算が絶えず追加されるシステムには, どれが最も適切か. 
+; ってなると最後のメッセージパッシング流が良さそう。いくらでも追加できる。けど削除できないのでは？
