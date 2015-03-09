@@ -36,6 +36,7 @@
   (get-iter put-lists op type))
 
 (define (contents datum)
+  (print datum)
   (if (pair? datum)
       (cdr datum)
       (error "Bad tagged datum -- CONTENTS" datum)))
@@ -290,17 +291,18 @@ put-lists
 
   ;; 内部手続き
   (define (add-complex z1 z2)
-    (make-from-real-imag (+ (real-part z1) (real-part z2))
-                         (+ (imag-part z1) (imag-part z2))))
+    (print z1 z2)
+    (make-from-real-imag (add (real-part z1) (real-part z2))
+                         (add (imag-part z1) (imag-part z2))))
   (define (sub-complex z1 z2)
-    (make-from-real-imag (- (real-part z1) (real-part z2))
-                         (- (imag-part z1) (imag-part z2))))
+    (make-from-real-imag (sub (real-part z1) (real-part z2))
+                         (sub (imag-part z1) (imag-part z2))))
   (define (mul-complex z1 z2)
-    (make-from-mag-ang (* (magnitude z1) (magnitude z2))
-                       (+ (angle z1) (angle z2))))
+    (make-from-mag-ang (mul (magnitude z1) (magnitude z2))
+                       (add (angle z1) (angle z2))))
   (define (div-complex z1 z2)
-    (make-from-mag-ang (/ (magnitude z1) (magnitude z2))
-                       (- (angle z1) (angle z2))))
+    (make-from-mag-ang (div (magnitude z1) (magnitude z2))
+                       (sub (angle z1) (angle z2))))
   
   ;; システムの他の部分へのインターフェース
   (define (tag z) (attach-tag 'complex z))
@@ -452,6 +454,7 @@ put-lists
        (lambda (x)
          (and (= 0 (real-part x))
               (= 0 (imag-part y)))))
+  (trace real-part)
   'done)
 
 ;; Alyssaの
@@ -495,18 +498,22 @@ put-lists
     ((get 'make-from-mag-ang 'polar) r a))
 
   ;; 内部手続き
+  (define (real-part z) 
+    ((get 'real-part (type-tag z)) z))
+  (define (imag-part z)
+    ((get 'imag-part (type-tag z)) z))
   (define (add-complex z1 z2)
-    (make-from-real-imag (+ (real-part z1) (real-part z2))
-                         (+ (imag-part z1) (imag-part z2))))
+    (make-from-real-imag (add (real-part z1) (real-part z2))
+                         (add (imag-part z1) (imag-part z2))))
   (define (sub-complex z1 z2)
-    (make-from-real-imag (- (real-part z1) (real-part z2))
-                         (- (imag-part z1) (imag-part z2))))
+    (make-from-real-imag (sub (real-part z1) (real-part z2))
+                         (sub (imag-part z1) (imag-part z2))))
   (define (mul-complex z1 z2)
-    (make-from-mag-ang (* (magnitude z1) (magnitude z2))
-                       (+ (angle z1) (angle z2))))
+    (make-from-mag-ang (mul (magnitude z1) (magnitude z2))
+                       (add (angle z1) (angle z2))))
   (define (div-complex z1 z2)
-    (make-from-mag-ang (/ (magnitude z1) (magnitude z2))
-                       (- (angle z1) (angle z2))))
+    (make-from-mag-ang (div (magnitude z1) (magnitude z2))
+                       (sub (angle z1) (angle z2))))
   
   ;; システムの他の部分へのインターフェース
   (define (tag z) (attach-tag 'complex z))
@@ -584,3 +591,76 @@ put-lists
 (define k (make-complex-from-real-imag 1 2))
 (equ? j k)
 ; たぶんこれでよさげなのだけどうまくいかない。
+;(=zero? rectangular #<closure (install-rectangular-package #f)
+; #fってなんだろう
+;;;
+;;; 2.5.2 異る型のデータの統合
+;;;
+(define (scheme-number->complex n)
+  (make-complex-from-real-imag (contents n) 0))
+
+;; ここでput/get coercionとかいうのが必要になっている気がする
+(define coercion-list '())
+
+(define (clear-coercion-list)
+  (set! coercion-list '()))
+
+(define (put-coercion type1 type2 item)
+  (if (get-coercion type1 type2) coercion-list 
+      (set! coercion-list
+            (cons (list type1 type2 item)
+                  coercion-list))))
+
+(define (get-coercion type1 type2) 
+  (define (get-type1 listItem)
+    (car listItem))
+  (define (get-type2 listItem)
+    (cadr listItem))
+  (define (get-item listItem)
+    (caddr listItem))
+  (define (get-coercion-iter list type1 type2)
+    (if (null? list) #f
+        (let ((top (car list)))
+          (if (and (equal? type1 (get-type1 top))
+                   (equal? type2 (get-type2 top))) (get-item top)
+                   (get-coercion-iter (cdr list) type1 type2)))))
+  (get-coercion-iter coercion-list type1 type2))
+
+;; apply-genericを書き換える
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (if (= (length args) 2)
+              (let ((type1 (car type-tags))
+                    (type2 (cadr type-tags))
+                    (a1 (car args))
+                    (a2 (cadr args)))
+                (let ((t1->t2 (get-coercion type1 type2))
+                      (t2->t1 (get-coercion type2 type1)))
+                  (cond (t1->t2
+                         (apply-generic op (t1->t2 a1) a2))
+                        (t2->t1
+                         (apply-generic op a1 (t2->t1 a2)))
+                        (else
+                         (error "No method for these types!"
+                                (list op type-tags))))))
+              (error "No method for these types"
+                     (list op type-tags)))))))
+                    
+;; 試し
+(clear-putlist)
+(install-scheme-number-package)
+(install-complex-package)
+(install-rectangular-package)
+(put-coercion 'scheme-number 'complex scheme-number->complex)
+(define a (make-scheme-number 10))
+(define b (make-complex-from-real-imag 1 2))
+(trace apply-generic)
+(trace get)
+(add a b)
+;;CALL apply-generic add (scheme-number . 10) (complex rectangular 1 . 2)
+;;  CALL apply-generic add (complex rectangular ...) (complex rectangular ...)
+;;変換は無事に動いたけど・・packageの中身がちがうっぽい？
+;; chapter2_8.scmに移動
