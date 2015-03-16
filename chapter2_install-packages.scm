@@ -77,15 +77,10 @@
   (put 'make-from-mag-ang 'rectangular 
        (lambda (r a) (tag (make-from-mag-ang r a)))) ; なぜ急に
 
-  (put 'equ? '(rectangular rectangular)
-       (lambda (x y)
-         (and (= (real-part x) (real-part y)
-                 (imag-part x) (imag-part y)))))
-
-  (put '=zero? 'rectangular
-       (lambda (x)
-         (and (= 0 (real-part x))
-              (= 0 (imag-part y)))))
+  (put 'add '(rectangular rectangular)
+       (lambda (x y) (make-from-real-imag 
+                      (+ (real-part x) (real-part y))
+                      (+ (imag-part x) (imag-part y)))))
   'done)
 
 ;; 極座標版
