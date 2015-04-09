@@ -27,8 +27,15 @@
 (new-withdraw 10)
 ;; => 80
 
-;; *Geiser dbg* っていうバッファが表示されると非常に使いやすいが、
-;; これを最初から開いておくことはできないのか？
+;; 下のmake-withdrawが微妙にわかりづらいのは
+(define (easy-make-withdraw arg-balance)
+  (let ((balance arg-balance))
+	(lambda (amount)
+	  (if (>= balance amount)
+		  (begin (set! balance (- balance amount))
+				 balance)
+		  "Insufficient funds"))))
+;; という途中の段階が無いからかも。
 
 (define (make-withdraw balance)
   (lambda (amount)
@@ -48,7 +55,6 @@
 
 (W2 40)
 ;; => 10
-
 
 (define (make-account balance)
   (define (withdraw amount)
@@ -81,3 +87,51 @@ acc2
 ;; => #<procedure:dispatch>
 ((acc2 'withdraw) 20)
 ;; => 80
+
+;; 3.1
+(define (make-accumlator sum)
+  (lambda (value)
+	(begin (set! sum (+ sum value))
+		   sum)))
+(define a1 (make-accumlator 10))
+(a1 10)
+;; => 30
+(define a2 (make-accumlator 30))
+(a2 10)
+;; => 40
+;; よさげ
+
+;; 3.2
+(define (make-monitored function)
+  (let ((counter 0)) ; letでくるめばいいのか謎
+	;; カウンターをリセットする
+	(define (reset-count)
+	  (set! counter 0))
+	;; カウンターを増やして登録してる関数を呼ぶ（てか返す)
+	(define (call)
+	  (begin (set! counter (+ 1 counter))
+			 function))
+
+	(define (dispatch m)
+	  (cond ((eq? m 'reset-count) (reset-count))
+			((eq? m 'how-many-calls?) counter)
+			(else ((call) m))))
+	dispatch))
+
+
+(define (square x)
+  (* x x))
+(define s (make-monitored square))
+
+(s 100)
+;; => 10000
+(s 'how-many-calls?)
+;; => 1
+(s 2)
+;; => 4
+(s 'how-many-calls?)
+;; => 2
+(s 'reset-count)
+(s 'how-many-calls?)
+;; => 0
+;; letでくるめばいいっぽい
