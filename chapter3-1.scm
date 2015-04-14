@@ -135,3 +135,85 @@ acc2
 (s 'how-many-calls?)
 ;; => 0
 ;; letでくるめばいいっぽい
+
+
+;; 3.3
+(define (make-account balance password)
+  (let ((pass password))
+	(define (withdraw amount)
+	  (if (>= balance amount)
+		  (begin (set! balance (- balance amount))
+				 balance)
+		  "Insufficient funds"))
+	(define (deposit amount)
+	  (set! balance (+ balance amount))
+	  balance)
+	(define (check password)
+	  (eq? password pass))
+	(define (dispatch password m)
+	  (if (check password)
+		  (cond ((eq? m 'withdraw) withdraw)
+				((eq? m 'deposit) deposit)
+				(else (error "Unknown request -- MAKE-ACCOUNT"
+							 m)))
+		  (error "Incorrect password")))
+	  dispatch))
+
+(define acc (make-account 100 'secret-password))
+((acc 'secret-password 'withdraw) 40)
+;; => 60
+((acc 'some-other-password 'deposit) 50)
+;; Incorrect password
+;; よさげ。
+
+;; 3.4
+(define (make-account balance password)
+  (let ((pass password) (error-counter 0))
+	(define (withdraw amount)
+	  (if (>= balance amount)
+		  (begin (set! balance (- balance amount))
+				 balance)
+		  "Insufficient funds"))
+	(define (deposit amount)
+	  (set! balance (+ balance amount))
+	  balance)
+	(define (call-the-cops)
+	  (print "calling cops.. please wait..."))
+
+	(define (check password)
+	  (eq? password pass))
+	(define (dispatch password m)
+	  (if (check password)
+		  (cond ((eq? m 'withdraw) withdraw)
+				((eq? m 'deposit) deposit)
+				(else (error "Unknown request -- MAKE-ACCOUNT"
+							 m)))
+		  (begin (set! error-counter (+ 1 error-counter))
+				 (if (= error-counter 7)
+					 (call-the-cops)
+					 (error "please be careful.")))))
+	  dispatch))
+
+(define acc (make-account 100 'secret-password))
+((acc 'secret-password 'withdraw) 40)
+;; => 60
+((acc 'some-other-password 'deposit) 50)
+((acc 'some-other-password 'deposit) 50)
+((acc 'some-other-password 'deposit) 50)
+((acc 'some-other-password 'deposit) 50)
+((acc 'some-other-password 'deposit) 50)
+((acc 'some-other-password 'deposit) 50)
+((acc 'some-other-password 'deposit) 50)
+;; "calling cops.. please wait..
+;; ってでるのでよさげではあるけど、 そのあと　50に対して関数を適用しようとしてエラーで死ぬ。
+;; 
+;; Error: struct:exn:fail:contract
+;; "calling cops.. please wait..."application: not a procedure;
+;;  expected a procedure that can be applied to arguments
+;;   given: #<void>
+;;   arguments...:
+;;    50
+;; Expression evaluated was:
+;; ((acc 'some-other-password 'deposit) 50)
+
+  
