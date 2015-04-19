@@ -167,6 +167,7 @@ acc2
 ;; よさげ。
 
 ;; 3.4
+;; pass passwordのletは本来不要
 (define (make-account balance password)
   (let ((pass password) (error-counter 0))
 	(define (withdraw amount)
