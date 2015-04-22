@@ -58,3 +58,24 @@
 ;; どうでもいいけどこういうことができてしまう
 ((paul-acc 'open-sesame 'deposit) 30) ; 他人のパスワードでアクセス
 ;; => 160
+
+
+;; 単純な手続きfを定義し, (+ (f 0) (f 1))が, +の引数を左から右へ評価すると0を返し, 右から左へ評価すると1を返すようにせよ. 
+
+;; globalに書くのは簡単だけどこういう問題なのか謎
+(define first-arg '())
+(define (f arg)
+  (if (eq? '() first-arg)
+	  (begin
+		(set! first-arg arg )
+		arg)
+	  first-arg))
+
+;; 試
+;; (trace f)
+;; (+ (f 0) (f 1))
+;; => 0
+;; >(f 0)
+;; <0
+;; >(f 1)
+;; <0
