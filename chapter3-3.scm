@@ -79,3 +79,20 @@
 ;; <0
 ;; >(f 1)
 ;; <0
+
+;; 3.11の準備
+(define (make-withdraw initial-amount)
+  (let ((balance initial-amount))
+    (lambda (amount)
+      (if (>= balance amount)
+          (begin (set! balance (- balance amount))
+                 balance)
+          "Insufficient funds"))))
+;; をletをlambdaにする
+(define (make-withdraw initial-amount)
+  ((lambda (balance initial-amount)
+     (lambda (amount)
+       (if (>= balance amount)
+           (begin (set! balance (- balance amount))
+                  balance)
+           "Insufficient funds")))))
