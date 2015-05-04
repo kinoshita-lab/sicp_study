@@ -62,3 +62,32 @@ z2
 (set-to-wow! z2)
 ;; gosh> ((wow b) a b)
 
+;; 3.16
+;; benのやつ
+(define (count-pairs x)
+  (if (not (pair? x))
+      0
+      (+ (count-pairs (car x))
+         (count-pairs (cdr x))
+         1)))
+(define l1 (list 'a 'b 'c))
+(count-pairs l1)
+;; gosh> 3
+;; よさげにみえるけど
+;; ↑で作った無限ループのやつとかどうなるのだろう
+z
+;; 無限ループ注意　(count-pairs z)
+;; 無限ループって答えが帰ってこなくなった
+
+(define x (list 'a 'b))
+(define z1 (cons x x))
+(count-pairs z1)
+;; これ5が返ってくる
+
+(define z2 (cons (list 'a 'b) (list 'a 'b)))
+(count-pairs z1)
+;; これも5が返ってくる
+;; とりあえず正しくないことは示した？
+
+;; z1の方は3つだけど5が返ってくる。
+;; こういう感じのを作ればいいのだろう
