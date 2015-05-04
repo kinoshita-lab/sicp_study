@@ -42,3 +42,23 @@ v
 ;; gosh> w
 ;; gosh> (d c b a)
 ;; gosh> (a)
+
+
+;; 共有と同一
+(define (set-to-wow! x)
+  (set-car! (car x) 'wow)
+  x)
+(define x (list 'a 'b))
+(define z1 (cons x x))
+z1
+;; gosh> ((a b) a b)
+;; こうだから図3.16はなんか微妙に変な気がする
+(define z2 (cons (list 'a 'b) (list 'a 'b)))
+z2
+
+(set-to-wow! z1)
+;; gosh> ((wow b) wow b)
+
+(set-to-wow! z2)
+;; gosh> ((wow b) a b)
+
