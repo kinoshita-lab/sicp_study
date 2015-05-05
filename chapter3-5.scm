@@ -4,7 +4,7 @@
 
 (define (front-ptr queue) (car queue))
 (define (rear-ptr queue) (cdr queue))
-(define (set-front-ptr! queue item) (set-car! queue item))
+(define (set-front-ptr! queue item) (set-car! queue item)) ;;この辺でfront-ptr, rear-ptrを使ってくれると3.22がだいぶわかりやすいんだけどなあ。
 (define (set-rear-ptr! queue item) (set-cdr! queue item))
 (define (empty-queue? queue) (null? (front-ptr queue)))
 (define (make-queue) (cons '() '()))
@@ -51,6 +51,64 @@
 
 ;; gosh> a->b->()
 ;; よさげ。
+
+;; 3.22
+;; queue でイチイチ外から入れてたやつを内側のを見るようにすればいいのかな。
+(define (make-queue)
+  
+  (let ((front-ptr '())
+        (rear-ptr '()))
+    (define (set-front-ptr! item)
+      (set! front-ptr item))
+    (define (set-rear-ptr! item)
+      (set! rear-ptr item))
+    (define (empty-queue?)
+      (null? front-ptr))
+    
+    (define (front-queue)
+      (if (empty-queue?)
+          (error "FRONT called with an empty queue")
+          (car front-ptr)))
+    
+    (define (insert-queue! item)
+      (let ((new-pair (cons item '())))
+        (cond ((empty-queue?)
+               (set-front-ptr! new-pair)
+               (set-rear-ptr! new-pair)
+               front-ptr)
+              (else
+               (set-cdr! rear-ptr new-pair)
+               (set-rear-ptr! new-pair)
+               front-ptr))))
+    
+    (define (delete-queue!)
+      (cond ((empty-queue?)
+             (error "DELETE! called with an empty queue"))
+            (else
+             (set-front-ptr! (cdr front-ptr)))))
+    
+    ;; 外部とのインターフェース
+    (define (dispatch m)
+      (cond ((eq? m 'insert-queue!) insert-queue!)
+            ((eq? m 'delete-queue!) delete-queue!)
+            (else
+             (error "unknown message.."))))
+    dispatch))
+
+(define q2 (make-queue))
+q2
+;; #<closure (make-queue dispatch)>
+((q2 'insert-queue!) 'a)
+;; (a)
+((q2 'insert-queue!) 'b)
+;; (a b)
+((q2 'delete-queue!))
+;; (b)
+((q2 'delete-queue!))
+;; ()
+
+;; よさげ
+
 
 
                  
