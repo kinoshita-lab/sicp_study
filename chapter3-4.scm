@@ -92,3 +92,31 @@ z
 ;; z1の方は3つだけど5が返ってくる。
 ;; こういう感じのを作ればいいのだろう
 ;; ってことで図をかいた。
+
+
+;問題 3.17
+;問題3.16のcount-pairsで, 任意の構造の異る対の個数を返す正しい解を考えよ. (ヒント: どの対が既に数えられたかを覚えておくのに使う補助のデータ構造を補正しながら構造を渡り歩け.) 
+;; 何をすればいいのかはザックリわかった。
+;; が、ここでmemqを使うという発想はなかった・・
+(define (corrected-count-pairs x)
+  (define counting-list '()) ; letでもいいと思うけど
+  (define (counter x)
+    (cond ((not (pair? x)) 0)
+          ((memq x counting-list) 0) ;; 数えてたら数えない
+          (else   (set! counting-list (cons counting-list x))
+                  (+ (counter (car x))
+                     (counter (cdr x))
+                     1))))
+  (trace counter)
+  (counter x))
+(define x (list 'a 'b))
+(define z1 (cons x x))
+z1
+ 
+(corrected-count-pairs z1)
+;; 1
+
+(define z2 (cons (list 'a 'b) (list 'a 'b)))
+(corrected-count-pairs z2)
+;; 3
+;; これであってるの？
