@@ -120,3 +120,46 @@ z1
 (corrected-count-pairs z2)
 ;; 3
 ;; これであってるの？
+
+;; 3.18
+(define (circular? x)
+  (define counting-list '())
+  (define (circular-finder item)
+    (cond ((null? item) #f)
+          ((memq (car item) counting-list) #t)
+          (else (set! counting-list (cons (car item)
+                                          counting-list))
+                (circular-finder (cdr item)))))
+  (circular-finder x))
+;; #t
+(define normal-list '(a b c))
+(circular? normal-list)
+;; CALL circular-finder (a b c)
+;;   CALL circular-finder (b c)
+;;     CALL circular-finder (c)
+;;       CALL circular-finder ()
+;;       RETN circular-finder #f
+;;     RETN circular-finder #f
+;;   RETN circular-finder #f
+;; RETN circular-finder #f
+;; #f
+(define (last-pair x)
+  (if (null? (cdr x))
+      x
+      (last-pair (cdr x))))
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+(define z (make-cycle (list 'a 'b 'c)))
+z
+(circular? z)
+;;  CALL circular-finder (a b c a b c a b c a b c a b c a b c a b c a b ...)
+;;   CALL circular-finder (b c a b c a b c a b c a b c a b c a b c a b c ...)
+;;     CALL circular-finder (c a b c a b c a b c a b c a b c a b c a b c a ...)
+;;       CALL circular-finder (a b c a b c a b c a b c a b c a b c a b c a b ...)
+;;       RETN circular-finder #t
+;;     RETN circular-finder #t
+;;   RETN circular-finder #t
+;; RETN circular-finder #t
+;; #t
+;; よさげ
