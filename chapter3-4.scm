@@ -163,3 +163,20 @@ z
 ;; RETN circular-finder #t
 ;; #t
 ;; よさげ
+
+;; 3.19
+;; 非常に賢明な考え方　というのは無理だったので調べた
+;; http://www.geocities.jp/m_hiroi/func/abcscm14.html
+;; 「循環リストのチェック」てところに書いてあるやつ
+(define (my-circular-list? ls)
+  (if (or (null? ls) (null? (cdr ls)))
+      #f
+      (let loop ((fast (cddr ls)) (slow (cdr ls)))
+        (cond ((null? fast) #f)
+	          ((eq? fast slow) #t)
+	          (else
+	           (loop (cddr fast) (cdr slow)))))))
+(my-circular-list? z)
+;; #t
+;; ふむ
+
