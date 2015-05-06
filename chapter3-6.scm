@@ -155,3 +155,45 @@ hogeTable
 ;; #f
 ;; よさげ
 
+;; 3.25
+;; だめだったので
+;; https://github.com/ten0s/sicp/blob/master/ch03/3.25.scm
+;; を参考にした
+(define (make-table)
+  (let ((table (cons '*table* '())))
+
+    (define (assoc key records)
+      (cond ((null? records) #f)
+            ((equal? key (caar records)) (car records))
+            (else (assoc key (cdr records)))))
+    
+    (define (lookup keys)
+      (cond ((null? keys) #f)
+            ((null? table) #f)
+            ((not (list? table)) #f)
+            (else
+             (let ((subtable (assoc (car keys) (cdr table))))
+               (if subtable
+                   (if (= (length keys) 1)
+                       (cdr subtable)
+                       (lookup (cdr keys) (subtable)))
+                   #f)))))
+    
+    (define (insert! keys value table)
+      (let ((key (car keys)))
+        (let ((subtable (assoc key (cdr table))))
+          (if subtable
+              (if (= (length keys) 1)
+                  (set-cdr! subtable value)
+                  (insert! (cdr keys) value subtable))
+              (let ((new-subtable (cons (cons key '())
+                                        (cdr table))))
+                (set-cdr! table new-subtable)
+                (insert keys value table)))))
+      'ok)
+    
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc) insert!)
+            (else (error "Unknown operation -- table" m))))
+    dispatch))
