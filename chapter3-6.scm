@@ -197,3 +197,140 @@ hogeTable
             ((eq? m 'insert-proc) insert!)
             (else (error "Unknown operation -- table" m))))
     dispatch))
+
+;; 3.26
+;; 2.66の答えはこんな感じだった(これ合ってるのかしらない)
+(define (lookup given-key set-of-records)
+  (let ((top-record (car set-of-records)))   
+    (cond ((null? set-of-records) false)
+          ((= x (key top-record)
+              (car set-of-records)))
+          ((< x (key top-record))
+              (lookup x (left-branch set-of-records)))
+          ((> x (key top-record))
+              (lookup x (right-branch set-of-records))))))
+
+;; この辺も必要かも
+(define (entry tree) (car tree))
+(define (left-branch tree) (cadr tree))
+(define (right-branch tree) (caddr tree))
+(define (make-tree entry left right)
+  (list entry left right))
+
+;; めんどいので１次元だしバラバラ方式でやる
+;; 微妙に変えないとダメだ ((key . value) left right) こんな感じにする
+(define (make-tree-entry key value left right)
+  (list (cons key value) left right))
+(make-tree-entry 'a 1 '() '())
+(define (set-left! tree left-entry)
+  (set-car! (cdr tree) left-entry)
+  tree)
+(define (set-right! tree right-entry)
+  (set-cdr! (cdr tree) right-entry)
+  tree)
+
+(define a1 (make-tree-entry 'a 1 '() '()))
+(define b2 (make-tree-entry 'b 2 '() '()))
+(define c3 (make-tree-entry 'c 3 '() '()))
+(define abtree (set-left! a1 b2))
+abtree
+;; ((a . 1) ((b . 2) () ()) ())
+(define abctree (set-right! abtree c3))
+abctree
+;; ((a . 1) ((b . 2) () ()) (c . 3) () ())
+;; ここまでよさげ。
+;; lookup書き換える
+;; まえにkey取り出しが必要ぽい
+(define (get-key tree-entry)
+  (caar tree-entry))
+(get-key a1)
+;; a よさげ
+;; さらにそのなかの値を拾うやつも必要
+(define (get-value tree-entry)
+  (cdar tree-entry))
+(get-value a1)
+;; 1 よさげ
+
+
+;; left-branch, right-branchも必要
+(define (left-branch tree)
+  (print (car tree))
+  (if (null? (cdr tree)) '()
+      (cadr tree)))
+(left-branch abctree)
+;; ((b . 2) () ())
+(define (right-branch tree)
+  (print tree)
+  (if (null? (cdr tree)) '()
+      (caddr tree)))
+(right-branch abctree)
+;; ((c . 3) () ())
+
+
+(define (lookup key tree)
+  (let ((top-record (car tree)))
+    (cond ((null? tree) #f)
+          ((= key (get-key top-record)
+              (get-value top-record))) ;; 見つかったtree-entryの値を返す
+          ((< key (get-key top-record))
+              (lookup key (left-branch tree)))
+          ((> key (get-key top-record))
+              (lookup key (right-branch tree))))))
+
+(define (assoc key tree)
+  (if (not (pair? tree)) #f
+      (let ((actual-tree (cdr tree)))
+        (if (null? actual-tree) #f
+            (let ((top-record (car actual-tree)))
+              (cond ((= key (get-key top-record))
+                     top-record)
+                    ((< key (get-key top-record))
+                     (assoc key (left-branch actual-tree)))
+                    ((> key (get-key top-record))
+                     (assoc key (right-branch actual-tree)))))))))
+
+
+(define (set-value! entry value)
+  (set-cdr! (car entry) value)
+  entry)
+
+;; これも拾ってきた
+(define (keyValueItem entry)
+  (car entry))
+
+(define (adjoin-set entry tree) 
+  (print tree)
+  (cond ((null? tree) entry) 
+        ;;=のときは先にやっている
+        ((= (get-key entry) (get-key (car tree))) tree) 
+        ((< (get-key entry) (get-key (car tree)))
+         (make-tree-entry
+          (get-key entry) (get-value entry)
+          (adjoin-set entry (left-branch (car tree))) 
+          (right-branch (car tree)))) 
+        ((> (get-key entry) (get-key (car tree)))
+         (make-tree-entry
+          (get-key entry) (get-value entry)
+          (left-branch (car tree))
+          (adjoin-set entry (right-branch (car tree)))))))
+
+(define (insert! key value table)
+  (let ((record (assoc key table)))
+    (if record
+        (set-value! record value)
+        (set-cdr! table (cons (adjoin-set (make-tree-entry key value '() '()) (cdr table)) '()))))
+  'ok)
+
+(define (make-table)
+  (list '*table*))
+
+;; 試　数字をキーにする
+(define hogeTable (make-table))
+(insert! 1 'aaa hogeTable)
+hogeTable
+(insert! 2 'bbb hogeTable)
+
+;; ・・うまくいかないな。
+;; http://www.serendip.ws/archives/1337
+;; こんな感じみたい　大枠まちがってなさそうなんだけどなあ
+
