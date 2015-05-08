@@ -334,3 +334,71 @@ hogeTable
 ;; http://www.serendip.ws/archives/1337
 ;; こんな感じみたい　大枠まちがってなさそうなんだけどなあ
 
+;; 3.27
+;; 最初のtableでやる
+(define (lookup key table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (cdr record)
+        #f)))
+
+(define (assoc key records)
+  (cond ((null? records) #f)
+        ((equal? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+
+(define (insert! key value table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (set-cdr! record value);; 見つかったら値を更新
+        (set-cdr! table
+                  (cons (cons key value) (cdr table))))) ;;ど頭に入れる
+  'ok)
+
+(define (make-table)
+  (list '*table*))
+
+(define (memorize f)
+  (let ((table (make-table)))
+    (lambda (x)
+      (let ((previously-computed-result (lookup x table)))
+        (or previously-computed-result
+            (let ((result (f x)))
+              (insert! x result table)
+              result))))))
+      
+(define memo-fib
+  (memorize (lambda (n)
+              (cond ((= n 0) 0)
+                    ((= n 1) 1)
+                    (else (+ (memo-fib (- n 1))
+                             (memo-fib (- n 2))))))))
+
+(memo-fib 3)
+;; 1回目
+;; CALL memo-fib 3
+;;   CALL memo-fib 2
+;;     CALL memo-fib 1
+;;     RETN memo-fib 1
+;;     CALL memo-fib 0
+;;     RETN memo-fib 0
+;;   RETN memo-fib 1
+;;   CALL memo-fib 1
+;;   RETN memo-fib 1
+;; RETN memo-fib 2
+;; 2
+(memo-fib 3)
+;; CALL memo-fib 3
+;; RETN memo-fib 2
+;; 2
+;; ２回めは結果が入っているのでそれが帰ってきた
+;; (memo-fib 3)の計算を解析する環境の図を描け.
+;; かいた。
+
+;; memo-fibがn番目のFibonacci数をnに比例したステップ数で計算出来る理由を説明せよ.
+;; どの計算でも前の値は計算済みなので、その先で毎回再帰が起こらないから。
+
+;; この方式はmemo-fibを単に(memoize fib)と定義してもやはり働くだろうか. 
+;; うごかなそう。 再帰のたびにfibの頭で毎回memorizeを呼びたい
+
+
