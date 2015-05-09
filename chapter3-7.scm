@@ -97,3 +97,22 @@
 ;; 動かないけど。
 ;; delayは1ゲートあたり　1(inverter-delay)+ 1(and-delay)
 ;; 2個通るので　2(inverter-delay) + 2(and-delay)
+;; ===============================================
+;; 3.30
+;; これでいいようなきがする
+(define (ripple-carry-adder as bs ss cin)
+  (define (iter as bs ss cin)
+    (if (null? as)
+        'ok
+        (let ((cout (make-wire)))
+          (full-adder (car as) (car bs) cin (car ss) cout)
+          (iter (cdr as) (cdr bs) (cdr ss) cout))))
+  (iter as bs ss cin))
+;; 完全な出力が得られるまでの遅延は, アンドゲート,オアゲートおよびインバータの遅延を使ってどの位か. 
+;; half adderで一番時間かかりそうなのは　AND->INV->ANDの道なので
+;; half adder1こで 2(AND) + 1(INV)
+;; full adderは1こあたりhalf adder x2 と or1個の道が時間かかりそうなので1個あたり
+;; 2x(half) + 1or
+;; = 4(and) + 1(inv) + 1(or)分の遅延がある
+;; nビットだと
+;; n x (4and + 1inv + 1or) の時間がかかる。
