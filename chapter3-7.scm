@@ -77,3 +77,23 @@
 (define (logical-or a b)
   (cond ((or (= 1 a) (= 1 b)) 1)
         (else 0)))
+;; ===============================================
+;; 3.29
+;; 知っていればできるけど知らなかったらどうするんだろう
+;; まずNANDゲートを作る
+(define (nand-gate a b c)
+  (let ((d (make-wire)) (e (make-wire)))
+    (inverter a d)
+    (inverter b e)
+    (and-gate d e d)
+    'ok))
+;; んでそれを3つくっつけてORゲートを作る
+(define (compound-or-gate a b c)
+  (let ((d (make-wire)) (e (make-wire)))
+    (nand-gate a a d)
+    (nand-gate b b e)
+    (and-gate d e c)
+    'ok))
+;; 動かないけど。
+;; delayは1ゲートあたり　1(inverter-delay)+ 1(and-delay)
+;; 2個通るので　2(inverter-delay) + 2(and-delay)
