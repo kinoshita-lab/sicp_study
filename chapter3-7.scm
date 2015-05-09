@@ -96,7 +96,7 @@
     'ok))
 ;; 動かないけど。
 ;; delayは1ゲートあたり　1(inverter-delay)+ 1(and-delay)
-;; 2個通るので　2(inverter-delay) + 2(and-delay)
+;; 2個通るので　2[inverter-delay] + 2[and-delay]
 ;; ===============================================
 ;; 3.30
 ;; これでいいようなきがする
@@ -110,9 +110,92 @@
   (iter as bs ss cin))
 ;; 完全な出力が得られるまでの遅延は, アンドゲート,オアゲートおよびインバータの遅延を使ってどの位か. 
 ;; half adderで一番時間かかりそうなのは　AND->INV->ANDの道なので
-;; half adder1こで 2(AND) + 1(INV)
+;; half adder1こで 2[AND] + 1[INV]
 ;; full adderは1こあたりhalf adder x2 と or1個の道が時間かかりそうなので1個あたり
 ;; 2x(half) + 1or
-;; = 4(and) + 1(inv) + 1(or)分の遅延がある
+;; = 4[and] + 1[inv] + 1[or]分の遅延がある
 ;; nビットだと
-;; n x (4and + 1inv + 1or) の時間がかかる。
+;; n x (4[and] + 1[inv] + 1[or]) の時間がかかる。
+;; ===============================================
+;; 動かない問題をといたあとでようやくmake-wireをのせるのか。
+
+(define (make-wire)
+  (let ((signal-value 0) (action-procedures '()))
+    
+    (define (set-my-signal! new-value)
+      (if (not (= signal-value new-value))
+          (begin (set! signal-value new-value)
+                 (call-each action-procedures))
+          'done))
+
+    (define (accept-action-procedure! proc)
+      (set! action-procedures (cons proc action-procedures))
+      (proc)) ;; ここで一発呼ぶのはなぜだろう
+
+    (define (dispatch m)
+      (cond ((eq? m 'get-signal) signal-value)
+            ((eq? m 'set-signal!) set-my-signal!)
+            ((eq? m 'add-action!) accept-action-procedure!)
+            (else (error "Unknown operation -- WIRE" m))))
+    dispatch))
+
+(define (call-each proedures)
+  (if (null? procedures)
+      'done
+      (begin
+        ((car procedures))
+        (call-each (cdr procedures)))))
+
+(define (get-signal wire)
+  (wire 'get-signal))
+
+(define (set-signal! wire new-value)
+  ((wire 'set-signal!) new-value))
+
+(define (add-action! wire action-procedure)
+  ((wire 'add-action!) action-procedure))
+
+;; 次第書き
+(define (after-delay delay action)
+  (add-to-agenda! (+ delay (current-time the-agenda))
+                  action
+                  the-agenda))
+
+(define (propagate)
+  (if (empty-agenda? the-agenda)
+      'done
+      (let ((first-item (first-agenda-item the-agenda)))
+        (first-item)
+        (remove-first-agenda-item! the-agenda)
+        (propagate))))
+
+(define (probe name wire)
+  (add-action! wire
+               (lambda ()
+                 (newline)
+                 (display name)
+                 (display " ")
+                 (display (current-time the-agenda))
+                 (display " New-value = ")
+                 (display (get-signal wire)))))
+
+;; このへん動かないけど
+(define the-agenda (make-agenda))
+(define inverter-delay 2)
+(define and-gate-delay 3)
+(define or-gate-delay 5)
+
+(define input-1 (make-wire))
+(define input-2 (make-wire))
+(define sum (make-wire))
+(define carry (make-wire))
+
+(probe 'sum sum)
+(probe 'carry carry)
+
+
+;; ===============================================
+;;3.31
+;; L.133で気になっていたことが問題になっているし
+;; probeを突っ込んだときに現在の値が表示できないからだとおもう
+
