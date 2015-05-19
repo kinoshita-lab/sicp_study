@@ -133,9 +133,9 @@
              (error "Contradiction" (list value newval)))
             (else 'ignored)))
     (define (forget-my-value retractor)
-      (if (eq? retractor inform)
+      (if (eq? retractor informant)
           (begin (set! informant false)
-                 (for-each-except retrator
+                 (for-each-except retractor
                                   inform-about-no-value
                                   constraints))
           'ignored))
@@ -158,7 +158,7 @@
     me))
 
 (define (for-each-except exception procedure list)
-  (define (looop items)
+  (define (loop items)
     (cond ((null? items) 'done)
           ((eq? (car items) exception) (loop (cdr items)))
           (else (procedure (car items))
@@ -174,10 +174,57 @@
 (define (set-value! connector new-value informant)
   ((connector 'set-value!) new-value informant))
 
-(define (forget-value!! connector retractor)
-  ((connect 'forget) retractor))
+(define (forget-value! connector retractor)
+  ((connector 'forget) retractor))
 
 (define (connect connector new-constraint)
   ((connector 'connect) new-constraint))
 
 ;; ↓ここまで全部定義すると上のやつが動くような気がするのでやってみるコーナー
+(define C (make-connector))
+(define F (make-connector))
+(celcius-fahrenheit-converter C F)
+;; => ok
+celcius-fahrenheit-converter
+;; #<closure celcius-fahrenheit-converter>
+(probe "Celsius temp" C)
+;; #<closure (probe me)>
+(probe "Fahrenheit temp" F)
+;; #<closure (probe me)>
+(set-value! C 25 'user)
+;; Probe: Celsius temp = 25
+;; Probe: Fahrenheit temp = 77
+;; done
+(set-value! F 212 'user)
+;; *** ERROR: Contradiction (77 212)
+(forget-value! C 'user)
+;; Probe: Celsius temp = ?
+;; Probe: Fahrenheit temp = ?done
+;; うごいているっぽい
+
+;; 3.33
+;; こうかな
+(define (averager a b c)
+  (let ((u (make-connector))
+        (v (make-connector)))
+    (adder a b u)
+    (multiplier u v c)
+    (constant 0.5 v)
+    'ok))
+;; 試
+(define A (make-connector))
+(define B (make-connector))
+(define C (make-connector))
+(averager A B C)
+;; => ok
+(probe "Average output" C)
+(set-value! A 10 'user)
+(set-value! B 20 'user)
+;; Probe: Average output = 15.0
+(forget-value! A 'user)
+;; Probe: Average output = ?
+;; よさげ。
+
+
+
+
