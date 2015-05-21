@@ -226,5 +226,48 @@ celcius-fahrenheit-converter
 ;; よさげ。
 
 
+;; 3.34
+;; multiplierは出口の値を決めると、手前の値を決められるけど
+;; 平方根が入り口に来るような動作をしなくなってしまう。
 
+;; 3.35 こんなかな。
+(define (squarer a b)
+  (define (process-new-value)
+    (if (has-value? b)
+        (if (< (get-value b) 0)
+            (error "square less than 0 -- SQUARER" (get-value b))
+            (set-value! a (sqrt (get-value b)) me)))
+    (if (has-value? a)
+        (set-value! b (* (get-value a) (get-value a)) me)))
+  
+  (define (process-forget-value)
+    (forget-value! a me)
+    (forget-value! b me)
+    (process-new-value))
 
+  (define (me request)
+    (cond ((eq? request 'I-have-a-value)
+           (process-new-value))
+          ((eq? request 'I-lost-my-value)
+           (process-forget-value))
+          (else
+           (error "Unknown Request -- SQUARER" request))))
+  (connect a me)
+  (connect b me)
+  me)
+
+;; 試
+(define A (make-connector))
+(define B (make-connector))
+(define squarer-tester (squarer A B))
+(probe "SQ output " B)
+(probe "SQ input" A)
+(set-value! A 10 'user)
+;; Probe: SQ input = 10
+;; Probe: SQ output  = 100done
+(forget-value! A 'user)
+;; Probe: SQ input = ?
+;; Probe: SQ output  = ?done
+(set-value! B 100 'user)
+;; Probe: SQ output  = 100
+;; Probe: SQ input = 10done
