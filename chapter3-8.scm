@@ -271,3 +271,81 @@ celcius-fahrenheit-converter
 (set-value! B 100 'user)
 ;; Probe: SQ output  = 100
 ;; Probe: SQ input = 10done
+
+;; 3.37
+;; celsius-fahrenheit-converter手続きは,
+
+;; (define (celsius-fahrenheit-converter x)
+;;   (c+ (c* (c/ (cv 9) (cv 5))
+;;           x)
+;;       (cv 32)))
+
+;; (define C (make-connector))
+;; (define F (celsius-fahrenheit-converter C))
+;; のような, より式主導の定義の形と比べると, 煩わしい. ここでc+, c*などは算術演算の「制約」版である. 例えばc+は引数として二つのコネクタをとり, これらと加算制約で関係づけられたコネクタを返す:
+;; (define (c+ x y)
+;;   (let ((z (make-connector)))
+;;     (adder x y z)
+;;     z))
+
+;;
+(define (c+ x y)
+  (let ((z (make-connector)))
+    (adder x y z)
+    z))
+(define (c* x y)
+  (let ((z (make-connector)))
+    (multiplier x y z)
+    z))
+(define (c/ x y)
+  (let ((z (make-connector)))
+    (divider x y z)
+    z))
+(define (cv x)
+  (let ((z (make-connector)))
+    (constant x z)))
+;; ここで逆数入れて逃げた割り算器を作らなければいけなくなった
+(define (divider m1 m2 product)
+  (define (process-new-value)
+    (cond ((or (and (has-value? m1) (= (get-value m1) 0))
+               (and (has-value? m2) (= (get-value m2) 0)))
+           (set-value! product 0 me))
+          ((and (has-value? m1) (has-value? m2))
+           (set-value! product
+                       (/ (get-value m1) (get-value m2))
+                       me))
+          ((and (has-value? product) (has-value? m1))
+           (set-value! m2
+                       (* (get-value product) (get-value m1))
+                       me))
+          ((and (has-value? product) (has-value? m2))
+           (set-value! m1
+                       (* (get-value product) (get-value m2))
+                       me))))
+  (define (process-forget-value)
+    (forget-value! product me)
+    (forget-value! m1 me)
+    (forget-value! m2 me)
+    (process-new-value))
+  (define (me request)
+    (cond ((eq? request 'I-have-a-value)
+           (process-new-value))
+          ((eq? request 'I-lost-my-value)
+           (process-forget-value))
+          (else
+           (error "Unknown request -- DIVIDER" request))))
+  (connect m1 me)
+  (connect m2 me)
+  (connect product me)
+  me)
+
+;; 試
+(define (celsius-fahrenheit-converter x)
+  (c+ (c* (c/ (cv 9) (cv 5))
+          x)
+      (cv 32)))
+
+(define C (make-connector))
+(define F (celsius-fahrenheit-converter C))
+;; いいような気がするけど動かない謎
+;; *** ERROR: Unknown request -- CONSTANT connect
