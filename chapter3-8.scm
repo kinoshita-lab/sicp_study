@@ -116,7 +116,7 @@
           ((eq? request 'I-lost-my-value)
            (process-forget-value))
           (else
-           (error "Unknown request -- PROBE" request))))
+            (error "Unknown request -- PROBE" request))))
   (connect connector me)
   me)
 
