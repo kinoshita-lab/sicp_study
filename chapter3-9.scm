@@ -35,3 +35,54 @@
 ;; benは3.41の内容諦めてるし・・
 ;; よさげだけどわからない
 
+;; 複数の共有資源を使う複雑さ
+(define (exchange account1 account2)
+  (let ((difference (- (account1 'balance)
+                       (account2 'balance))))
+    ((account1 'withdraw) difference)
+    ((account2 'deposit) difference)))
+
+;; 全体のexchange手続きを直列化
+(define (make-account-and-serializer balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+
+  (let ((balance-serializer (make-serializer))) ; ここでserializerを作った上で・・・
+    (define (dispatch m)
+      (cond ((eq? m 'withdraw) withdraw) ; 各取引をする
+            ((eq? m 'deposit) deposit)
+            ((eq? m 'balance) balance)
+            ((eq? m 'serializer) balance-serializer) ; 取引時にはこれを引っ張ってきて外から参照する必要ができた。
+            (else (error "Unknown request -- MAKE-ACCOUNT"
+                         m))))
+    dispatch))
+
+(define (deposit account amount)
+  (let ((s (account 'serializer))
+        (d (account 'deposit)))
+    ((s d) amount)))
+
+(define (serialized-exchange account1 account2)
+  (let ((serializer1 (account1 'serializer))
+        (serializer2 (account2 'serializer)))
+    ((serializer1 (serializer2 exchange))
+     account1
+     account2)))
+
+;; 3.43
+;; 論ずる方
+;; やりたかったことは$10/$20/$30の交換なので、順調に行けば3種類のどこに入っているかが変わるだけで、1アカウントあたりの量が変わることはないのではないか。
+
+;; 残高がおかしくなる場合
+;; と
+;; 合計がおかしくなる場合
+;; の図をかく。
+
+
+
