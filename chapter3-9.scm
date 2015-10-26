@@ -101,5 +101,38 @@
 ;; account1の方見てみると、'balanceのところでaccount1のserializerを拾ってきていて、
 ;; それをつかって'withdrawしようとしているけど 'balanceですでにロックがかかってるから'withdrawできない。
 
+;; 直列変換器の実装
+;; やっとかい　回路のところもそうだったけど基本的な部品を作るのが最後過ぎて動かせない問題が多い
+(define (make-serializer)
+  (let ((mutex (make-mutex))) ;mutexを作って・・
+    (lambda (p)
+      (define (serialized-p . args)
+        (mutex 'acquire) ; mutexを取得して
+        (let ((val (apply p args))) ;関数を実行してvalに結果を入れて
+          (mutex 'release) ; mutexを開放する
+          val))
+      serialized-p))) ;・・という手続きを返す
+;; これってletまみれにしなくてもbeginとかで作れるんじゃないのかな。
+
+(define (make-mutex)
+  (let ((cell (list false)))
+    (define (the-mutex m)
+      (cond ((eq? m 'aqcuire)
+             (if (test-and-set! cell) ; trueが返ってきたらsetできていない、という動きするのでちょっと注意
+                 (the-mutex 'acquire))) ; retry
+            ((eq? m 'release) (clear! cell))))
+  the-mutex))
+
+(define (clear! cell)
+  (set-car! cell false))
+
+(define (test-and-set! cell)
+  (if (car cell)
+      true
+      (begin (set-car! cell true)
+             false)))
+;; 3.46
+;; 絵をかくのがめんどくなってきた
+;; けどかく
 
 
