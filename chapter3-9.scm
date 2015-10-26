@@ -84,5 +84,22 @@
 ;; 合計がおかしくなる場合
 ;; の図をかく。
 
+;; 3.44
+;; exchangeの時にはdifferenceの値が有効な期間中、2つの口座をロックしないとダメだったけど、transferの場合は1個ずつで完結しているから大丈夫なのではないだろうか。
+
+;; 3.45
+;; これ、本文にあったやつと何が違うんだろう？
+;; ((eq? m 'withdraw) (balance-serializer withdraw))
+;; みたいに、dispatchされる手続きがserializeされて返ってくる。
+;; こうしておけば、毎回depositとかの処理でserializerを使う必要がない、ということだと思う。
+;; 問題になってるexchangeとかの時、
+;; (define (exchange account1 account2)
+;;   (let ((difference (- (account1 'balance)
+;;                      (account2 'balance))))
+;;     ((account1 'withdraw) difference)
+;;     ((account2 'deposit) difference)))
+;; account1の方見てみると、'balanceのところでaccount1のserializerを拾ってきていて、
+;; それをつかって'withdrawしようとしているけど 'balanceですでにロックがかかってるから'withdrawできない。
+
 
 
