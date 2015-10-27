@@ -134,11 +134,7 @@
 ;; 3.46
 ;; 絵をかくのがめんどくなってきた
 ;; carのところからset-car! のところまでの間に別のプロセスがset-carしちゃったら破綻する
-(cond ((eq? m 'aqcuire)
-             (if (test-and-set! cell) ; trueが返ってきたらsetできていない、という動きするのでちょっと注意
-                 (the-mutex 'acquire))) ; retry
-            ((eq? m 'release) (clear! cell))))
-  the-mutex))
+
 ;; 3.47
 ;; a. 相互排除器を使って
 ;; mutexはtest-and-set!を使って作られているじゃないの。問題の意味がわからない。
