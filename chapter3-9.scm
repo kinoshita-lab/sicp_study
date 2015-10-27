@@ -134,6 +134,50 @@
 ;; 3.46
 ;; 絵をかくのがめんどくなってきた
 ;; carのところからset-car! のところまでの間に別のプロセスがset-carしちゃったら破綻する
-
+(cond ((eq? m 'aqcuire)
+             (if (test-and-set! cell) ; trueが返ってきたらsetできていない、という動きするのでちょっと注意
+                 (the-mutex 'acquire))) ; retry
+            ((eq? m 'release) (clear! cell))))
+  the-mutex))
+;; 3.47
+;; a. 相互排除器を使って
+;; mutexはtest-and-set!を使って作られているじゃないの。問題の意味がわからない。
+;; mutexから先がどうなってるかは気にしないで作れってことだと思えばいいのかな。
+(define (make-semaphore-mutex n)
+  (let ((mutex (make-mutex))
+        (number 0))
+    (define (the-semaphore m)
+      (cond ((eq? m 'acquire)
+             (begin (mutex 'acquire) ;; ここで自動retryになる
+                    (if (< number n)
+                        (set! number (+ 1 number)))
+                    (mutex 'release)))
+             ((eq? m 'release)
+              (begin (mutex 'acquire)
+                     (set! number (- number 1))
+                     (if (< number 0)
+                         "ERROR"
+                         (mutex 'release))))))
+    the-semaphore))
+                         
+;; b. test-and-set!を使って
+;; 単純に↑を開けばいいような？
+(define (make-semaphore-test-and-set n)
+  (let ((list #f)
+        (number 0))
+    (define (the-semaphore m)
+      (cond ((eq? m 'acquire)
+             (begin (mutex 'acquire) ;; ここで自動retryになる
+                    (if (or (test-and-set! cell) ;; こいつはダメだった時にtrue返すから
+                            (>= number n)) ;; さっきのmutex版とは条件を反転させる。
+                        (the-semaphore m) ;; 手動retry
+                        (begin (set! number (+ 1 number))
+                        (clear! cell)))))
+             ((eq? m 'release)
+              (begin (set! number (- number 1))
+                     (if (< number 0)
+                         "ERROR"
+                         (clear! cell))))))
+    the-semaphore))
 
 
