@@ -177,3 +177,56 @@
     the-semaphore))
 
 
+
+;; 3.48
+;; 上に述べたデッドロック回避法(つまり口座に番号をつけ, プロセスはより小さい番号の方の口座を先に獲得しようとする.)が交換問題でデッドロックを回避する理由を詳しく説明せよ. この方法を採用するようserialized-exchangeを書き直せ. (make-accountも書き直し, 各口座は番号と共に作り出され, その番号は適切なメッセージを送ってアクセス出来るようにしなければならない.)
+
+
+;; 回避できる理由
+;; デッドロックの説明のところに書いてあった状況では、PeterもPaulも両方がa1の口座にアクセスしようとする。
+;; その場合、例えばPeterはa1の方を獲得、Paulはそれが開放されるまで待つ状況になる。
+;; PeterとPaulがそれぞれ相手のり源の開放待ち状態になってしまうのは回避される。
+
+;; まずserialized-exchangeを改造して順番の概念を導入
+(define (serialized-exchange account1 account2)
+  (let ((serializer1 (account1 'serializer))
+        (serializer2 (account2 'serializer))
+        (account-number1 (account1 'number))
+        (account-number2 (account2 'number))) ;; 同じ番号という状況は省く
+    (if (< account-number1 account-number2)
+        ((serializer1 (serializer2 exchange))
+         account1         
+         account2)
+        ((serializer2 (serializer1 exchange))
+         account2 
+         account1))))
+
+;; んでserializerつきのmake-accountに番号の概念を導入する
+(define account-number-source 0)
+
+(define (make-account-and-serializer-and-number balance)
+  (let ((my-account-number account-number-source))
+    (define (withdraw amount)
+      (if (>= balance amount)
+          (begin (set! balance (- balance amount))
+                 balance)
+          "Insufficient funds"))
+    (define (deposit amount)
+      (set! balance (+ balance amount))
+      balance)
+
+    (define (number) ;; これ追加
+      my-account-number)
+
+    (let ((balance-serializer (make-serializer))) ; ここでserializerを作った上で・・・
+      (define (dispatch m)
+        (cond
+         ((eq? m 'withdraw) withdraw) ; 各取引をする
+         ((eq? m 'deposit) deposit)
+         ((eq? m 'balance) balance)
+         ((eq? m 'serializer) balance-serializer) ; 取引時にはこれを引っ張ってきて外から参照する必要ができた。
+         ((eq? m 'number) number) ; これ追加
+         (else (error "Unknown request -- MAKE-ACCOUNT"
+                      m))))
+      (set! account-number (+ 1 account-number)) ;; これ足してみた
+      dispatch)))
