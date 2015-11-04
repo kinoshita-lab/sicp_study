@@ -51,9 +51,34 @@
 
 ;; 3.50 こんなかな
 (define (stream-map proc . argstreams)
-  (if (null? (car argstreams)) ;;carで単品を取り出してるからあnull?でいいのではないか。
+  (if (null? (car argstreams)) ;;carで単品を取り出してるからnull?でいいのではないか。
       the-empty-stream
       (begin
        (apply proc (map stream-car argstreams))
        (apply stream-map
               (cons proc (map stream-cdr argstreams))))))
+
+;; 3.51
+;; 色々動かないことが判明した
+;; これいただいてきた https://github.com/naoiwata/sicp/blob/master/chapter3/pages/stream.scm
+(load "./stream.scm")
+
+(define (show x)
+  (display-line x)
+  x)
+
+(define x (stream-map show (stream-enumerate-interval 0 10)))
+gosh> 
+0x
+
+(stream-ref x 5)
+gosh> 
+1
+2
+3
+4
+55
+(stream-ref x 7)
+gosh> 
+6
+77
