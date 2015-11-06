@@ -82,3 +82,51 @@ gosh>
 gosh> 
 6
 77
+
+
+;; 3.52
+(define sum 0)
+;; この時点ではsumは0
+(define (accum x) (set! sum (+ x sum)) sum)
+;; sumは0
+
+(define seq
+  (stream-map accum
+              (stream-enumerate-interval 1 20)))
+;; 0
+(define y (stream-filter even? seq))
+;; 0
+(define z
+  (stream-filter (lambda (x) (= (remainder x 5) 0))
+                 seq))
+;; 0
+(stream-ref y 7)
+gosh> 136
+
+sum
+gosh> 136
+
+(display-stream z)
+gosh> 
+10
+15
+45
+55
+105
+120
+190
+210done
+
+sum
+210
+;; stream.scmがよくわからないけど、 delayはこういう風に実装されている。
+;; (define-macro (delay exp) `(memo-proc (lambda () ,exp)))
+;; delayを書きかえてみてどうなるかやればいいのかな。
+(define (delay exp) (lambda () exp))
+;; 結果同じだった　？？
+;; delay内容を計算するのはforceのときで、それは今回だとstream-cdr
+;; memo化してないとすれば、毎回accumが呼ばれる気がする。
+;; メモ化したりしなかったりで結果が変わるのは困るな。
+
+
+
