@@ -130,3 +130,16 @@ sum
 
 
 
+;; 3.53
+(define s (cons-stream 1 (add-streams s s)))
+1 2 4 8... ってなる気がする　2^nが出る
+
+
+;;add-streamsはこうだったので、
+(define (add-streams s1 s2)
+  (stream-map + s1 s2))
+
+;; 3.54
+;mul-streamsはこんな感じかな
+(define (mul-streams s1 s2)
+  (stream-map * s1 s2))
