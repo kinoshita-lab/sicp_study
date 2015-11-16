@@ -122,7 +122,7 @@ sum
 ;; stream.scmがよくわからないけど、 delayはこういう風に実装されている。
 ;; (define-macro (delay exp) `(memo-proc (lambda () ,exp)))
 ;; delayを書きかえてみてどうなるかやればいいのかな。
-(define (delay exp) (lambda () exp))
+;;(define (delay exp) (lambda () exp))
 ;; 結果同じだった　？？
 ;; delay内容を計算するのはforceのときで、それは今回だとstream-cdr
 ;; memo化してないとすれば、毎回accumが呼ばれる気がする。
@@ -132,8 +132,9 @@ sum
 
 ;; 3.53
 (define s (cons-stream 1 (add-streams s s)))
-1 2 4 8... ってなる気がする　2^nが出る
 
+1 2 4 8... ってなる気がする　2^nが出る
+;; (display-stream s) <- 試しに実行すると大変なことになるので注意
 
 ;;add-streamsはこうだったので、
 (define (add-streams s1 s2)
@@ -143,3 +144,26 @@ sum
 ;mul-streamsはこんな感じかな
 (define (mul-streams s1 s2)
   (stream-map * s1 s2))
+(define ones (cons-stream 1 ones))
+(define integers (cons-stream 1 (add-streams ones integers)))
+(define factorials
+  (cons-stream 1
+               (mul-streams integers ones))) 
+
+;; こうかな。
+
+
+;; 3.55
+;; 1, 1 + 2, 1 + 2 + 3, 1 + 2 + 3 + 4, ...
+;; 1個前のやつと自分を足す　という方法で行けそう　んでそれは fibsでやったやつだ
+;; fibのところでやった風の図
+;; 1  2  3  4 (integers)
+;;    1  3  6 (partial-sum integers)
+;; ------------------------
+;; 1  3  6 10 15 (partial-sum integers)
+;; この図わかりづらいな。
+;; ってことであとはこれをfib風に並べればいいと思う
+(define partial-sum stream
+  (cons-stream (stream-car stream) ;; integerの最初の1
+               (add-streams (stream-cdr stream) ;;　以後のintegers 2 3 4...
+                            (partial-sum stream)))) ;; 自分
