@@ -167,3 +167,25 @@ sum
   (cons-stream (stream-car stream) ;; integerの最初の1
                (add-streams (stream-cdr stream) ;;　以後のintegers 2 3 4...
                             (partial-sum stream)))) ;; 自分
+
+;; 3.56 何言ってるか全然わかんね
+;; とりあえずmergeの写経
+(define (merge s1 s2)
+  (cond ((stream-null? s1) s2) ;; 長さが違って、どっちか終わっちゃった時とか
+		((stream-null? s2) s1) ;; は残ったほうのストリームをそのまま返す
+		(else
+		 (let ((s1car (stream-car s1)) ;; 先頭を
+			   (s2car (stream-car s2))) ;; 持ってきて・・
+		   (cond ((< s1car s2car)
+				  (cons-stream s1car (merge (stream-cdr s1) s2))) ;; 小さい順
+				 ((> s1car s2car)                                 ;; に
+				  (cons-stream s2car (merge (stream-cdr s2) s1))) ;; 並べる
+				 (else
+				  (cons-stream s1car　　　　　　　　　　　　　　　;; s1 と s2で同じ値が入ってたらs1の値を入れて
+							   (merge (stream-cdr s1)             ;; 次の要素へ
+									  (stream-cdr s2)))))))))     ;; 進む
+;; 問題の意味わかった (scale-stream S 2) (scale-stream S 3) (scale-stream S 5) を重複をのぞいて並べろって言っているのか
+(define S (cons-stream 1
+					   (merge
+						(merge (scale-stream S 2) (scale-stream S 3))
+						(scale-stream S 5))))
