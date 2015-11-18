@@ -213,4 +213,15 @@ sum
 (expand 1 7 10) ->  1 4 2 8 5 7 1 4 2 8 5...　ってのが出る
 (expand 3 8 10) -> 3 7 5 0 0 0 0 0 0 ... ってのが出る
 
+;; 3.59
+;; a0 / 1, a1 / 2, ... って言う風にすればいいので
+;; a
+(define (integrate-series s)
+  (stream-map / s integers)) 
 
+;; b 全然わからない
+(define cosine-series
+  (cons-stream 1 (integrate-series  (stream-map (lambda (x) (* x -1)) sine-series))))
+
+(define sine-series
+  (cons-stream 0 (integrate-series cosine-series)))
