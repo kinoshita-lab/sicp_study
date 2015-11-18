@@ -202,3 +202,15 @@ sum
 ;; \sum_{i+0}^{i=n-1} = \frac{n^2}{2}
 ;; 合計 \frac{(n+1)^2}{2} + \frac{n^2}{2}回の計算をする必要がある
 ;; だと指数的ではなくてO(n^2)だからなんか違う気がする。
+
+
+;; 3.58
+;; (define (expand num den radix)
+;;   (cons-stream
+;;    (quotient (* num radix) den)
+;;    (expand (remainder (* num radix) den) den radix)))
+;; radix進で小数の各桁を出すっぽい最初の0.みたいなのはでない
+(expand 1 7 10) ->  1 4 2 8 5 7 1 4 2 8 5...　ってのが出る
+(expand 3 8 10) -> 3 7 5 0 0 0 0 0 0 ... ってのが出る
+
+
