@@ -225,3 +225,29 @@ sum
 
 (define sine-series
   (cons-stream 0 (integrate-series cosine-series)))
+;; 結局これで何がしたかったのだろう
+
+;; 3.60 (ナゾ)
+(define (mul-series s1 s2)
+  (cons-stream (* (stream-car s1) (stream-car s2))
+               (add-streams (mul-streams (stream-cdr s1) (stream-cdr s2))
+                            (mul-series s1 s2))))
+
+;; 3.61(ナゾ) https://wizardbook.wordpress.com/2010/12/20/exercise-3-61/
+(define (invert-unit-series s)
+  (cons-stream 
+   1
+   (scale-stream (mul-series (stream-cdr s)
+                             (invert-unit-series s))
+                 -1)))
+;; 3.62(ナゾ) https://wqzhang.wordpress.com/2009/08/12/sicp-exercise-3-62/
+(define (div-series num den)
+  (let ((den0 (stream-car den)))
+    (if (= den0 0)
+        (error "The constant term of the denominator must be nonzero")
+        (scale-stream 
+         (mul-series 
+          num (invert-unit-series 
+               (scale-stream den (/ 1 den0))))
+         den0))))  ; should be (/ 1 den0) see comments below
+(define tangent-series (div-series sine-series cosine-series))
