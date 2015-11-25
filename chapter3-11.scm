@@ -68,3 +68,22 @@
                                    pi-stream) 10)
 ;; gosh>  4.0 3.166666666666667 3.142105263157895 3.141599357319005 3.1415927140337785 3.1415926539752927 3.1415926535911765 3.141592653589778 3.1415926535897953 3.141592653589795
 
+;; 3.63
+;; Alyssa版はguessesを返すのではなく、sqrt-streamを呼びまくって突き進んでいく。メモ化ができない。
+;; delayがメモ化してなかったら結局同じように計算が進んでいくから同じような気がする。
+
+;; 3.64
+(define (stream-limit s tolerance)
+  (let ((s0 (stream-car s)) ;; 相続く
+        (s1 (stream-car (stream-cdr s)))) ;;2つの要素
+    (if (< (abs (- s0 s1)) tolerance) s1 ;; 絶対値で許容誤差より小さくなるのを見つけ、その2つの要素の2番めを返す
+        (stream-limit (stream-cdr s) tolerance))))
+;;試
+(define (sqrt x tolerance)
+  (stream-limit (sqrt-stream x) tolerance))
+(sqrt 2 1)
+;; gosh> 1.5
+(sqrt 2 0.01)
+;; gosh> 1.4142156862745097
+(sqrt 2 0.0000000000000000000001)
+;; gosh> 1.414213562373095
