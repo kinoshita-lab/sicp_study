@@ -166,3 +166,128 @@
 ;; 2^n + 2^(n-1) -1 っぽい
 ;; そうすると (99, 100)は
 ;; 950737950171172051122527404031番め
+
+;; 3.67 問題の意味すらわからない
+;; (2 1)みたいなのを出せってことみたい
+(define (pairs2 s t)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+    (interleave
+     (interleave
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr t))
+      (stream-map (lambda (x) (list x (stream-car s))) ;; 逆のやつを作って合体
+                  (stream-cdr t)))
+       (pairs (stream-cdr s) (stream-cdr t)))))
+(show-stream (pairs2 integers integers) 10)
+;; gosh>  (1 1) (1 2) (2 2) (2 1) (2 3) (1 3) (3 3) (3 1) (2 4) (1 4)
+;; よさげ。
+
+;; 3.68 なぜいつもlouisはまちがっているのだろう
+(define (pairs-l s t)
+  (interleave
+   (stream-map (lambda (x) (list (stream-car s) x))
+               t)
+   (pairs-l (stream-cdr s) (stream-cdr t))))
+
+;; (show-stream (pairs-l integers integers) 10)
+;; ってやると無限ループになって何も表示されなかった。
+;; 違うところは最初のstream-mapの2番めの引数が(cdr-stream t)じゃなくてtなところ
+;; (define (interleave s1 s2)
+;;        (if (stream-null? s1)
+;;            s2
+;;            (cons-stream (stream-car s1)
+;;                         (interleave s2 (stream-cdr s1)))))
+;; interleaveはこんな感じになっていてs2がtのままになってしまうから？
+
+;; 3.69
+;; とりあえず3つの組をつくってみる
+;; うまくいっていたpairを改造すれば出来そう..と思ったけどわからなかった
+;; こうらしい
+(define (triples s t u)
+  (cons-stream
+    (list (stream-car s) (stream-car t) (stream-car u))
+    (interleave
+      (stream-map
+        (lambda (x) (list (stream-car s) x))
+        (pairs t u))
+      (triples (stream-cdr s) (stream-cdr t) (stream-cdr u)))))
+
+
+
+;; フィルタる
+(define integer-triples (triples integers integers integers))
+(show-stream integer-triples 10)
+;; これでいいような気がするけどどうにも動かない。謎。無限ループになってしまう。
+;; (define pytagoras-triples
+;;   (stream-filter
+;;    (lambda (s)
+;;      (= (square (car s)) (+ (square (cadr s)) (square (caddr s)))))
+;;    integer-triples))
+;; (show-stream pytagoras-triples 10)
+
+
+;; 3.70
+(define (merge-weighted s1 s2 weight)
+  (cond ((stream-null? s1) s2) ;; 長さが違って、どっちか終わっちゃった時とか
+		((stream-null? s2) s1) ;; は残ったほうのストリームをそのまま返す
+		(else
+		 (let ((s1car (stream-car s1)) ;; 先頭を
+				(s2car (stream-car s2))) ;; 持ってきて・・
+		   (cond ((< (weight s1car) (weight s2car)) ;; 適用した結果を使って比較
+				  (cons-stream s1car (merge-weighted (stream-cdr s1) s2 weight)))      ;; 小さい順
+				 (else                                                                 ;; に
+				  (cons-stream s2car (merge-weighted (stream-cdr s2) s1 weight)))))))) ;; 並べる
+				 
+
+(define (weighted-pairs s t w)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+   (merge-weighted
+    (stream-map (lambda (x) (list (stream-car s) x))
+                (stream-cdr t))
+    (weighted-pairs (stream-cdr s) (stream-cdr t) w) w)))
+
+;; a
+(define q70-a
+  (weighted-pairs integers integers
+				  (lambda (si)  
+					(+ (car si) (cadr si)))))
+
+(show-stream q70-a 10)
+;; gosh>  (1 1) (1 2) (2 2) (1 3) (2 3) (1 4) (3 3) (1 5) (2 4) (1 6)
+;; よさげ。
+
+;; b
+;; 2, 3, 5どれでも割り切れない正の整数 をまず作る
+(define q70b-integer-stream
+  (stream-filter (lambda (x)
+                   (not (and (= (remainder x 2) 0)
+                             (= (remainder x 3) 0)
+                             (= (remainder x 5) 0))))
+                 integers))
+(show-stream q70b-integer-stream 100)
+;; gosh>  1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 91 92 93 94 95 96 97 98 99 100 101 102 103
+;; いいのかな。確かに30とかそうっぽい
+(define q70-b
+  (weighted-pairs q70b-integer-stream q70b-integer-stream
+                  (lambda (si)
+                    (let ((i (car si))
+                          (j (cadr si)))
+                      (+ (* 2 i) (* 3 j) (* 5 i j))))))
+(show-stream q70-b 10)
+
+;; こんなのでてきた
+;; (1 1)(1 2)
+;;  (1 2)(1 3)
+;;  (1 3)(1 4)
+;;  (2 2)(2 3)
+;; (2 3)
+;;  (1 4)(1 5)
+;;  (1 5)(1 6)
+;;  (2 3)(2 4)
+;; (2 4)
+;;  (1 6)(1 7)
+;;  (2 4)(2 5)
+;; (3 3)
+;;  (1 7)(1 8)
