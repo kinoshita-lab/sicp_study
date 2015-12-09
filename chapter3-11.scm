@@ -291,3 +291,62 @@
 ;;  (2 4)(2 5)
 ;; (3 3)
 ;;  (1 7)(1 8)
+
+;; 3.71
+(define (ramanujan-weight i j)
+  (+ (* i i i) (* j j j)))
+(define ramanujan-weighted-stream
+  (weighted-pairs integers integers
+                  (lambda (si)
+                    (let ((i (car si))
+                          (j (cadr si)))
+                      (ramanujan-weight i j)))))
+(show-stream ramanujan-weighted-stream 10)
+;;  (1 1) (1 2) (2 2) (1 3) (2 3) (3 3) (1 4) (2 4) (3 4) (1 5)
+;; なんか並んだ。ここから同じ重みのやつを拾ってくればいいのかな。
+(define (ramanujan-numbers s)
+  (let* ((s1car (stream-car s))
+		 (s2car (stream-car (stream-cdr s)))
+		 (ws1 (ramanujan-weight (car s1car) (cadr s1car)))
+		 (ws2 (ramanujan-weight (car s2car) (cadr s2car))))
+	(if (= ws1 ws2)
+		(cons-stream ws1 (ramanujan-numbers (stream-cdr s)))
+		(ramanujan-numbers (stream-cdr s)))))
+	
+  
+(define ramanujan-stream
+  (ramanujan-numbers ramanujan-weighted-stream))
+(show-stream ramanujan-stream 10)
+;; gosh>  1729 4104 13832 20683 32832 39312 40033 46683 64232 65728
+;; よさげだけど無駄が多いようなきがする
+
+;; 3.72
+;;  3.71の無駄方式でやる
+(define (q372-weight i j)
+  (+ (* i i) (* j j))) ;; 2つの平方数の和
+(define q372-weighted-stream
+  (weighted-pairs integers integers
+                  (lambda (si)
+                    (let ((i (car si))
+                          (j (cadr si)))
+                      (q372-weight i j)))))
+(show-stream q372-weighted-stream 10)
+;; gosh>  (1 1) (1 2) (2 2) (1 3) (2 3) (1 4) (3 3) (2 4) (3 4) (1 5)
+(define (q372-numbers s)
+  (let* ((s1car (stream-car s))
+		 (s2car (stream-car (stream-cdr s)))
+         (s3car (stream-car (stream-cdr (stream-cdr s))))
+		 (ws1 (q372-weight (car s1car) (cadr s1car)))
+		 (ws2 (q372-weight (car s2car) (cadr s2car)))
+         (ws3 (q372-weight (car s3car) (cadr s3car))))
+	(if (= ws1 ws2 ws3)
+		(cons-stream ws1 (q372-numbers (stream-cdr s)))
+		(q372-numbers (stream-cdr s)))))
+	
+  
+(define q372-stream
+  (q372-numbers q372-weighted-stream))
+
+(show-stream q372-stream 10)
+;; gosh>  325 425 650 725 845 850 925 1025 1105 1105
+;; よさげ・・ではある
