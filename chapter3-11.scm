@@ -350,3 +350,26 @@
 (show-stream q372-stream 10)
 ;; gosh>  325 425 650 725 845 850 925 1025 1105 1105
 ;; よさげ・・ではある
+
+;; 信号としてのストリーム
+(define (integral integrand initial-value dt)
+  (define int
+    (cons-stream initial-value
+                 (add-streams (scale-stream integrand dt)
+                              int))))
+
+;; 3.73
+;; 問題の意味がよくわからないんだけどv0とiはどこから入れるんだろう
+;; RCの系を作っといてどこからかv0を入れるわけにもいかなそう　めんどいから外で定義
+(define v0 0) ;; 0v
+(define i (scale-stream ones 1));; 1A
+(show-stream i 10)
+;; 1 1 1 1 1 1 1 1 1 1
+(define (RC R C dt)
+  (add-streams (scale-stream i R) ;; R側
+               (integral (scale-stream i (/ 1 C)) v0 dt))) ;; C側
+
+(define RC1 (RC 5 1 0.5))
+(show-stream RC1 10)
+;;  5 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5
+;; いいのかな。
