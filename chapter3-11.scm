@@ -373,3 +373,24 @@
 (show-stream RC1 10)
 ;;  5 5.5 6.0 6.5 7.0 7.5 8.0 8.5 9.0 9.5
 ;; いいのかな。
+
+;; 3.74
+;; 問題がざっくりしているなあ
+(define zero-crossings
+  (stream-map sign-change-detector sense-data (cons-stream 0 sense-data)))
+;; こうらしい
+
+;; 3.75
+;; 毎度間違っているlouisが出てきた
+;; (define (make-zero-crossings input-stream last-value)
+;;   (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+;;     (cons-stream (sign-change-detector avpt last-value)
+;;                  (make-zero-crossings (stream-cdr input-stream)
+;;                                       avpt))))
+;; んー 2回めのlast-valueはavptになっちゃってるから？　んでlast-valueと別で追加すればいいのかな
+(define (make-zero-crossings input-stream last-value last-avpt)
+  (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+    (cons-stream (sign-change-detector avpt last-value)
+                 (make-zero-crossings (stream-cdr input-stream)
+                                      (stream-car input-stream) ;; 真のlast-value
+                                      avpt))))
