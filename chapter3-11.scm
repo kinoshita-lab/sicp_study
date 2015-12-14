@@ -394,3 +394,25 @@
                  (make-zero-crossings (stream-cdr input-stream)
                                       (stream-car input-stream) ;; 真のlast-value
                                       avpt))))
+;; 3.76
+;; smoothはこんなかな。
+(define (smooth stream)
+  (cons-stream (/ (+ (stream-car stream) (stream-car (stream-cdr stream))) 2)
+               (stream-cdr stream)))
+
+;; 試したいけどいい方法はないのかな
+;; gaucheだとrandom-realってのがあるっぽい　0~1までの乱数
+(define sense-data
+  (stream-map (lambda (s) (- 0.5 (random-real)))
+              ones))
+(show-stream sense-data 10)
+;; 1323592462254095 0.4024595950005905 0.2215017811329516 -0.046881519204983846 -0.4575068354342976 -0.46488853519927653 0.3423869183224517 -0.4705927817606157 -0.45716694824294557
+;; 使えそう。
+;; smoothのテスト
+(show-stream (smooth sense-data) 10)
+;; 0.028916596241992276 0.35811366137278466 0.07823871737372501 -0.4157355251890671 -0.2922073295595544 -0.459492426392903 -0.15574069915658684 0.46428832142581045 -0.3491293058687771 -0.43399324775755055
+;; 部品化スタイルってなんだろう
+;; input-streamがsmoothったやつ　ってことであれば louisが最初考えた版を使って
+(define zero-crossings
+  (make-zero-crossings (smooth sense-data) 0))
+;; こうかな。
