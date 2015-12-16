@@ -416,3 +416,25 @@
 (define zero-crossings
   (make-zero-crossings (smooth sense-data) 0))
 ;; こうかな。
+
+;;;3.5.4 ストリームと遅延評価
+(define (integral delayed-integrand initial-value dt)
+  (define int
+    (cons-stream initial-value
+                 (let ((integrand (force delayed-integrand)))
+                   (add-streams (scale-stream integrand dt)
+                                int))))
+  int)
+
+
+;; 3.77
+(define (integral delayed-integrand initial-value dt)
+  (cons-stream initial-value
+               (if (stream-null? (force delayed-integrand))
+                   the-empty-stream
+                   (integral (delay (stream-cdr (force delayed-integrand)))
+                             (+ (* dt (stream-car (force delayed-integrand)))
+                                initial-value)
+                             dt))))
+
+;; この問題はgaucheでは動かないらしい
