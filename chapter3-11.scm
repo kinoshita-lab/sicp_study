@@ -438,3 +438,44 @@
                              dt))))
 
 ;; この問題はgaucheでは動かないらしい
+
+
+;; 3.78
+;; solveみたいにして delayを使って順番にかいてけばいいんだろうね
+(define (scale-stream stream factor)
+  (stream-map (lambda (x) (* x factor))
+              stream))
+
+(define (solve-2nd a b y0 dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (add-streams (scale-stream dy a)
+                           (scale-stream y b)))
+  y)
+;; こんなかな。
+
+;; 3.79
+;; fがどこにきいてくるかよくわからないなあ。
+;; addとscaleの地点だけでよいのであれば
+(define (solve-2nd-generic f y0 dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (stream-map f dy y))
+  y)
+;; こんなかな。
+
+;; 3.80
+(define iL0 0)
+(define vC0 10)
+
+(define (RLC R L C dt)
+  (define vc (integral (delay dvc) vC0 dt))
+  (define il (integral (delay dil) iL0 dt))
+  (define dvc (scale-stream il (/ (- 1) C)))
+  (define dil (add-streams (scale-stream vc (/ 1 L))
+                           (scale-stream il (/ (- R) L))))
+
+  (stream-map (lambda (a b) (cons a b))
+              vc il))
+  
+(show-stream (RLC 1 1 0.2 0.1) 10)
