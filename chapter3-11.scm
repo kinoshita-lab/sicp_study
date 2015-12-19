@@ -481,3 +481,81 @@
 (show-stream (RLC 1 1 0.2 0.1) 10)
 ;; (10 . 0) (10.0 . 1.0) (9.5 . 1.9) (8.55 . 2.66) (7.220000000000001 . 3.249) (5.5955 . 3.6461) (3.77245 . 3.84104) (1.8519299999999999 . 3.834181) (-0.0651605000000004 . 3.6359559) (-1.8831384500000004 . 3.2658442599999997)
 ;; あってるのかな。
+
+;;; 3.5.5 関数的プログラムの部品化度とオブジェクトの部品化度
+(load "./ch3support.scm");; これと
+(define random-init 0) ;; これがないと動かない。
+(define random-numbers
+  (cons-stream random-init
+               (stream-map rand-update random-numbers)))
+
+(define (map-successive-pairs f s)
+  (cons-stream
+   (f (stream-car s) (stream-car (stream-cdr s)))
+   (map-successive-pairs f (stream-cdr (stream-cdr s)))))
+
+(define cesaro-stream
+  (map-successive-pairs (lambda (r1 r2) (= (gcd r1 r2) 1))
+                        random-numbers))
+
+(define (monte-carlo experiment-stream passed failed)
+  (define (next passed failed)
+    (cons-stream
+     (/ passed (+ passed failed))
+     (monte-carlo
+      (stream-cdr experiment-stream) passed failed)))
+  (if (stream-car experiment-stream)
+      (next (+ passed 1) failed)
+      (next passed (+ failed 1))))
+
+(define pi
+  (stream-map (lambda (p) (sqrt (/ 6 p)))
+              (monte-carlo cesaro-stream 0 0)))
+;; gosh> *** ERROR: attempt to calculate a division by zero
+;; 動かないし
+
+
+;; 3.81
+
+;; 3.6はこんなだった。この時は自前でrand-updateを作っていてえらいな。
+;; (define (random-generator initial-value)
+;;   (define (rand-update x) 
+;;     (let ((a 27) (b 26) (m 127))
+;;       (modulo (+ (* a x) b) m)))
+;;   (define (rand)
+;;     (begin (set! initial-value (rand-update initial-value))
+;;            initial-value))
+;;   (define (reset value)
+;;     (set! initial-value value))
+;;   (define (dispatch m)
+;;     (cond ((eq? m 'generate) (rand))
+;;           ((eq? m 'reset) reset)
+;;           (else (error "Unknown request -- random-generator"
+;;                        m))))
+;;   dispatch)
+
+(define (random-generator initial-value)
+  (define (rand-update x) 
+    (let ((a 27) (b 26) (m 127))
+      (modulo (+ (* a x) b) m)))
+  (define rand ;; ここが数値ではなくてストリームを返す
+    (cons-stream initial-value
+                 (stream-map rand-update rand)))
+  (define (reset value)
+    (random-generator value)) ;; こうかな
+  (define (dispatch m)
+    (cond ((eq? m 'generate) rand)
+          ((eq? m 'reset) reset)
+          (else (error "Unknown request -- random-generator"
+                       m))))
+  dispatch)
+
+;; 試
+(define hoge (random-generator 0))
+
+(show-stream (hoge 'generate) 10)
+;;  0 26 93 124 72 65 3 107 121 118 乱数かも
+(show-stream (((hoge 'reset) 10) 'generate) 10)
+;; 10 42 17 104 40 90 43 44 71 38
+;; 違うのでたからいいのかな。
+
