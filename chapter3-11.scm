@@ -559,3 +559,122 @@
 ;; 10 42 17 104 40 90 43 44 71 38
 ;; 違うのでたからいいのかな。
 
+;; 3.82
+;; random-in-rangeのstreamを作らないとだ
+(use srfi-27)
+(random-real) ;; 0.0 ~ 1.0
+(define (random high)
+  (* (random-real) high))
+(random 10)
+
+(define random-init 1) 
+(define (random-numbers high)
+  (cons-stream (random high)
+               (random-numbers high)))
+(define (random-in-range-stream low high)
+  (cons-stream (+ low (stream-car (random-numbers (- high low))))
+  (random-in-range-stream low high)))
+(show-stream (random-in-range-stream 10 20) 10)
+;; gosh>  14.89764395788231 14.455862007108994 16.463130101112647 17.093648308580725 17.54686681982361 12.760250769985785 16.797026768536746 16.550980039738405 11.626117351946306 11.189976815583766
+;; できた
+
+;; monte-carloのstream版をいまいちよくわかってなかったかも
+(define (monte-carlo experiment-stream passed failed)
+  (define (next passed failed)
+    (cons-stream
+     (/ passed (+ passed failed))
+     (monte-carlo
+      (stream-cdr experiment-stream) passed failed)))
+  (if (stream-car experiment-stream)
+      (next (+ passed 1) failed)
+      (next passed (+ failed 1))))
+
+
+;; 面積を求めるやつ
+(define (area-size x1 x2 y1 y2)
+  (* (- x2 x1) (- y2 y1)))
+
+(define (square x)
+  (* x x))
+
+;; predicateはrandomな値を2つとってきてそれが条件を満たしているのを返す手続き
+;; 調べて #tとか #fとか返すやつ。例えば問題3.5みたいに円だったら
+(define (predicate x y x1 x2 y1 y2)
+  (let* ((cx (/ (+ x1 x2) 2.0)) 
+		(cy (/ (+ y1 y2) 2.0))
+		(r (- x2 cx)))
+;;	(print (+ (square (- x cx)) (square (- y cy))) "," (square r))
+	(<= (+ (square (- x cx)) (square (- y cy))) (square r))))
+(predicate 0.0 0.0 -1 1 -1 1)
+(predicate 1.5 0 -1 1 -1 1)
+
+;; monte-caroに突っ込むexperiment-streamはすでに#t/#fのカタマリになっている必要があるっぽいので
+;; x1~y2までの面積を
+;; predicateに入っている確率で割った答えが延々と入っているストリームを作る・・前に単品でやってみると
+(define (estimate-integral-p1 p x1 x2 y1 y2)
+  (let* ((area (area-size x1 x2 y1 y2))
+		 (rand-x (random-in-range-stream x1 x2))
+		 (rand-y (random-in-range-stream y1 y2))
+		 (carx (stream-car rand-x))
+		 (cary (stream-car rand-y)))
+	(p carx cary x1 x2 y1 y2)))
+(estimate-integral-p1 predicate -1 1 -1 1)
+;; gosh> #t
+
+;; 1個monte-carloれるのが出てきたのでこれをストリームでやる版をつくると
+(define (estimate-integral-p2 p x1 x2 y1 y2)
+  (let* ((area (area-size x1 x2 y1 y2))
+		 (rand-x (random-in-range-stream x1 x2))
+		 (rand-y (random-in-range-stream y1 y2))
+		 (carx (stream-car rand-x))
+		 (cary (stream-car rand-y)))
+		 (cons-stream (p carx cary x1 x2 y1 y2)
+					  (estimate-integral-p2 p x1 x2 y1 y2))))
+
+(show-stream (estimate-integral-p2 predicate -1 1 -1 1) 100)
+;; gosh>  #t #f #f #f #t #f #t #t #t #t
+;; なんかそれっぽいの出てきた
+;; のでこれをmonte-carloにつっこんでみる
+(define (estimate-integral-p3 p x1 x2 y1 y2)
+  (let* ((area (area-size x1 x2 y1 y2))
+		 (rand-x (random-in-range-stream x1 x2))
+		 (rand-y (random-in-range-stream y1 y2))
+		 (carx (stream-car rand-x))
+		 (cary (stream-car rand-y)))
+		 (monte-carlo (cons-stream (p carx cary x1 x2 y1 y2)
+                                   (estimate-integral-p3 p x1 x2 y1 y2)) 0.0 0.0)))
+
+(show-stream (estimate-integral-p3 predicate -1 1 -1 1) 100)
+
+(define (estimate-integral-p3 p x1 x2 y1 y2)
+  (define rand-x (random-in-range-stream x1 x2))
+  (define rand-y (random-in-range-stream y1 y2))
+  (define experiment-stream
+    (stream-map (lambda (n m) (p n m x1 x2 y1 y2)) rand-x rand-y))
+  (define monte-carlo-stream
+    (monte-carlo experiment-stream 0.0 0.0))
+  monte-carlo-stream)
+(show-stream (estimate-integral-p3 predicate -1 1 -1 1) 10)
+;; gosh>  1.0 0.5 0.6666666666666666 0.75 0.6 0.6666666666666666 0.7142857142857143 0.75 0.7777777777777778 0.8
+;; それっぽいの出てきた その2！!
+
+;; これに後は面積をかけ算すると出来上がりかも
+(define (estimate-integral p x1 x2 y1 y2)
+  (define rand-x (random-in-range-stream x1 x2))
+  (define rand-y (random-in-range-stream y1 y2))
+  (define experiment-stream
+    (stream-map (lambda (n m) (p n m x1 x2 y1 y2)) rand-x rand-y))
+  (define monte-carlo-stream
+    (monte-carlo experiment-stream 0.0 0.0))
+  (let ((area (area-size x1 x2 y1 y2)))
+    (scale-stream monte-carlo-stream area)))
+
+(show-stream (estimate-integral predicate -1 1 -1 1) 100)
+;; gosh>  4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 4.0 3.8823529411764706 3.8857142857142857 3.888888888888889 3.891891891891892 3.789473684210526 3.7948717948717947 3.8 3.8048780487804876 3.8095238095238093 3.813953488372093 3.8181818181818183 3.8222222222222224 3.8260869565217392 3.74468085106383 3.75 3.7551020408163267 3.76 3.764705882352941 3.769230769230769 3.7735849056603774 3.7777777777777777 3.7818181818181817 3.7857142857142856 3.789473684210526 3.793103448275862 3.7966101694915255 3.7333333333333334 3.737704918032787 3.7419354838709675 3.746031746031746 3.6875 3.6923076923076925 3.696969696969697 3.701492537313433 3.7058823529411766 3.710144927536232 3.7142857142857144 3.6619718309859155 3.6666666666666665 3.671232876712329 3.6216216216216215 3.6266666666666665 3.6315789473684212 3.6363636363636362 3.58974358974359 3.5443037974683542 3.5 3.506172839506173 3.5121951219512195 3.5180722891566263 3.5238095238095237 3.5294117647058822 3.5348837209302326 3.5402298850574714 3.5454545454545454 3.50561797752809 3.511111111111111 3.5164835164835164 3.4782608695652173 3.4838709677419355 3.4893617021276597 3.4947368421052634 3.5 3.5051546391752577 3.510204081632653 3.515151515151515 3.52
+;; pi っぽくなればいいのであっているかも
+(stream-ref (estimate-integral predicate -1 1 -1 1) 100000)
+;; gosh> 3.138248617513825
+;; gosh> 3.150608493915061
+;; gosh> 3.137088629113709
+;; 収束が微妙・・
+
