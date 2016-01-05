@@ -649,8 +649,8 @@
 (define (estimate-integral-p3 p x1 x2 y1 y2)
   (define rand-x (random-in-range-stream x1 x2))
   (define rand-y (random-in-range-stream y1 y2))
-  (define experiment-stream
-    (stream-map (lambda (n m) (p n m x1 x2 y1 y2)) rand-x rand-y))
+  (define experiment-stream 
+    (stream-map (lambda (n m) (p n m x1 x2 y1 y2)) rand-x rand-y)) ;; mapで適用済みじゃないとうまくいかなかった
   (define monte-carlo-stream
     (monte-carlo experiment-stream 0.0 0.0))
   monte-carlo-stream)
