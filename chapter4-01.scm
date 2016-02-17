@@ -210,3 +210,224 @@
 ;;  (apply (eval (operator exp) env)
 ;;         (list-of-values (operands exp) env)))
 ;; はこのままでよさげ
+
+;; 動作しなくてイライラしてたのでreplまでのせてみた。
+;; chapter4-repl.scm
+;; windowsのemacs上でgosh -iするとreplが表示されないなあ
+;; powershellでやるか
+;; 4.3
+;; データ主導ってなんだっけ
+;; putとかgetとかのやつか
+;; メッセージパッシングのほうが個人的にはいいな。
+;; まあ問題だからとくか
+
+(load "./chapter2_utility.scm") ;; 懐かしい・・
+(load "./chapter4-repl.scm") ;; 標準品を読み込んでおいて定義を上書きする作戦
+
+;; こんなのをつくればいいのかな。
+(define (install-quote-package)
+  ;; 内部手続き
+  (define (text-of-quotation exp) (cadr exp))
+  ;; 外部とのインタフェース
+  (put 'eval 'quote text-of-quotation)
+  'ok)
+
+(install-quote-package)
+;; gosh> ok
+put-lists
+;; gosh> ((eval quote #<closure (install-quote-package text-of-quotation)>))
+
+(get 'eval 'quote)
+;; gosh> #<closure (install-quote-package text-of-quotation)>
+(define q (list 1 2 3))
+((get 'eval 'quote) q)
+;; gosh> (1 2 3)
+;; 欲しかったものなのかな。とりあえず。元々のtext-of-quatationは (cadr exp)で中身を取ってきていたけどそうもいかなさそう。
+
+;; これに対応するパッケージ
+;;  ((assignment? exp) (eval-assignment exp env)) 
+(define (install-assignment-package)
+  ;; 内部手続たち
+  (define (assignment-variable exp) (cadr exp))
+  (define (assignment-value exp) (caddr exp))
+  (define (set-variable-value! var val env)
+	(define (env-loop env)
+	  (define (scan vars vals)
+		(cond ((null? vars)
+			   (env-loop (enclosing-environment env)))
+			  ((eq? var (car vars))
+             (set-car! vals val))
+			  (else (scan (cdr vars) (cdr vals)))))
+	  (if (eq? env the-empty-environment)
+		  (error "Unbound variable -- SET!" var)
+		  (let ((frame (first-frame env)))
+          (scan (frame-variables frame)
+                (frame-values frame)))))
+	(env-loop env))
+  (define (eval-assignment exp env)
+	(set-variable-value! (assignment-variable exp)
+						 (eval (assignment-variable exp) env))
+  'ok)
+  ;; 外部とのインタフェース
+  (put 'eval 'assignment eval-assignment)
+  'ok)
+;; definition ((definition? exp) (eval-definition exp env))
+(define (install-definition-package)
+  (define (eval-definition exp env)
+	(define-variable! (definition-variable exp)
+	  (eval (definition-value exp) env)
+	  env)
+  'ok)
+
+  (define (define-variable! var val env)
+	(let ((frame (first-frame env)))
+	  (define (scan vars vals)
+		(cond ((null? vars)
+			   (add-binding-to-frame! var val frame))
+			  ((eq? var (car vars))
+             (set-car! vals val))
+            (else (scan (cdr vars) (cdr vals)))))
+	  (scan (frame-variables frame)
+			(frame-values frame))))
+  
+  ;; 外部とのインタフェース
+  (put 'eval 'definition eval-definition)
+  'ok)
+
+;; if   ((if? exp) (eval-if exp env))
+(define (install-if-package)
+  (define (eval-if exp env)
+	(if (true? (eval (if-predicate exp) env))
+		(eval (if-consequent exp) env)
+		(eval (if-alternative exp) env)))
+
+  (define (if-predicate exp) (cadr exp))
+  (define (if-consequent exp) (caddr exp))
+  (define (if-alternative exp)
+	(if (not (null? (cdddr exp)))
+		(cadddr exp)
+		'false))
+  (put 'eval 'if eval-if)
+  'ok)
+;; lambda    ((lambda? exp) (make-procedure (lambda-parameters exp)
+;;                                       (lambda-body exp)
+;;                                       env))
+(define (install-labmda-package)
+  (define (make-procedure parameters body env)
+	(list 'procedure parameters body env))
+  (define (compound-procedure? p)
+	(tagged-list? p 'procedure))
+  (define (procedure-parameters p) (cadr p))
+  (define (procedure-body p) (caddr p))
+  (define (procedure-environment p) (cadddr p))
+  
+  ;; make-procedureを呼んでも lambda-parametersとlambda-bodyが実行できるタイミングはなくなっちゃうので、
+  ;; 固めたのを返す関数が必要だと思う
+  (define (make-make-procedure env exp) ;; 変な名前！
+	(make-procedure (lambda-parameters exp)
+					(lambda-body exp)
+					env))
+
+  (put 'eval 'procedure make-make-procedure)
+  'ok)
+
+(define (install-begin-package)
+  (define (begin-actions exp) (cdr exp))
+  (define (last-exp? seq) (null? (cdr seq)))
+  (define (first-exp seq) (car seq))
+  (define (rest-exps seq) (cdr seq))
+  (define (sequence->exp seq)
+	(cond ((null? seq) seq)
+		  ((last-exp? seq) (first-exp seq))
+		  (else (make-begin seq))))
+  (define (make-begin seq) (cons 'begin seq))
+
+  ;; これもlambdaとおなじでmake-begin呼ぶようにするとこまりそう
+  (define (make-make-begin exp env)
+	(eval-sequence (begin-actions exp) env))
+  
+  (put 'eval 'begin make-make-begin)
+  'ok)
+
+(define (install-cond-package)
+  (define (cond? exp) (tagged-list? exp 'cond))
+  (define (cond-clauses exp) (cdr exp))
+  (define (cond-else-clause? clause)
+	(eq? (cond-predicate clause) 'else))
+  (define (cond-predicate clause) (car clause))
+  (define (cond-actions clause) (cdr clause))
+  (define (cond-if exp) (expand-clauses (cond-clauses exp)))
+  (define (expand-clauses clauses)
+	(if (null? clauses)
+		'false
+		(let ((first (car clauses))
+			  (rest (cdr clauses)))
+		  (if (cond-else-clause? first)
+			  (if (null? rest)
+				  (sequence->exp (cond-actions first))
+				  (error "ELSE clause isn't last: COND->IF" clauses))
+			  (make-if (cond-predicate first)
+					   (sequence->exp (cond-actions first))
+					   (expand-clauses rest))))))
+
+  ;; 外部用
+  (define (eval-cond exp env)
+	(eval (cond->if exp) env))
+
+  (put 'eval 'cond-cond)
+  'ok)
+
+(define (install-application-package)
+  (define (application? exp) (pair? exp))
+  (define (operator exp) (car exp))
+  (define (operands exp) (cdr exp))
+  (define (no-operands? ops) (null? ops))
+  (define (first-operand ops) (car ops))
+  (define (rest-operands ops) (cdr ops))
+
+  (define (primitive-procedure? proc)
+  (tagged-list? proc 'primitive))
+
+  (define (primitive-implementation proc) (cadr proc))
+  
+  (define primitive-procedures
+	(list (list 'car car)
+		  (list 'cdr cdr)
+		  (list 'cons cons)
+		  (list 'null? null?)
+		  ))
+
+  (define (primitive-procedure-names)
+	(map car
+		 primitive-procedures))
+
+  (define (primitive-procedure-objects)
+	(map (lambda (proc) (list 'primitive (cadr proc)))
+		 primitive-procedures))
+
+  (define (apply-primitive-procedure proc args)
+	(apply-in-underlying-scheme
+	 (primitive-implementation proc) args))
+  
+  (define (apply procedure arguments)
+	(cond ((primitive-procedure? procedure)
+		   (apply-primitive-procedure procedure arguments))
+		  ((compound-procedure? procedure)
+		   (eval-sequence
+			(procedure-body procedure)
+			(extend-environment
+			 (procedure-parameters procedure)
+           arguments
+           (procedure-environment procedure))))
+		(else
+         (error
+          "Unknown procedure type: APPLY" procedure))))
+'ok)
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else
+         (error "Unknown expression type: eval" exp))))
+
+;; 多分こんな感じだと思う
+

@@ -1,4 +1,30 @@
 ;;  attach-tag,etc.
+(define put-lists '())
+(define (clear-putlist)
+  (set! put-lists '()))
+
+(define (put op type item)
+  (if (get op type) put-lists
+  (set! put-lists (cons (list op type item) put-lists)))) ; setっての使えばやりたいことできそう
+
+(define (get op type) 
+  (define (get-operator listItem)
+    (car listItem))
+
+  (define (get-type listItem)
+    (cadr listItem))
+
+  (define (get-item listItem)
+    (caddr listItem))
+
+  (define (get-iter list op type)
+    (if (null? list) #f
+        (let ((top (car list)))
+          (if (and (eq? op (get-operator top))
+                   (eq? type (get-type top))) (get-item top)
+                   (get-iter (cdr list) op type)))))
+  (get-iter put-lists op type))
+
 (define (attach-tag type-tag contents)
   (cons type-tag contents))
 
