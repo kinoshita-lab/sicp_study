@@ -227,20 +227,26 @@
 ;; こんなのをつくればいいのかな。
 (define (install-quote-package)
   ;; 内部手続き
-  (define (text-of-quotation exp) (cadr exp))
+  (define (text-of-quotation exp) (print exp) (cadr exp))
   ;; 外部とのインタフェース
   (put 'eval 'quote text-of-quotation)
   'ok)
+
 
 (install-quote-package)
 ;; gosh> ok
 put-lists
 ;; gosh> ((eval quote #<closure (install-quote-package text-of-quotation)>))
-
+(use slib)
+(require 'trace)
+(trace get)
 (get 'eval 'quote)
 ;; gosh> #<closure (install-quote-package text-of-quotation)>
-(define q (list 1 2 3))
-((get 'eval 'quote) q)
+(define q '('quote 1 2 3))
+(car q)
+(define f '('quote 1 2 3))
+((get 'eval (car (car f)) f)
+
 ;; gosh> (1 2 3)
 ;; 欲しかったものなのかな。とりあえず。元々のtext-of-quatationは (cadr exp)で中身を取ってきていたけどそうもいかなさそう。
 
@@ -377,57 +383,33 @@ put-lists
   (put 'eval 'cond-cond)
   'ok)
 
-(define (install-application-package)
-  (define (application? exp) (pair? exp))
-  (define (operator exp) (car exp))
-  (define (operands exp) (cdr exp))
-  (define (no-operands? ops) (null? ops))
-  (define (first-operand ops) (car ops))
-  (define (rest-operands ops) (cdr ops))
-
-  (define (primitive-procedure? proc)
-  (tagged-list? proc 'primitive))
-
-  (define (primitive-implementation proc) (cadr proc))
-  
-  (define primitive-procedures
-	(list (list 'car car)
-		  (list 'cdr cdr)
-		  (list 'cons cons)
-		  (list 'null? null?)
-		  ))
-
-  (define (primitive-procedure-names)
-	(map car
-		 primitive-procedures))
-
-  (define (primitive-procedure-objects)
-	(map (lambda (proc) (list 'primitive (cadr proc)))
-		 primitive-procedures))
-
-  (define (apply-primitive-procedure proc args)
-	(apply-in-underlying-scheme
-	 (primitive-implementation proc) args))
-  
-  (define (apply procedure arguments)
-	(cond ((primitive-procedure? procedure)
-		   (apply-primitive-procedure procedure arguments))
-		  ((compound-procedure? procedure)
-		   (eval-sequence
-			(procedure-body procedure)
-			(extend-environment
-			 (procedure-parameters procedure)
-           arguments
-           (procedure-environment procedure))))
-		(else
-         (error
-          "Unknown procedure type: APPLY" procedure))))
-'ok)
-        ((application? exp)
-         (apply (eval (operator exp) env)
-                (list-of-values (operands exp) env)))
-        (else
-         (error "Unknown expression type: eval" exp))))
+;; applyは無理
 
 ;; 多分こんな感じだと思う
+;; でこのパッケージ用のevalを作る
+;; self-evaluating, variable, application? はタグがついてないので無理
+
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+		;; パッケージあれば実行
+		(else
+		 (let ((proc (get 'eval (car exp))))
+		   (if proc
+			   (proc (cdr exp))
+			   ;; なくてapplyだったら実行
+			   (if (application? exp)
+				   (apply (eval (operator exp) env)
+						  (list-of-values (operands exp) env))
+				   (error "Unknown expression type: eval" exp)))))))
+;; 使うときはこんな感じ
+(clear-putlist) ;; 全消し
+(install-quote-package)
+(install-assignment-package)
+(install-definition-package)
+(install-if-package)
+(install-labmda-package)
+(install-begin-package)
+(install-cond-package)
+
 
