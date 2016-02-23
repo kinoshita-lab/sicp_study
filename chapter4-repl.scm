@@ -334,4 +334,5 @@
       (display object)))
 
 (define the-global-environment (setup-environment))
-(driver-loop)
+;; これを解き放つとrepl
+;; (driver-loop)

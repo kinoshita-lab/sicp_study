@@ -413,3 +413,65 @@ put-lists
 (install-cond-package)
 
 
+;;;;; 4.4
+(load "./chapter4-repl.scm")
+(define env the-global-environment)
+
+;; evalを書きかえてこんな感じにする
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp) (make-procedure (lambda-parameters exp)
+                                       (lambda-body exp)
+                                       env))
+		;; ここに追加
+		((and? exp) (eval-and exp env))
+		((or? exp) (eval-or exp env))
+		;; 追加ココマデ
+		
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((cond? exp) (eval (cond->if exp) env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else
+         (error "Unknown expression type: eval" exp))))
+
+; 
+(define (and? exp) (tagged-list? exp 'and))
+(define (or? exp) (tagged-list? exp 'and))
+
+(define (eval-and exp env)
+  (my-and (cdr exp) env))
+
+(define (eval-or exp env)
+  (my-or (cdr exp) env))
+
+(define (my-and arg env)
+  (cond ((eq? '() arg) #f) ;; nilだったら#f
+		((atom? arg) (eval arg env)) ;; atomだったらそいつを評価
+		(let ((first-element (car arg))
+			  (rest-elements (cdr arg)))
+		  (if (eval first-element env) ;; 1個目評価して
+			  (my-and rest-elements env) ;; #tだったら次
+			  #f)))) ;; #fだったらその時点で#f返す
+
+(define (my-or arg env)
+  (cond ((eq? '() arg) #f) ;; nilだったら#f
+		((atom? arg) (eval arg env)) ;; atomだったらそいつを評価
+		(let ((first-element (car arg)) 
+			  (rest-elements (cdr arg)))
+		  (if (eval first-element) ;; 1個目評価して
+			  #t ;; #tだったらその時点で#t
+			  (my-or rest-elements env))))) ;; #fだったらさいごまでやる
+
+
+
+
+
+
