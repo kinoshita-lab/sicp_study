@@ -472,6 +472,59 @@ put-lists
 
 
 
+;; その2　派生編 ifに変えてみよう
+;; cond->ifと同じかんじで。
+;; and
+(define (and-clauses exp) (cdr exp))
+(define (and->if exp) (expand-and-clauses (and-clauses exp)))
+(define (expand-and-clauses clauses)
+  (define (iter clauses result)
+	(if (null? clauses)
+      result ;; これまでの結果
+      (let ((first (car clauses))
+            (rest (cdr clauses)))
+        (make-if first ;; ここ#tだったら終了
+				 (iter rest first) ;;　違ったら続き
+				 #f))))
+  (iter clauses #f))
 
+;; or
+(define (or-clauses exp) (cdr exp))
+(define (or->if exp) (expand-or-clauses (or-clauses exp)))
+(define (expand-or-clauses clauses)
+  (define (iter clauses)
+	(if (null? clauses)
+      #f
+      (let ((first (car clauses))
+            (rest (cdr clauses)))
+        (make-if first
+				 first
+				 (iter rest)))))
+  (iter clauses))
 
+;; evalはこういう感じに書き換える
+;; evalを書きかえてこんな感じにする
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp) (make-procedure (lambda-parameters exp)
+                                       (lambda-body exp)
+                                       env))
+		;; ここから
+		((and? exp) (eval (and->if exp) env))
+		((or? exp) (eval (or->if exp) env))
+		;; ここまで
+		
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((cond? exp) (eval (cond->if exp) env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else
+         (error "Unknown expression type: eval" exp))))
 
