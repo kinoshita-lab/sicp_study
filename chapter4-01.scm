@@ -528,3 +528,51 @@ put-lists
         (else
          (error "Unknown expression type: eval" exp))))
 
+;;　4.5
+(cond ((assoc 'b '((a 1) (b 2))) => cadr)
+	  (else false))
+; gosh> 2
+; へー
+; expand clausesを改造すればいいよね
+  (define (expand-clauses clauses)
+	(if (null? clauses)
+		'false
+		(if (arrow-expression? clauses) ;; 4.5 こんな
+			(arrow->if clauses) ;; 4.5 感じにした
+			(let ((first (car clauses))
+				  (rest (cdr clauses)))
+			  (if (cond-else-clause? first)
+				  (if (null? rest)
+					  (sequence->exp (cond-actions first))
+					  (error "ELSE clause isn't last: COND->IF" clauses))
+				  (make-if (cond-predicate first)
+						   (sequence->exp (cond-actions first))
+						   (expand-clauses rest)))))))
+
+;; ということで2つ作るよ。
+(define (arrow-expression? clauses)
+  (equal? (cadar clauses) '=>))
+
+(define test-case
+  '('cond ((assoc 'b '((a 1) (b 2))) => cadr)
+		 (else false)))
+test-case
+;; gosh> ('cond ((assoc 'b '((a 1) (b 2))) => cadr) (else false))
+(arrow-expression? (cond-clauses test-case))
+;; #t
+;; よさげ
+(define (predicate clauses) (caar clauses))
+(define (operator clauses) (caddar clauses))
+(define (arrow->if clauses)
+  (make-if (predicate clauses)
+		   (list operator (predicate clauses))
+		   #f))
+
+
+(predicate (cond-clauses test-case))
+(operator (cond-clauses test-case))
+(arrow->if (cond-clauses test-case))
+;; gosh> (if #0=(assoc 'b '((a 1) (b 2))) (#<closure operator> #0#) #f)
+;; よさげ
+
+
