@@ -576,3 +576,65 @@ test-case
 ;; よさげ
 
 
+;; 4.6
+     ((lambda? exp) (make-procedure (lambda-parameters exp)
+                                       (lambda-body exp)
+                                       env))
+
+(define test-case (list 'let '((v1 e1) (v2 e2)) 'body))
+test-case
+;; >  (let ((v1 e1) '(v2 e2)) body)
+;; こんな。
+
+
+
+(caddr test-case)
+;; こんなかな。
+(define (let->combination sexp)
+  (let ((vars-exps (cadr test-case))
+		(body (caddr test-case)))
+	((make-lambda (vars sexp)
+		      body
+		      env) (exp sexp)))) 
+
+;; ↑で必要なのを作る
+(define (vars s)
+  (cond ((eq? s '()) '())
+		(else  (cons (caar s) (vars (cdr s))))))
+(vars (cadr  test-case))
+;; gosh> (v1 v2) ;; とれた
+(trace exp)
+(define (exp s)
+  (cond ((eq? s '()) '())
+		(else  (cons (cadar s) (exp (cdr s))))))
+(exp (cadr test-case))
+;; (e1 e2)
+
+;; evalに組み込む用
+(define (let? exp) (tagged-list? exp 'lambda))
+(define (eval-let let-clause env)
+  (eval (let->combination let-clause) env))
+
+
+;; eval
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp) (make-procedure (lambda-parameters exp)
+                                       (lambda-body exp)
+                                       env))
+	;; ここから
+	((let? exp (eval-let exp env)))
+	;; ここまで
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((cond? exp) (eval (cond->if exp) env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else
+         (error "Unknown expression type: eval" exp))))
