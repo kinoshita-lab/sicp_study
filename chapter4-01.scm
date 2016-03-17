@@ -577,9 +577,6 @@ test-case
 
 
 ;; 4.6
-     ((lambda? exp) (make-procedure (lambda-parameters exp)
-                                       (lambda-body exp)
-                                       env))
 
 (define test-case (list 'let '((v1 e1) (v2 e2)) 'body))
 test-case
@@ -611,7 +608,7 @@ test-case
 ;; (e1 e2)
 
 ;; evalに組み込む用
-(define (let? exp) (tagged-list? exp 'lambda))
+(define (let? exp) (tagged-list? exp 'let))
 (define (eval-let let-clause env)
   (eval (let->combination let-clause) env))
 
@@ -630,6 +627,83 @@ test-case
 	;; ここから
 	((let? exp (eval-let exp env)))
 	;; ここまで
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((cond? exp) (eval (cond->if exp) env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else
+         (error "Unknown expression type: eval" exp))))
+
+
+;; 4.7
+;; (let* ((x 3) 
+;; 	   (y (+ x 2)) 
+;; 	   (z (+ x y 5)))
+;;   (* x z)))
+;; を
+;; (let ((x 3))
+;;   (let ((y (+ x 2)))
+;; 	(let ((z (+ x y 5)))
+;; 	  (* x z))))
+;; こう変形すしたい　という問題
+
+(define test-case  '(let* ((x 3) 
+						   (y (+ x 2)) 
+						   (z (+ x y 5)))
+					  (* x z)))
+test-case
+;; (let* ((x 3) (y (+ x 2)) (z (+ x y 5))) (* x z))
+
+; evalに組み込む用
+(define (let*? exp) (tagged-list? exp 'let*))
+(let*? test-case)
+;; #t
+(define (let*-clauses exp) (cdr exp))
+(let*-clauses test-case)
+;; (((x 3) (y (+ x 2)) (z (+ x y 5))) (* x z))
+(define (let*-bindings clauses)
+  (car clauses))
+(let*-bindings (let*-clauses test-case))
+;; ((x 3) (y (+ x 2)) (z (+ x y 5)))
+
+
+(define (let*-body clauses) (cadr (let*-clauses test-case)))
+(let*-body (let*-clauses test-case))
+;; gosh> (* x z)
+
+;; letだらけに変形する
+(define (nested-let bind body)
+  (if (null? bind) body
+	  (list 'let (list (car bind) (nested-let (cdr bind) body)))))
+(trace nested-let)
+(nested-let (let*-bindings (let*-clauses test-case)) (let*-body (let*-clauses test-case)))
+;; > (let ((x 3) (let ((y (+ x 2)) (let ((z (+ x y 5)) (* x z)))))))
+
+;; eval
+(define (eval-let* exp env)
+  (let* ((clauses (let*-clauses exp))
+		 ((binding (let*-bindings exp)))
+		 ((body (let*-body exp))))
+	(eval (nested-let binding body) env)))
+
+;; evalに突っ込む
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp) (make-procedure (lambda-parameters exp)
+                                       (lambda-body exp)
+                                       env))
+		;; ここから
+		;; letは必要
+		((let? exp (eval-let exp env)))
+		((let*? exp (eval-let* exp env)))
+		;; ここまで
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
