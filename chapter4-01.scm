@@ -712,3 +712,124 @@ test-case
                 (list-of-values (operands exp) env)))
         (else
          (error "Unknown expression type: eval" exp))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 4.8
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; named letの意味がぜんぜんわからない
+(define (fib n)
+  (let fib-iter ((a 1)
+				 (b 0)
+				 (count n))
+	(if (= count 0)
+		b
+		(fib-iter (+ a b) a (- count 1)))))
+(fib 10)
+;; 55
+;; 確かに動いているっぽい
+;; これといっしょだよね。
+(define (fib n)
+  (define (fib-iter a b count)
+	(if (= count 0)
+		b
+		(fib-iter (+ a b) a (- count 1))))
+  (fib-iter 1 0 n))
+;; こう変えればいいのかな。
+;; ほんとうは
+(define (fib n)
+  (letrec ((fib-iter (lambda (a b count)
+					(if (= count 0)
+						b
+						(fib-iter (+ a b) a (- count 1))))))
+	(fib-iter 1 0 n)))
+(fib 10)
+;; こうすればいいのだろうけど・・むり
+
+(define test-case '(let fib-iter ((a 1)
+								  (b 0)
+								  (count n))
+					 (if (= count 0)
+						 b
+					 (fib-iter (+ a b) a (- count 1)))))
+test-case
+;; (let fib-iter ((a 1) (b 0) (count n)) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))
+(define (let->combination sexp)
+  (if (named-let? sexp) ;; ここと
+	  (named-let->function sexp)  ;; ここ増やした
+	  (let ((vars-exps (cadr test-case))
+			(body (caddr test-case)))
+		((make-lambda (vars sexp)
+					  body
+					  env) (exp sexp)))))
+
+;; implる
+(define (named-let? exp)
+  (define atom? ;; scheme手習いのやつ
+    (lambda (x)
+	  (and (not (pair? x)) (not (null? x)))))
+  (atom? (cadr exp)))
+;;(define not-ok '(let ((a 1) (b 0) (count n))))
+;;(named-let? not-ok)
+;; #f
+;;(named-let? test-case)
+;; #t
+
+(define (named-let-clauses exp)
+  (cdr exp))
+;; (named-let-clauses test-case)
+;; gosh> (fib-iter ((a 1) (b 0) (count n)) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))
+
+(define (named-let-name clause)
+  (car clause))
+;; (named-let-name (named-let-clauses test-case))
+;; fib-iter
+
+(define (named-let-bindings clause)
+  (cadr clause))
+;; (named-let-bindings (named-let-clauses test-case))
+;; gosh> ((a 1) (b 0) (count n))
+
+(define (named-let-initial-values bindings)
+  (define (iter b)
+	(if (null? b) '()
+		(cons (cadr (car b)) (iter (cdr b)))))
+  (iter bindings))
+;; (named-let-initial-values (named-let-bindings (named-let-clauses test-case)))
+;; gosh> (1 0 n)
+;; これせっかくだからnamed letで書いてみると
+(define (named-let-initial-values bindings)
+  (let iter ((b bindings))
+	(if (null? b) '()
+		(cons (cadr (car b)) (iter (cdr b))))))
+;; (named-let-initial-values (named-let-bindings (named-let-clauses test-case)))
+;; gosh> (1 0 n)
+;; うごいた。
+
+(define (named-let-parameters bindings)
+  (let iter ((b bindings))
+	(if (null? b) '()
+		(cons (caar b) (iter (cdr b))))))
+;; (named-let-parameters (named-let-bindings (named-let-clauses test-case)))
+;; (a b count)
+
+(define (named-let-function-body clause)
+  (caddr clause))
+;; (named-let-function-body (named-let-clauses test-case))
+;; gosh> (if (= count 0) b (fib-iter (+ a b) a (- count 1)))
+
+;; ここまでを合体
+(define (named-let->function sexp)
+  (let* ((clauses (named-let-clauses sexp))
+		 (function-name (named-let-name clauses))
+		 (function-body (named-let-function-body clauses))
+		 (function-parameters (named-let-parameters (named-let-bindings clauses)))
+		 (initial-values (named-let-initial-values (named-let-bindings clauses))))
+	(list (list 'define (list function-name function-parameters function-body)) ;; 関数を定義して
+		  (list function-name initial-values)))) ;; 呼ぶ
+(named-let->function test-case)
+;; gosh> ((define (fib-iter (a b count) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))) (fib-iter (1 0 n)))
+
+
+
+
+
+
