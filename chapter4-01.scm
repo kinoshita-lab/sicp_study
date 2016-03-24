@@ -50,9 +50,9 @@
 (define (eval-sequence exps env)
   (cond ((last-exp? exps)
          (eval (first-exp exps) env))
-         (else
-          (eval (first-exp exps) env)
-          (eval-sequence (rest-exps exps) env))))
+        (else
+         (eval (first-exp exps) env)
+         (eval-sequence (rest-exps exps) env))))
 
 (define (eval-assignment exp env)
   (set-variable-value! (assignment-variable exp)
@@ -62,8 +62,8 @@
 
 (define (eval-definition exp env)
   (define-variable! (definition-variable exp)
-                    (eval (definition-value exp) env)
-                    env)
+    (eval (definition-value exp) env)
+    env)
   'ok)
 
 ;; 4.1
@@ -191,12 +191,12 @@
 ;;         (apply (eval (operator exp) env)
 ;;                (list-of-values (operands exp) env)))
 ;; こいつを割と上の方に持ってくるとどうなるか？ということね。
-; application? は pair? で引っ掛けるので、
+                                        ; application? は pair? で引っ掛けるので、
 (pair? '(define x 3)) ;; が #tになるので application? に入っていってしまう。
-; で "define" という名前の手続きを探しに行ってしまうから definition? が動かなくなってしまう。
-;
+                                        ; で "define" という名前の手続きを探しに行ってしまうから definition? が動かなくなってしまう。
+                                        ;
 ;; b
-; 手続き適用 のところを軒並み変更
+                                        ; 手続き適用 のところを軒並み変更
 (cddr '(call + 1 2))
 (define (application? exp) (tagged-list? exp 'call))
 (define (operator exp) (cadr exp))
@@ -247,586 +247,586 @@ put-lists
 (define f '('quote 1 2 3))
 ((get 'eval (car (car f)) f)
 
-;; gosh> (1 2 3)
-;; 欲しかったものなのかな。とりあえず。元々のtext-of-quatationは (cadr exp)で中身を取ってきていたけどそうもいかなさそう。
+ ;; gosh> (1 2 3)
+ ;; 欲しかったものなのかな。とりあえず。元々のtext-of-quatationは (cadr exp)で中身を取ってきていたけどそうもいかなさそう。
 
-;; これに対応するパッケージ
-;;  ((assignment? exp) (eval-assignment exp env)) 
-(define (install-assignment-package)
-  ;; 内部手続たち
-  (define (assignment-variable exp) (cadr exp))
-  (define (assignment-value exp) (caddr exp))
-  (define (set-variable-value! var val env)
-	(define (env-loop env)
-	  (define (scan vars vals)
-		(cond ((null? vars)
-			   (env-loop (enclosing-environment env)))
-			  ((eq? var (car vars))
-             (set-car! vals val))
-			  (else (scan (cdr vars) (cdr vals)))))
-	  (if (eq? env the-empty-environment)
-		  (error "Unbound variable -- SET!" var)
-		  (let ((frame (first-frame env)))
-          (scan (frame-variables frame)
-                (frame-values frame)))))
-	(env-loop env))
-  (define (eval-assignment exp env)
-	(set-variable-value! (assignment-variable exp)
-						 (eval (assignment-variable exp) env))
-  'ok)
-  ;; 外部とのインタフェース
-  (put 'eval 'assignment eval-assignment)
-  'ok)
-;; definition ((definition? exp) (eval-definition exp env))
-(define (install-definition-package)
-  (define (eval-definition exp env)
-	(define-variable! (definition-variable exp)
-	  (eval (definition-value exp) env)
-	  env)
-  'ok)
+ ;; これに対応するパッケージ
+ ;;  ((assignment? exp) (eval-assignment exp env)) 
+ (define (install-assignment-package)
+   ;; 内部手続たち
+   (define (assignment-variable exp) (cadr exp))
+   (define (assignment-value exp) (caddr exp))
+   (define (set-variable-value! var val env)
+     (define (env-loop env)
+       (define (scan vars vals)
+         (cond ((null? vars)
+                (env-loop (enclosing-environment env)))
+               ((eq? var (car vars))
+                (set-car! vals val))
+               (else (scan (cdr vars) (cdr vals)))))
+       (if (eq? env the-empty-environment)
+           (error "Unbound variable -- SET!" var)
+           (let ((frame (first-frame env)))
+             (scan (frame-variables frame)
+                   (frame-values frame)))))
+     (env-loop env))
+   (define (eval-assignment exp env)
+     (set-variable-value! (assignment-variable exp)
+                          (eval (assignment-variable exp) env))
+     'ok)
+   ;; 外部とのインタフェース
+   (put 'eval 'assignment eval-assignment)
+   'ok)
+ ;; definition ((definition? exp) (eval-definition exp env))
+ (define (install-definition-package)
+   (define (eval-definition exp env)
+     (define-variable! (definition-variable exp)
+       (eval (definition-value exp) env)
+       env)
+     'ok)
 
-  (define (define-variable! var val env)
-	(let ((frame (first-frame env)))
-	  (define (scan vars vals)
-		(cond ((null? vars)
-			   (add-binding-to-frame! var val frame))
-			  ((eq? var (car vars))
-             (set-car! vals val))
-            (else (scan (cdr vars) (cdr vals)))))
-	  (scan (frame-variables frame)
-			(frame-values frame))))
-  
-  ;; 外部とのインタフェース
-  (put 'eval 'definition eval-definition)
-  'ok)
+   (define (define-variable! var val env)
+     (let ((frame (first-frame env)))
+       (define (scan vars vals)
+         (cond ((null? vars)
+                (add-binding-to-frame! var val frame))
+               ((eq? var (car vars))
+                (set-car! vals val))
+               (else (scan (cdr vars) (cdr vals)))))
+       (scan (frame-variables frame)
+             (frame-values frame))))
+   
+   ;; 外部とのインタフェース
+   (put 'eval 'definition eval-definition)
+   'ok)
 
-;; if   ((if? exp) (eval-if exp env))
-(define (install-if-package)
-  (define (eval-if exp env)
-	(if (true? (eval (if-predicate exp) env))
-		(eval (if-consequent exp) env)
-		(eval (if-alternative exp) env)))
+ ;; if   ((if? exp) (eval-if exp env))
+ (define (install-if-package)
+   (define (eval-if exp env)
+     (if (true? (eval (if-predicate exp) env))
+         (eval (if-consequent exp) env)
+         (eval (if-alternative exp) env)))
 
-  (define (if-predicate exp) (cadr exp))
-  (define (if-consequent exp) (caddr exp))
-  (define (if-alternative exp)
-	(if (not (null? (cdddr exp)))
-		(cadddr exp)
-		'false))
-  (put 'eval 'if eval-if)
-  'ok)
-;; lambda    ((lambda? exp) (make-procedure (lambda-parameters exp)
-;;                                       (lambda-body exp)
-;;                                       env))
-(define (install-labmda-package)
-  (define (make-procedure parameters body env)
-	(list 'procedure parameters body env))
-  (define (compound-procedure? p)
-	(tagged-list? p 'procedure))
-  (define (procedure-parameters p) (cadr p))
-  (define (procedure-body p) (caddr p))
-  (define (procedure-environment p) (cadddr p))
-  
-  ;; make-procedureを呼んでも lambda-parametersとlambda-bodyが実行できるタイミングはなくなっちゃうので、
-  ;; 固めたのを返す関数が必要だと思う
-  (define (make-make-procedure env exp) ;; 変な名前！
-	(make-procedure (lambda-parameters exp)
-					(lambda-body exp)
-					env))
+   (define (if-predicate exp) (cadr exp))
+   (define (if-consequent exp) (caddr exp))
+   (define (if-alternative exp)
+     (if (not (null? (cdddr exp)))
+         (cadddr exp)
+         'false))
+   (put 'eval 'if eval-if)
+   'ok)
+ ;; lambda    ((lambda? exp) (make-procedure (lambda-parameters exp)
+ ;;                                       (lambda-body exp)
+ ;;                                       env))
+ (define (install-labmda-package)
+   (define (make-procedure parameters body env)
+     (list 'procedure parameters body env))
+   (define (compound-procedure? p)
+     (tagged-list? p 'procedure))
+   (define (procedure-parameters p) (cadr p))
+   (define (procedure-body p) (caddr p))
+   (define (procedure-environment p) (cadddr p))
+   
+   ;; make-procedureを呼んでも lambda-parametersとlambda-bodyが実行できるタイミングはなくなっちゃうので、
+   ;; 固めたのを返す関数が必要だと思う
+   (define (make-make-procedure env exp) ;; 変な名前！
+     (make-procedure (lambda-parameters exp)
+                     (lambda-body exp)
+                     env))
 
-  (put 'eval 'procedure make-make-procedure)
-  'ok)
+   (put 'eval 'procedure make-make-procedure)
+   'ok)
 
-(define (install-begin-package)
-  (define (begin-actions exp) (cdr exp))
-  (define (last-exp? seq) (null? (cdr seq)))
-  (define (first-exp seq) (car seq))
-  (define (rest-exps seq) (cdr seq))
-  (define (sequence->exp seq)
-	(cond ((null? seq) seq)
-		  ((last-exp? seq) (first-exp seq))
-		  (else (make-begin seq))))
-  (define (make-begin seq) (cons 'begin seq))
+ (define (install-begin-package)
+   (define (begin-actions exp) (cdr exp))
+   (define (last-exp? seq) (null? (cdr seq)))
+   (define (first-exp seq) (car seq))
+   (define (rest-exps seq) (cdr seq))
+   (define (sequence->exp seq)
+     (cond ((null? seq) seq)
+           ((last-exp? seq) (first-exp seq))
+           (else (make-begin seq))))
+   (define (make-begin seq) (cons 'begin seq))
 
-  ;; これもlambdaとおなじでmake-begin呼ぶようにするとこまりそう
-  (define (make-make-begin exp env)
-	(eval-sequence (begin-actions exp) env))
-  
-  (put 'eval 'begin make-make-begin)
-  'ok)
+   ;; これもlambdaとおなじでmake-begin呼ぶようにするとこまりそう
+   (define (make-make-begin exp env)
+     (eval-sequence (begin-actions exp) env))
+   
+   (put 'eval 'begin make-make-begin)
+   'ok)
 
-(define (install-cond-package)
-  (define (cond? exp) (tagged-list? exp 'cond))
-  (define (cond-clauses exp) (cdr exp))
-  (define (cond-else-clause? clause)
-	(eq? (cond-predicate clause) 'else))
-  (define (cond-predicate clause) (car clause))
-  (define (cond-actions clause) (cdr clause))
-  (define (cond-if exp) (expand-clauses (cond-clauses exp)))
-  (define (expand-clauses clauses)
-	(if (null? clauses)
-		'false
-		(let ((first (car clauses))
-			  (rest (cdr clauses)))
-		  (if (cond-else-clause? first)
-			  (if (null? rest)
-				  (sequence->exp (cond-actions first))
-				  (error "ELSE clause isn't last: COND->IF" clauses))
-			  (make-if (cond-predicate first)
-					   (sequence->exp (cond-actions first))
-					   (expand-clauses rest))))))
+ (define (install-cond-package)
+   (define (cond? exp) (tagged-list? exp 'cond))
+   (define (cond-clauses exp) (cdr exp))
+   (define (cond-else-clause? clause)
+     (eq? (cond-predicate clause) 'else))
+   (define (cond-predicate clause) (car clause))
+   (define (cond-actions clause) (cdr clause))
+   (define (cond-if exp) (expand-clauses (cond-clauses exp)))
+   (define (expand-clauses clauses)
+     (if (null? clauses)
+         'false
+         (let ((first (car clauses))
+               (rest (cdr clauses)))
+           (if (cond-else-clause? first)
+               (if (null? rest)
+                   (sequence->exp (cond-actions first))
+                   (error "ELSE clause isn't last: COND->IF" clauses))
+               (make-if (cond-predicate first)
+                        (sequence->exp (cond-actions first))
+                        (expand-clauses rest))))))
 
-  ;; 外部用
-  (define (eval-cond exp env)
-	(eval (cond->if exp) env))
+   ;; 外部用
+   (define (eval-cond exp env)
+     (eval (cond->if exp) env))
 
-  (put 'eval 'cond-cond)
-  'ok)
+   (put 'eval 'cond-cond)
+   'ok)
 
-;; applyは無理
+ ;; applyは無理
 
-;; 多分こんな感じだと思う
-;; でこのパッケージ用のevalを作る
-;; self-evaluating, variable, application? はタグがついてないので無理
+ ;; 多分こんな感じだと思う
+ ;; でこのパッケージ用のevalを作る
+ ;; self-evaluating, variable, application? はタグがついてないので無理
 
-(define (eval exp env)
-  (cond ((self-evaluating? exp) exp)
-        ((variable? exp) (lookup-variable-value exp env))
-		;; パッケージあれば実行
-		(else
-		 (let ((proc (get 'eval (car exp))))
-		   (if proc
-			   (proc (cdr exp))
-			   ;; なくてapplyだったら実行
-			   (if (application? exp)
-				   (apply (eval (operator exp) env)
-						  (list-of-values (operands exp) env))
-				   (error "Unknown expression type: eval" exp)))))))
-;; 使うときはこんな感じ
-(clear-putlist) ;; 全消し
-(install-quote-package)
-(install-assignment-package)
-(install-definition-package)
-(install-if-package)
-(install-labmda-package)
-(install-begin-package)
-(install-cond-package)
+ (define (eval exp env)
+   (cond ((self-evaluating? exp) exp)
+         ((variable? exp) (lookup-variable-value exp env))
+         ;; パッケージあれば実行
+         (else
+          (let ((proc (get 'eval (car exp))))
+            (if proc
+                (proc (cdr exp))
+                ;; なくてapplyだったら実行
+                (if (application? exp)
+                    (apply (eval (operator exp) env)
+                           (list-of-values (operands exp) env))
+                    (error "Unknown expression type: eval" exp)))))))
+ ;; 使うときはこんな感じ
+ (clear-putlist) ;; 全消し
+ (install-quote-package)
+ (install-assignment-package)
+ (install-definition-package)
+ (install-if-package)
+ (install-labmda-package)
+ (install-begin-package)
+ (install-cond-package)
 
 
 ;;;;; 4.4
-(load "./chapter4-repl.scm")
-(define env the-global-environment)
+ (load "./chapter4-repl.scm")
+ (define env the-global-environment)
 
-;; evalを書きかえてこんな感じにする
-(define (eval exp env)
-  (cond ((self-evaluating? exp) exp)
-        ((variable? exp) (lookup-variable-value exp env))
-        ((quoted? exp) (text-of-quotation exp))
-        ((assignment? exp) (eval-assignment exp env))
-        ((definition? exp) (eval-definition exp env))
-        ((if? exp) (eval-if exp env))
-        ((lambda? exp) (make-procedure (lambda-parameters exp)
-                                       (lambda-body exp)
-                                       env))
-		;; ここに追加
-		((and? exp) (eval-and exp env))
-		((or? exp) (eval-or exp env))
-		;; 追加ココマデ
-		
-        ((begin? exp)
-         (eval-sequence (begin-actions exp) env))
-        ((cond? exp) (eval (cond->if exp) env))
-        ((application? exp)
-         (apply (eval (operator exp) env)
-                (list-of-values (operands exp) env)))
-        (else
-         (error "Unknown expression type: eval" exp))))
+ ;; evalを書きかえてこんな感じにする
+ (define (eval exp env)
+   (cond ((self-evaluating? exp) exp)
+         ((variable? exp) (lookup-variable-value exp env))
+         ((quoted? exp) (text-of-quotation exp))
+         ((assignment? exp) (eval-assignment exp env))
+         ((definition? exp) (eval-definition exp env))
+         ((if? exp) (eval-if exp env))
+         ((lambda? exp) (make-procedure (lambda-parameters exp)
+                                        (lambda-body exp)
+                                        env))
+         ;; ここに追加
+         ((and? exp) (eval-and exp env))
+         ((or? exp) (eval-or exp env))
+         ;; 追加ココマデ
+         
+         ((begin? exp)
+          (eval-sequence (begin-actions exp) env))
+         ((cond? exp) (eval (cond->if exp) env))
+         ((application? exp)
+          (apply (eval (operator exp) env)
+                 (list-of-values (operands exp) env)))
+         (else
+          (error "Unknown expression type: eval" exp))))
 
-; 
-(define (and? exp) (tagged-list? exp 'and))
-(define (or? exp) (tagged-list? exp 'and))
+                                        ; 
+ (define (and? exp) (tagged-list? exp 'and))
+ (define (or? exp) (tagged-list? exp 'and))
 
-(define (eval-and exp env)
-  (my-and (cdr exp) env))
+ (define (eval-and exp env)
+   (my-and (cdr exp) env))
 
-(define (eval-or exp env)
-  (my-or (cdr exp) env))
+ (define (eval-or exp env)
+   (my-or (cdr exp) env))
 
-(define (my-and arg env)
-  (cond ((eq? '() arg) #f) ;; nilだったら#f
-		((atom? arg) (eval arg env)) ;; atomだったらそいつを評価
-		(let ((first-element (car arg))
-			  (rest-elements (cdr arg)))
-		  (if (eval first-element env) ;; 1個目評価して
-			  (my-and rest-elements env) ;; #tだったら次
-			  #f)))) ;; #fだったらその時点で#f返す
+ (define (my-and arg env)
+   (cond ((eq? '() arg) #f) ;; nilだったら#f
+         ((atom? arg) (eval arg env)) ;; atomだったらそいつを評価
+         (let ((first-element (car arg))
+               (rest-elements (cdr arg)))
+           (if (eval first-element env) ;; 1個目評価して
+               (my-and rest-elements env) ;; #tだったら次
+               #f)))) ;; #fだったらその時点で#f返す
 
-(define (my-or arg env)
-  (cond ((eq? '() arg) #f) ;; nilだったら#f
-		((atom? arg) (eval arg env)) ;; atomだったらそいつを評価
-		(let ((first-element (car arg)) 
-			  (rest-elements (cdr arg)))
-		  (if (eval first-element) ;; 1個目評価して
-			  #t ;; #tだったらその時点で#t
-			  (my-or rest-elements env))))) ;; #fだったらさいごまでやる
-
-
-
-;; その2　派生編 ifに変えてみよう
-;; cond->ifと同じかんじで。
-;; and
-(define (and-clauses exp) (cdr exp))
-(define (and->if exp) (expand-and-clauses (and-clauses exp)))
-(define (expand-and-clauses clauses)
-  (define (iter clauses result)
-	(if (null? clauses)
-      result ;; これまでの結果
-      (let ((first (car clauses))
-            (rest (cdr clauses)))
-        (make-if first ;; ここ#tだったら終了
-				 (iter rest first) ;;　違ったら続き
-				 #f))))
-  (iter clauses #f))
-
-;; or
-(define (or-clauses exp) (cdr exp))
-(define (or->if exp) (expand-or-clauses (or-clauses exp)))
-(define (expand-or-clauses clauses)
-  (define (iter clauses)
-	(if (null? clauses)
-      #f
-      (let ((first (car clauses))
-            (rest (cdr clauses)))
-        (make-if first
-				 first
-				 (iter rest)))))
-  (iter clauses))
-
-;; evalはこういう感じに書き換える
-;; evalを書きかえてこんな感じにする
-(define (eval exp env)
-  (cond ((self-evaluating? exp) exp)
-        ((variable? exp) (lookup-variable-value exp env))
-        ((quoted? exp) (text-of-quotation exp))
-        ((assignment? exp) (eval-assignment exp env))
-        ((definition? exp) (eval-definition exp env))
-        ((if? exp) (eval-if exp env))
-        ((lambda? exp) (make-procedure (lambda-parameters exp)
-                                       (lambda-body exp)
-                                       env))
-		;; ここから
-		((and? exp) (eval (and->if exp) env))
-		((or? exp) (eval (or->if exp) env))
-		;; ここまで
-		
-        ((begin? exp)
-         (eval-sequence (begin-actions exp) env))
-        ((cond? exp) (eval (cond->if exp) env))
-        ((application? exp)
-         (apply (eval (operator exp) env)
-                (list-of-values (operands exp) env)))
-        (else
-         (error "Unknown expression type: eval" exp))))
-
-;;　4.5
-(cond ((assoc 'b '((a 1) (b 2))) => cadr)
-	  (else false))
-; gosh> 2
-; へー
-; expand clausesを改造すればいいよね
-  (define (expand-clauses clauses)
-	(if (null? clauses)
-		'false
-		(if (arrow-expression? clauses) ;; 4.5 こんな
-			(arrow->if clauses) ;; 4.5 感じにした
-			(let ((first (car clauses))
-				  (rest (cdr clauses)))
-			  (if (cond-else-clause? first)
-				  (if (null? rest)
-					  (sequence->exp (cond-actions first))
-					  (error "ELSE clause isn't last: COND->IF" clauses))
-				  (make-if (cond-predicate first)
-						   (sequence->exp (cond-actions first))
-						   (expand-clauses rest)))))))
-
-;; ということで2つ作るよ。
-(define (arrow-expression? clauses)
-  (equal? (cadar clauses) '=>))
-
-(define test-case
-  '('cond ((assoc 'b '((a 1) (b 2))) => cadr)
-		 (else false)))
-test-case
-;; gosh> ('cond ((assoc 'b '((a 1) (b 2))) => cadr) (else false))
-(arrow-expression? (cond-clauses test-case))
-;; #t
-;; よさげ
-(define (predicate clauses) (caar clauses))
-(define (operator clauses) (caddar clauses))
-(define (arrow->if clauses)
-  (make-if (predicate clauses)
-		   (list operator (predicate clauses))
-		   #f))
-
-
-(predicate (cond-clauses test-case))
-(operator (cond-clauses test-case))
-(arrow->if (cond-clauses test-case))
-;; gosh> (if #0=(assoc 'b '((a 1) (b 2))) (#<closure operator> #0#) #f)
-;; よさげ
-
-
-;; 4.6
-
-(define test-case (list 'let '((v1 e1) (v2 e2)) 'body))
-test-case
-;; >  (let ((v1 e1) '(v2 e2)) body)
-;; こんな。
+ (define (my-or arg env)
+   (cond ((eq? '() arg) #f) ;; nilだったら#f
+         ((atom? arg) (eval arg env)) ;; atomだったらそいつを評価
+         (let ((first-element (car arg)) 
+               (rest-elements (cdr arg)))
+           (if (eval first-element) ;; 1個目評価して
+               #t ;; #tだったらその時点で#t
+               (my-or rest-elements env))))) ;; #fだったらさいごまでやる
 
 
 
-(caddr test-case)
-;; こんなかな。
-(define (let->combination sexp)
-  (let ((vars-exps (cadr test-case))
-		(body (caddr test-case)))
-	((make-lambda (vars sexp)
-		      body
-		      env) (exp sexp)))) 
+ ;; その2　派生編 ifに変えてみよう
+ ;; cond->ifと同じかんじで。
+ ;; and
+ (define (and-clauses exp) (cdr exp))
+ (define (and->if exp) (expand-and-clauses (and-clauses exp)))
+ (define (expand-and-clauses clauses)
+   (define (iter clauses result)
+     (if (null? clauses)
+         result ;; これまでの結果
+         (let ((first (car clauses))
+               (rest (cdr clauses)))
+           (make-if first ;; ここ#tだったら終了
+                    (iter rest first) ;;　違ったら続き
+                    #f))))
+   (iter clauses #f))
 
-;; ↑で必要なのを作る
-(define (vars s)
-  (cond ((eq? s '()) '())
-		(else  (cons (caar s) (vars (cdr s))))))
-(vars (cadr  test-case))
-;; gosh> (v1 v2) ;; とれた
-(trace exp)
-(define (exp s)
-  (cond ((eq? s '()) '())
-		(else  (cons (cadar s) (exp (cdr s))))))
-(exp (cadr test-case))
-;; (e1 e2)
+ ;; or
+ (define (or-clauses exp) (cdr exp))
+ (define (or->if exp) (expand-or-clauses (or-clauses exp)))
+ (define (expand-or-clauses clauses)
+   (define (iter clauses)
+     (if (null? clauses)
+         #f
+         (let ((first (car clauses))
+               (rest (cdr clauses)))
+           (make-if first
+                    first
+                    (iter rest)))))
+   (iter clauses))
 
-;; evalに組み込む用
-(define (let? exp) (tagged-list? exp 'let))
-(define (eval-let let-clause env)
-  (eval (let->combination let-clause) env))
+ ;; evalはこういう感じに書き換える
+ ;; evalを書きかえてこんな感じにする
+ (define (eval exp env)
+   (cond ((self-evaluating? exp) exp)
+         ((variable? exp) (lookup-variable-value exp env))
+         ((quoted? exp) (text-of-quotation exp))
+         ((assignment? exp) (eval-assignment exp env))
+         ((definition? exp) (eval-definition exp env))
+         ((if? exp) (eval-if exp env))
+         ((lambda? exp) (make-procedure (lambda-parameters exp)
+                                        (lambda-body exp)
+                                        env))
+         ;; ここから
+         ((and? exp) (eval (and->if exp) env))
+         ((or? exp) (eval (or->if exp) env))
+         ;; ここまで
+         
+         ((begin? exp)
+          (eval-sequence (begin-actions exp) env))
+         ((cond? exp) (eval (cond->if exp) env))
+         ((application? exp)
+          (apply (eval (operator exp) env)
+                 (list-of-values (operands exp) env)))
+         (else
+          (error "Unknown expression type: eval" exp))))
+
+ ;;　4.5
+ (cond ((assoc 'b '((a 1) (b 2))) => cadr)
+       (else false))
+                                        ; gosh> 2
+                                        ; へー
+                                        ; expand clausesを改造すればいいよね
+ (define (expand-clauses clauses)
+   (if (null? clauses)
+       'false
+       (if (arrow-expression? clauses) ;; 4.5 こんな
+           (arrow->if clauses) ;; 4.5 感じにした
+           (let ((first (car clauses))
+                 (rest (cdr clauses)))
+             (if (cond-else-clause? first)
+                 (if (null? rest)
+                     (sequence->exp (cond-actions first))
+                     (error "ELSE clause isn't last: COND->IF" clauses))
+                 (make-if (cond-predicate first)
+                          (sequence->exp (cond-actions first))
+                          (expand-clauses rest)))))))
+
+ ;; ということで2つ作るよ。
+ (define (arrow-expression? clauses)
+   (equal? (cadar clauses) '=>))
+
+ (define test-case
+   '('cond ((assoc 'b '((a 1) (b 2))) => cadr)
+           (else false)))
+ test-case
+ ;; gosh> ('cond ((assoc 'b '((a 1) (b 2))) => cadr) (else false))
+ (arrow-expression? (cond-clauses test-case))
+ ;; #t
+ ;; よさげ
+ (define (predicate clauses) (caar clauses))
+ (define (operator clauses) (caddar clauses))
+ (define (arrow->if clauses)
+   (make-if (predicate clauses)
+            (list operator (predicate clauses))
+            #f))
 
 
-;; eval
-(define (eval exp env)
-  (cond ((self-evaluating? exp) exp)
-        ((variable? exp) (lookup-variable-value exp env))
-        ((quoted? exp) (text-of-quotation exp))
-        ((assignment? exp) (eval-assignment exp env))
-        ((definition? exp) (eval-definition exp env))
-        ((if? exp) (eval-if exp env))
-        ((lambda? exp) (make-procedure (lambda-parameters exp)
-                                       (lambda-body exp)
-                                       env))
-	;; ここから
-	((let? exp (eval-let exp env)))
-	;; ここまで
-        ((begin? exp)
-         (eval-sequence (begin-actions exp) env))
-        ((cond? exp) (eval (cond->if exp) env))
-        ((application? exp)
-         (apply (eval (operator exp) env)
-                (list-of-values (operands exp) env)))
-        (else
-         (error "Unknown expression type: eval" exp))))
+ (predicate (cond-clauses test-case))
+ (operator (cond-clauses test-case))
+ (arrow->if (cond-clauses test-case))
+ ;; gosh> (if #0=(assoc 'b '((a 1) (b 2))) (#<closure operator> #0#) #f)
+ ;; よさげ
 
 
-;; 4.7
-;; (let* ((x 3) 
-;; 	   (y (+ x 2)) 
-;; 	   (z (+ x y 5)))
-;;   (* x z)))
-;; を
-;; (let ((x 3))
-;;   (let ((y (+ x 2)))
-;; 	(let ((z (+ x y 5)))
-;; 	  (* x z))))
-;; こう変形すしたい　という問題
+ ;; 4.6
 
-(define test-case  '(let* ((x 3) 
-						   (y (+ x 2)) 
-						   (z (+ x y 5)))
-					  (* x z)))
-test-case
-;; (let* ((x 3) (y (+ x 2)) (z (+ x y 5))) (* x z))
-
-; evalに組み込む用
-(define (let*? exp) (tagged-list? exp 'let*))
-(let*? test-case)
-;; #t
-(define (let*-clauses exp) (cdr exp))
-(let*-clauses test-case)
-;; (((x 3) (y (+ x 2)) (z (+ x y 5))) (* x z))
-(define (let*-bindings clauses)
-  (car clauses))
-(let*-bindings (let*-clauses test-case))
-;; ((x 3) (y (+ x 2)) (z (+ x y 5)))
+ (define test-case (list 'let '((v1 e1) (v2 e2)) 'body))
+ test-case
+ ;; >  (let ((v1 e1) '(v2 e2)) body)
+ ;; こんな。
 
 
-(define (let*-body clauses) (cadr (let*-clauses test-case)))
-(let*-body (let*-clauses test-case))
-;; gosh> (* x z)
 
-;; letだらけに変形する
-(define (nested-let bind body)
-  (if (null? bind) body
-	  (list 'let (list (car bind) (nested-let (cdr bind) body)))))
-(trace nested-let)
-(nested-let (let*-bindings (let*-clauses test-case)) (let*-body (let*-clauses test-case)))
-;; > (let ((x 3) (let ((y (+ x 2)) (let ((z (+ x y 5)) (* x z)))))))
+ (caddr test-case)
+ ;; こんなかな。
+ (define (let->combination sexp)
+   (let ((vars-exps (cadr test-case))
+         (body (caddr test-case)))
+     ((make-lambda (vars sexp)
+                   body
+                   env) (exp sexp)))) 
 
-;; eval
-(define (eval-let* exp env)
-  (let* ((clauses (let*-clauses exp))
-		 ((binding (let*-bindings exp)))
-		 ((body (let*-body exp))))
-	(eval (nested-let binding body) env)))
+ ;; ↑で必要なのを作る
+ (define (vars s)
+   (cond ((eq? s '()) '())
+         (else  (cons (caar s) (vars (cdr s))))))
+ (vars (cadr  test-case))
+ ;; gosh> (v1 v2) ;; とれた
+ (trace exp)
+ (define (exp s)
+   (cond ((eq? s '()) '())
+         (else  (cons (cadar s) (exp (cdr s))))))
+ (exp (cadr test-case))
+ ;; (e1 e2)
 
-;; evalに突っ込む
-(define (eval exp env)
-  (cond ((self-evaluating? exp) exp)
-        ((variable? exp) (lookup-variable-value exp env))
-        ((quoted? exp) (text-of-quotation exp))
-        ((assignment? exp) (eval-assignment exp env))
-        ((definition? exp) (eval-definition exp env))
-        ((if? exp) (eval-if exp env))
-        ((lambda? exp) (make-procedure (lambda-parameters exp)
-                                       (lambda-body exp)
-                                       env))
-		;; ここから
-		;; letは必要
-		((let? exp (eval-let exp env)))
-		((let*? exp (eval-let* exp env)))
-		;; ここまで
-        ((begin? exp)
-         (eval-sequence (begin-actions exp) env))
-        ((cond? exp) (eval (cond->if exp) env))
-        ((application? exp)
-         (apply (eval (operator exp) env)
-                (list-of-values (operands exp) env)))
-        (else
-         (error "Unknown expression type: eval" exp))))
+ ;; evalに組み込む用
+ (define (let? exp) (tagged-list? exp 'let))
+ (define (eval-let let-clause env)
+   (eval (let->combination let-clause) env))
+
+
+ ;; eval
+ (define (eval exp env)
+   (cond ((self-evaluating? exp) exp)
+         ((variable? exp) (lookup-variable-value exp env))
+         ((quoted? exp) (text-of-quotation exp))
+         ((assignment? exp) (eval-assignment exp env))
+         ((definition? exp) (eval-definition exp env))
+         ((if? exp) (eval-if exp env))
+         ((lambda? exp) (make-procedure (lambda-parameters exp)
+                                        (lambda-body exp)
+                                        env))
+         ;; ここから
+         ((let? exp (eval-let exp env)))
+         ;; ここまで
+         ((begin? exp)
+          (eval-sequence (begin-actions exp) env))
+         ((cond? exp) (eval (cond->if exp) env))
+         ((application? exp)
+          (apply (eval (operator exp) env)
+                 (list-of-values (operands exp) env)))
+         (else
+          (error "Unknown expression type: eval" exp))))
+
+
+ ;; 4.7
+ ;; (let* ((x 3) 
+ ;;        (y (+ x 2)) 
+ ;;        (z (+ x y 5)))
+ ;;   (* x z)))
+ ;; を
+ ;; (let ((x 3))
+ ;;   (let ((y (+ x 2)))
+ ;;     (let ((z (+ x y 5)))
+ ;;       (* x z))))
+ ;; こう変形すしたい　という問題
+
+ (define test-case  '(let* ((x 3) 
+                            (y (+ x 2)) 
+                            (z (+ x y 5)))
+                       (* x z)))
+ test-case
+ ;; (let* ((x 3) (y (+ x 2)) (z (+ x y 5))) (* x z))
+
+                                        ; evalに組み込む用
+ (define (let*? exp) (tagged-list? exp 'let*))
+ (let*? test-case)
+ ;; #t
+ (define (let*-clauses exp) (cdr exp))
+ (let*-clauses test-case)
+ ;; (((x 3) (y (+ x 2)) (z (+ x y 5))) (* x z))
+ (define (let*-bindings clauses)
+   (car clauses))
+ (let*-bindings (let*-clauses test-case))
+ ;; ((x 3) (y (+ x 2)) (z (+ x y 5)))
+
+
+ (define (let*-body clauses) (cadr (let*-clauses test-case)))
+ (let*-body (let*-clauses test-case))
+ ;; gosh> (* x z)
+
+ ;; letだらけに変形する
+ (define (nested-let bind body)
+   (if (null? bind) body
+       (list 'let (list (car bind) (nested-let (cdr bind) body)))))
+ (trace nested-let)
+ (nested-let (let*-bindings (let*-clauses test-case)) (let*-body (let*-clauses test-case)))
+ ;; > (let ((x 3) (let ((y (+ x 2)) (let ((z (+ x y 5)) (* x z)))))))
+
+ ;; eval
+ (define (eval-let* exp env)
+   (let* ((clauses (let*-clauses exp))
+          ((binding (let*-bindings exp)))
+          ((body (let*-body exp))))
+     (eval (nested-let binding body) env)))
+
+ ;; evalに突っ込む
+ (define (eval exp env)
+   (cond ((self-evaluating? exp) exp)
+         ((variable? exp) (lookup-variable-value exp env))
+         ((quoted? exp) (text-of-quotation exp))
+         ((assignment? exp) (eval-assignment exp env))
+         ((definition? exp) (eval-definition exp env))
+         ((if? exp) (eval-if exp env))
+         ((lambda? exp) (make-procedure (lambda-parameters exp)
+                                        (lambda-body exp)
+                                        env))
+         ;; ここから
+         ;; letは必要
+         ((let? exp (eval-let exp env)))
+         ((let*? exp (eval-let* exp env)))
+         ;; ここまで
+         ((begin? exp)
+          (eval-sequence (begin-actions exp) env))
+         ((cond? exp) (eval (cond->if exp) env))
+         ((application? exp)
+          (apply (eval (operator exp) env)
+                 (list-of-values (operands exp) env)))
+         (else
+          (error "Unknown expression type: eval" exp))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 4.8
+ ;; 4.8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; named letの意味がぜんぜんわからない
-(define (fib n)
-  (let fib-iter ((a 1)
-				 (b 0)
-				 (count n))
-	(if (= count 0)
-		b
-		(fib-iter (+ a b) a (- count 1)))))
-(fib 10)
-;; 55
-;; 確かに動いているっぽい
-;; これといっしょだよね。
-(define (fib n)
-  (define (fib-iter a b count)
-	(if (= count 0)
-		b
-		(fib-iter (+ a b) a (- count 1))))
-  (fib-iter 1 0 n))
-;; こう変えればいいのかな。
-;; ほんとうは
-(define (fib n)
-  (letrec ((fib-iter (lambda (a b count)
-					(if (= count 0)
-						b
-						(fib-iter (+ a b) a (- count 1))))))
-	(fib-iter 1 0 n)))
-(fib 10)
-;; こうすればいいのだろうけど・・むり
+ ;; named letの意味がぜんぜんわからない
+ (define (fib n)
+   (let fib-iter ((a 1)
+                  (b 0)
+                  (count n))
+     (if (= count 0)
+         b
+         (fib-iter (+ a b) a (- count 1)))))
+ (fib 10)
+ ;; 55
+ ;; 確かに動いているっぽい
+ ;; これといっしょだよね。
+ (define (fib n)
+   (define (fib-iter a b count)
+     (if (= count 0)
+         b
+         (fib-iter (+ a b) a (- count 1))))
+   (fib-iter 1 0 n))
+ ;; こう変えればいいのかな。
+ ;; ほんとうは
+ (define (fib n)
+   (letrec ((fib-iter (lambda (a b count)
+                        (if (= count 0)
+                            b
+                            (fib-iter (+ a b) a (- count 1))))))
+     (fib-iter 1 0 n)))
+ (fib 10)
+ ;; こうすればいいのだろうけど・・むり
 
-(define test-case '(let fib-iter ((a 1)
-								  (b 0)
-								  (count n))
-					 (if (= count 0)
-						 b
-					 (fib-iter (+ a b) a (- count 1)))))
-test-case
-;; (let fib-iter ((a 1) (b 0) (count n)) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))
-(define (let->combination sexp)
-  (if (named-let? sexp) ;; ここと
-	  (named-let->function sexp)  ;; ここ増やした
-	  (let ((vars-exps (cadr test-case))
-			(body (caddr test-case)))
-		((make-lambda (vars sexp)
-					  body
-					  env) (exp sexp)))))
+ (define test-case '(let fib-iter ((a 1)
+                                   (b 0)
+                                   (count n))
+                      (if (= count 0)
+                          b
+                          (fib-iter (+ a b) a (- count 1)))))
+ test-case
+ ;; (let fib-iter ((a 1) (b 0) (count n)) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))
+ (define (let->combination sexp)
+   (if (named-let? sexp) ;; ここと
+       (named-let->function sexp)  ;; ここ増やした
+       (let ((vars-exps (cadr test-case))
+             (body (caddr test-case)))
+         ((make-lambda (vars sexp)
+                       body
+                       env) (exp sexp)))))
 
-;; implる
-(define (named-let? exp)
-  (define atom? ;; scheme手習いのやつ
-    (lambda (x)
-	  (and (not (pair? x)) (not (null? x)))))
-  (atom? (cadr exp)))
-;;(define not-ok '(let ((a 1) (b 0) (count n))))
-;;(named-let? not-ok)
-;; #f
-;;(named-let? test-case)
-;; #t
+ ;; implる
+ (define (named-let? exp)
+   (define atom? ;; scheme手習いのやつ
+     (lambda (x)
+       (and (not (pair? x)) (not (null? x)))))
+   (atom? (cadr exp)))
+ ;;(define not-ok '(let ((a 1) (b 0) (count n))))
+ ;;(named-let? not-ok)
+ ;; #f
+ ;;(named-let? test-case)
+ ;; #t
 
-(define (named-let-clauses exp)
-  (cdr exp))
-;; (named-let-clauses test-case)
-;; gosh> (fib-iter ((a 1) (b 0) (count n)) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))
+ (define (named-let-clauses exp)
+   (cdr exp))
+ ;; (named-let-clauses test-case)
+ ;; gosh> (fib-iter ((a 1) (b 0) (count n)) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))
 
-(define (named-let-name clause)
-  (car clause))
-;; (named-let-name (named-let-clauses test-case))
-;; fib-iter
+ (define (named-let-name clause)
+   (car clause))
+ ;; (named-let-name (named-let-clauses test-case))
+ ;; fib-iter
 
-(define (named-let-bindings clause)
-  (cadr clause))
-;; (named-let-bindings (named-let-clauses test-case))
-;; gosh> ((a 1) (b 0) (count n))
+ (define (named-let-bindings clause)
+   (cadr clause))
+ ;; (named-let-bindings (named-let-clauses test-case))
+ ;; gosh> ((a 1) (b 0) (count n))
 
-(define (named-let-initial-values bindings)
-  (define (iter b)
-	(if (null? b) '()
-		(cons (cadr (car b)) (iter (cdr b)))))
-  (iter bindings))
-;; (named-let-initial-values (named-let-bindings (named-let-clauses test-case)))
-;; gosh> (1 0 n)
-;; これせっかくだからnamed letで書いてみると
-(define (named-let-initial-values bindings)
-  (let iter ((b bindings))
-	(if (null? b) '()
-		(cons (cadr (car b)) (iter (cdr b))))))
-;; (named-let-initial-values (named-let-bindings (named-let-clauses test-case)))
-;; gosh> (1 0 n)
-;; うごいた。
+ (define (named-let-initial-values bindings)
+   (define (iter b)
+     (if (null? b) '()
+         (cons (cadr (car b)) (iter (cdr b)))))
+   (iter bindings))
+ ;; (named-let-initial-values (named-let-bindings (named-let-clauses test-case)))
+ ;; gosh> (1 0 n)
+ ;; これせっかくだからnamed letで書いてみると
+ (define (named-let-initial-values bindings)
+   (let iter ((b bindings))
+     (if (null? b) '()
+         (cons (cadr (car b)) (iter (cdr b))))))
+ ;; (named-let-initial-values (named-let-bindings (named-let-clauses test-case)))
+ ;; gosh> (1 0 n)
+ ;; うごいた。
 
-(define (named-let-parameters bindings)
-  (let iter ((b bindings))
-	(if (null? b) '()
-		(cons (caar b) (iter (cdr b))))))
-;; (named-let-parameters (named-let-bindings (named-let-clauses test-case)))
-;; (a b count)
+ (define (named-let-parameters bindings)
+   (let iter ((b bindings))
+     (if (null? b) '()
+         (cons (caar b) (iter (cdr b))))))
+ ;; (named-let-parameters (named-let-bindings (named-let-clauses test-case)))
+ ;; (a b count)
 
-(define (named-let-function-body clause)
-  (caddr clause))
-;; (named-let-function-body (named-let-clauses test-case))
-;; gosh> (if (= count 0) b (fib-iter (+ a b) a (- count 1)))
+ (define (named-let-function-body clause)
+   (caddr clause))
+ ;; (named-let-function-body (named-let-clauses test-case))
+ ;; gosh> (if (= count 0) b (fib-iter (+ a b) a (- count 1)))
 
-;; ここまでを合体
-(define (named-let->function sexp)
-  (let* ((clauses (named-let-clauses sexp))
-		 (function-name (named-let-name clauses))
-		 (function-body (named-let-function-body clauses))
-		 (function-parameters (named-let-parameters (named-let-bindings clauses)))
-		 (initial-values (named-let-initial-values (named-let-bindings clauses))))
-	(list (list 'define (list function-name function-parameters function-body)) ;; 関数を定義して
-		  (list function-name initial-values)))) ;; 呼ぶ
-(named-let->function test-case)
-;; gosh> ((define (fib-iter (a b count) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))) (fib-iter (1 0 n)))
+ ;; ここまでを合体
+ (define (named-let->function sexp)
+   (let* ((clauses (named-let-clauses sexp))
+          (function-name (named-let-name clauses))
+          (function-body (named-let-function-body clauses))
+          (function-parameters (named-let-parameters (named-let-bindings clauses)))
+          (initial-values (named-let-initial-values (named-let-bindings clauses))))
+     (list (list 'define (list function-name function-parameters function-body)) ;; 関数を定義して
+           (list function-name initial-values)))) ;; 呼ぶ
+ (named-let->function test-case)
+ ;; gosh> ((define (fib-iter (a b count) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))) (fib-iter (1 0 n)))
 
 
 
