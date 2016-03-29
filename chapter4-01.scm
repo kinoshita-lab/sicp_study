@@ -713,7 +713,7 @@ put-lists
          (else
           (error "Unknown expression type: eval" exp))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
- ;; 4.8
+;; 4.8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
  ;; named letの意味がぜんぜんわからない
  (define (fib n)
@@ -828,8 +828,65 @@ put-lists
  (named-let->function test-case)
  ;; gosh> ((define (fib-iter (a b count) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))) (fib-iter (1 0 n)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 4.9
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 繰り返すfor
+;; defineで書くとこんなかな。
+(define (for start end func)
+  (let loop ((s start) 
+			 (e end)
+			 (f func))
+	(if (= s e) '()
+		(begin (func)
+			   (loop (+ 1 s) e func)))))
+(for 1 10 (lambda () (print "Hoge")))
+;; gosh> Hoge
+;; Hoge
+;; Hoge
+;; Hoge
+;; Hoge
+;; Hoge
+;; Hoge
+;; Hoge
+;; Hoge
+;; ()
 
+(define test-case 
+  '(for 1 10 (lambda () (print "Hoge"))))
+;; test-case
+;; gosh> (for 1 10 (lambda () (print "Hoge")))
 
+;; evalに組み込む用
+(define (for? exp) (tagged-list? exp 'for))
+;;(for? test-case)
+;; #t
 
+(define (for-clauses exp) (cdr exp))
+;; (for-clauses test-case)
+;; gosh> (1 10 (lambda () (print "Hoge")))
 
+(define (for-start clause) (car clause))
+;; (for-start (for-clauses test-case))
+;; 1
 
+(define (for-end clause) (cadr clause))
+;; (for-end (for-clauses test-case))
+;; 10
+
+(define (for-func clause) (caddr clause))
+(for-func (for-clauses test-case))
+;; gosh> (lambda () (print "Hoge"))
+
+(define (for->named-let exp)
+  (let* ((clause (for-clauses exp))
+		 (start (for-start clause))
+		 (func (for-func clause))
+		 (end (for-end clause)))
+	(list 'let 'loop (list (list 's start)
+						   (list 'e end)
+						   (list 'f func))
+		  (list 'if '(= s e) '()
+				(list 'begin '(f)
+					  (list 'loop '(+ 1 s) 'e 'f) )))))
+(for->named-let test-case)
