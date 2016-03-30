@@ -920,3 +920,59 @@ put-lists
 		(else
 		 (error "Unknown expression type: eval" exp))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 4.10
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; なんでもいいのかな (1 + 1) -> 2 みたいなのつくってみる 2項までじゃないとめんどい
+(define test-case '(1 + 1))
+;; test-case
+;; gosh> (1 + 1)
+
+(define (my-math-operator exp)
+  (cadr exp))
+;;(my-math-operator test-case)
+;; +
+
+;; eval用
+(define (my-math-expression? exp)
+  (let ((op (my-math-operator exp)))
+	(or (eq? '+ op)
+		(eq? '- op)
+		(eq? '* op)
+		(eq? '/ op))))
+;; #t
+
+
+;; 変形用
+(define (my-math->normal-function exp)
+  (let ((first-operand (car exp))
+		(operator (my-math-operator exp))
+		(second-operand (caddr exp)))
+	(list operator first-operand second-operand)))
+(my-math->normal-function test-case)
+;; (+ 1 1)
+;; できた
+
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+		((variable? exp) (lookup-variable-value exp env))
+		((quoted? exp) (text-of-quotation exp))
+		((assignment? exp) (eval-assignment exp env))
+		((definition? exp) (eval-definition exp env))
+		((if? exp) (eval-if exp env))
+		((lambda? exp) (make-procedure (lambda-parameters exp)
+									   (lambda-body exp)
+									   env))
+		;; これを
+		((my-math-expression? exp) (eval (my-math->normal-function exp)))
+		;; 足した
+
+		((begin? exp)
+		 (eval-sequence (begin-actions exp) env))
+		((cond? exp) (eval (cond->if exp) env))
+		((application? exp)
+		 (apply (eval (operator exp) env)
+				(list-of-values (operands exp) env)))
+		(else
+		 (error "Unknown expression type: eval" exp))))
