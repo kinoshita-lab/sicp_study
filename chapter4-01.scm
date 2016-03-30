@@ -890,3 +890,33 @@ put-lists
 				(list 'begin '(f)
 					  (list 'loop '(+ 1 s) 'e 'f) )))))
 (for->named-let test-case)
+;; gosh> (let loop ((s 1) (e 10) (f (lambda () (print "Hoge")))) (if (= s e) () (begin (f) (loop (+ 1 s) e f))))
+;; できた。
+
+(define (eval-for exp env)
+  (eval (for->named-let exp) env))
+
+;; 入れる
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+		((variable? exp) (lookup-variable-value exp env))
+		((quoted? exp) (text-of-quotation exp))
+		((assignment? exp) (eval-assignment exp env))
+		((definition? exp) (eval-definition exp env))
+		((if? exp) (eval-if exp env))
+		((lambda? exp) (make-procedure (lambda-parameters exp)
+									   (lambda-body exp)
+									   env))
+		;; ここから
+		((let? exp (eval-let exp env)))　;; letいる
+		((for? exp (eval-for exp env))) ;;
+		;; ここまで
+		((begin? exp)
+		 (eval-sequence (begin-actions exp) env))
+		((cond? exp) (eval (cond->if exp) env))
+		((application? exp)
+		 (apply (eval (operator exp) env)
+				(list-of-values (operands exp) env)))
+		(else
+		 (error "Unknown expression type: eval" exp))))
+
