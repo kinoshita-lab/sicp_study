@@ -88,3 +88,43 @@ test-env
 ;; gosh> *** ERROR: Unbound variable: SET! a
 ;; lookup-variable-value var env
 ;; うーん・・
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 4.12
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; scanが共通っぽい
+(define (scan var vars vals)
+  (cond ((null? vars) '()) ;; null かえしてみる
+		((eq? var (car vars)) vals) ;; vals返すので適当につかってくれ
+		(else
+		 (scan var (cdr vars) (cdr  vals)))))
+
+(define (set-variable-value! var val env)
+  (define (env-loop env)
+	(let* ((frame (first-frame env))
+		   (scanned (scan var (frame-variables frame) (frame-values frame))))
+	(if (eq? env the-empty-environment)
+		(error "Unbound variable -- SET!" var)
+		(if (null? scanned)
+			(env-loop (enclosing-environment env))
+			(car scanned)))))
+	(env-loop env))
+
+(define (define-variable! var val env)
+  (let* ((frame (first-frame env))
+		 (scanned (scan var (frame-variables frame) (frame-values frame))))
+	(if (null? scanned)
+		(add-binding-to-frame! var val frame)
+		(set-car! scanned val))))
+
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+	(let* ((frame (first-frame env))
+		   (scanned (scan var (frame-variables frame) (frame-values frame))))
+	  (if (eq? env the-empty-environment)
+		  (error "Unbound variable" var)
+		  (car scanned))))
+  (env-loop env))
+
+
+
