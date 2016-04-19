@@ -126,5 +126,33 @@ test-env
 		  (car scanned))))
   (env-loop env))
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 4.13
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 環境の1フレーム目でいいと思う
+;; 多重定義されてた時どうすんの？　とか
+;; 存在しない場合に先頭の環境まで遡るの？とかが難しいことになるから
+(define (remove l index)
+  (if (= index 0)
+	  (cdr l)
+	  (append (list (car l)) (remove (cdr l) (- index 1)))))
+(remove '(1 2 3) 1)
+;; (1 3)
+(define (find-index l item)
+  (define (iter l n)
+	(cond ((null? l) '())
+		  ((eq? item (car l)) n)
+		  (else (iter (cdr l) (+ 1 n)))))
+  (iter l 0))
+(find-index '(1 2 3 4 5) 3)
+;; 2
+(define (make-unbound! var env)
+  (let* ((frame (first-frame env))
+		 (vars (frame-variables frame))
+		 (vals (frame-values frame)))
+	(let ((index (find-index vars var)))
+	  (if (null? index)
+		  (display "no binding found..")
+		  (set! frame (make-frame (remove vars index) (remove vals index)))))))
+;; こんなかな。
 
