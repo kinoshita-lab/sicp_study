@@ -97,3 +97,22 @@
 ;; http://www.serendip.ws/archives/1973
 
 
+;;; 4.17
+;; 4.6で作ったletはこんなだった
+;; (define (let->combination sexp)
+;;   (let ((vars-exps (cadr test-case))
+;; 		(body (caddr test-case)))
+;; 	((make-lambda (vars sexp)
+;; 				  body
+;; 				  env) (exp sexp)))) 
+;;
+;; ので、let1回でlamda1回分のフレームが作られる。
+;; 図書いた
+;; フレームが出来ないようにしつつ、'*unassigned* にできるようにすればいいので、
+(lambda ⟨vars⟩
+  (begin ((u '*unassigned*)
+		  (v '*unassigned*))
+		 (set! u ⟨e1⟩)
+		 (set! v ⟨e2⟩)
+		 ⟨e3⟩))
+;; こうすればいいかも。
