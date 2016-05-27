@@ -110,9 +110,39 @@
 ;; 図書いた
 ;; フレームが出来ないようにしつつ、'*unassigned* にできるようにすればいいので、
 (lambda ⟨vars⟩
-  (begin ((u '*unassigned*)
-		  (v '*unassigned*))
+  (begin (set! u '*unassigned*)
+		 (set! v '*unassigned*)
 		 (set! u ⟨e1⟩)
 		 (set! v ⟨e2⟩)
 		 ⟨e3⟩))
 ;; こうすればいいかも。
+;; 違ったから直した
+
+;; 4.18
+;; なんでこの問題やってたのかを見失ってしまった。
+;; 変数が同時に定義できるようにするためだった。
+(define (solve f y0 dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (stream-map f y))
+  y)
+
+;; 問題文の変形
+(lambda (f y0 dt)
+  (let ((y '*unassigned*) (dy '*unassigned*))
+	(let ((a (integral (delay dy) y0 dt)) ;; let->combinationの中でdyの値が必要
+		  (b (stream-map f y))  ;; let->combinationの中でyの値が必要
+		  (set! u a) 
+		  (set! v b))
+	  y)))
+
+;; 本文中の変形
+(lambda (f y0 dt)
+  (let ((y '*unassigned*)
+		(dy '*unassigned*))
+	(set! y (integral (delay dy) y0 dt)) ;; eval-assignmentの中で dyの値を使わない
+	(set! dy (stream-map f y)) ;; eval-assignmentの中でyの値を使わない
+	y))
+
+;; ってことで本文の方は動くけど問題のはダメらしい。 http://d.hatena.ne.jp/rucifer_hacker/20090331/1238480075
+
+
