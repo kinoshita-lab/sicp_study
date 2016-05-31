@@ -163,3 +163,40 @@
 ;; 
 ;; 内部定義を実装するには　↑のメンタルモデルみたいに + をすぐに評価しないで使うときに評価すればいいと思う
 
+;; 4.20
+;; letrec試してみる
+(letrec
+	((fact (lambda (n) 
+			 (if (= n 1) 1 (* n (fact (- n 1)))))))
+  (fact 10))
+;; gosh> 3628800
+;; へー
+;; ↑をletだけにするには・・？
+(let ((fact '*unassigned*))
+  (set! fact (lambda (n)
+			   (if (= n 1) 1 (* n (fact (- n 1))))))
+  (fact 10))
+;; こうしたら動いた
+
+(define letrec-test-case 
+  '(letrec
+	  ((fact (lambda (n)
+				(if (= n 1) 1 (* n (fact (- n 1)))))))
+	 (fact 10)))
+letrec-test-case
+;; gosh > (letrec ((fact (lambda (n) (if (= n 1) 1 (* n (fact (- n 1))))))) (fact 10))
+
+(define (letrec->let lr)
+  (let* ((letrec-names (map car (cadr lr))) ;; (fact)
+		 (letrec-defines (map cadr (cadr lr))) ;; ((lambda (n) (if (= n 1) 1 (* n (fact (- n 1))))))
+		 (letrec-body (cddr lr))) ;;  ((fact 10)) 
+	(list 'let (map (lambda (li) (list li '*unassigned*)) letrec-names)
+		  (append (map (lambda (var val) (list 'set! (cons var val))) letrec-names letrec-defines)))))
+
+(letrec->let letrec-test-case)
+;; gosh> (let ((fact *unassigned*)) ((set! (fact lambda (n) (if (= n 1) 1 (* n (fact (- n 1))))))))
+;; よさげ。評価機に組み込むのは略
+
+;; b. 絵をかいた。
+;; 1個環境増えるけど再帰的な定義ができるって感じだと思った。
+
