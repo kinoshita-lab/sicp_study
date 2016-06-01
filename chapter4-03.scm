@@ -200,3 +200,41 @@ letrec-test-case
 ;; b. 絵をかいた。
 ;; 1個環境増えるけど再帰的な定義ができるって感じだと思った。
 
+;; 4.21
+((lambda (n)
+   ((lambda (fact) (fact fact n))
+	(lambda (ft k) (if (= k 1) 1 
+					   (* k (ft ft (- k 1)))))))
+ 10)
+;; gosh> 3628800 ;; なった
+
+;; a. fib
+((lambda (n)
+   ((lambda (fib) (fib fib n))
+	(lambda (fb k) 
+	  (cond ((= k 0) 0)
+			((= k 1) 1)
+			(else (+ (fb fb (- k 2))
+					 (fb fb (- k 1))))))))
+ 10)
+;; gosh> 55
+
+;; b. 元はこれ
+(define (f x)
+  (define (even? n)
+	(if (= n 0) true (odd? (- n 1))))
+  (define (odd? n)
+	(if (= n 0) false (even? (- n 1))))
+  (even? x))
+
+
+
+(define (f x)
+  ((lambda (even? odd?) (even? even? odd? x))
+   (lambda (ev? od? n) ;; evenぽい方
+	 (if (= n 0) true (od? ev? od? (- n 1)))) ;; ここで先頭2つ入れ替えるとodd呼ばれる
+   (lambda (ev? od? n) ;; oddぽい方
+	 (if (= n 0) false (ev? od? od? (- n 1))))))　;; ここで先頭2つ入れ替えるとeven呼ばれる
+(f 10)
+(f 11)
+  
