@@ -51,5 +51,44 @@
 		(bproc (analyze-sequence (lambda-body exp))))
 	(lambda (env) (make-procedure vars bproc env))))
 
+;;  4.22
 
+ 
+ 
 
+ ;; evalに組み込む用
+ (define (let? exp) (tagged-list? exp 'let))
+ 
+
+(define (analyze exp)
+  (cond ((self-evaluationg? exp) (analyze-self-evaluating exp))
+		((quoted? exp) (analyze-quoted exp))
+		((variable? exp) (analyze-variable exp))
+		((assignment? exp) (analyze-assignment exp))
+		((definition? exp) (analyze-definition exp))
+		((if? exp) (analyze-if exp))
+		((lambda? exp) (analyze-lambda exp))
+		((begin? exp) (analyze-sequence (begin-actions exp)))
+		((cond? exp) (analyze (cond->if exp)))
+		((let? exp) (analyze (let->combination exp))) ;; これを足して
+		((application? exp) (analyze-application exp))
+		(else (error "Unknown expression type: ANALYZE" exp))))
+
+;; 4.6から必要なのを持ってくる
+;; これを削って
+;; (define (eval-let let-clause env)
+;;    (eval (let->combination let-clause) env))
+
+(define (let->combination exp)
+  (let ((vars-exps (cadr test-case))
+		(body (caddr test-case)))
+	((make-lambda (vars sexp)
+				  body
+				  env) (vals exp)))) 
+;; ↑で必要なのを作る
+(define (vars s)
+  (cond ((eq? s '()) '())
+		(else  (cons (caar s) (vars (cdr s))))))
+(define (vals s)
+  (cond ((eq? s '()) '())
+		(else  (cons (cadar s) (exp (cdr s))))))
