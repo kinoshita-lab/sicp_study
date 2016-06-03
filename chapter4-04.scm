@@ -92,3 +92,10 @@
 (define (vals s)
   (cond ((eq? s '()) '())
 		(else  (cons (cadar s) (exp (cdr s))))))
+
+
+;; 4.23
+;; sequentiallyがあるのはどうして？　っていう問題だと思った
+;; Alyssaの方は解析が全部終わてない (execute-sequence...)が頭についたリストになってしまうところが
+;; analyze感が無いみたい
+;; http://community.schemewiki.org/?sicp-ex-4.23
