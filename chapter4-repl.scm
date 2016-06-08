@@ -19,7 +19,7 @@
            (procedure-environment procedure))))
         (else
          (error
-          "Unknown procedure type: APPLY" procedure))))
+          "Unknownn procedure type: APPLY" procedure))))
 
 
 
@@ -41,21 +41,6 @@
                 (list-of-values (operands exp) env)))
         (else
          (error "Unknown expression type: eval" exp))))
-
-;; apply
-(define (apply procedure arguments)
-  (cond ((primitive-procedure? procedure)
-         (apply-primitive-procedure procedure arguments))
-        ((compound-procedure? procedure)
-         (eval-sequence
-          (procedure-body procedure)
-          (extend-environment
-           (procedure-parameters procedure)
-           arguments
-           (procedure-environment procedure))))
-        (else
-         (error
-          "Unknown procedure type: APPLY" procedure))))
 
 ;; 中身
 (define (list-of-values exps env)
@@ -294,6 +279,9 @@
         (list 'cdr cdr)
         (list 'cons cons)
         (list 'null? null?)
+		(list '+ +) ;; for 4.24
+		(list '- -)
+		(list '= =)
         ))
 
 (define (primitive-procedure-names)
@@ -315,6 +303,15 @@
   (prompt-for-input input-prompt)
   (let ((input (read)))
     (let ((output (eval input the-global-environment)))
+      (announce-output output-prompt)
+      (user-print output)))
+  (driver-loop))
+;; for 4.24
+(define (driver-loop)
+  (prompt-for-input input-prompt)
+  (let ((input (read)))
+    ;; time マクロを組み込む
+    (let ((output (time (eval input the-global-environment))))
       (announce-output output-prompt)
       (user-print output)))
   (driver-loop))

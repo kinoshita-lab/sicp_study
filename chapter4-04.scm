@@ -3,6 +3,7 @@
 (define (eval exp env) ((analyze exp) env))
 (define (analyze exp)
   (cond ((self-evaluationg? exp) (analyze-self-evaluating exp))
+		((primitive-procedure? exp))
 		((quoted? exp) (analyze-quoted exp))
 		((variable? exp) (analyze-variable exp))
 		((assignment? exp) (analyze-assignment exp))
@@ -51,6 +52,39 @@
 		(bproc (analyze-sequence (lambda-body exp))))
 	(lambda (env) (make-procedure vars bproc env))))
 
+(define (analyze-sequence exps)
+  (define (sequentially proc1 proc2)
+	(lambda (env) (proc1 env) (proc2 env)))
+  (define (loop first-proc rest-procs)
+	(if (null? rest-procs)
+		first-proc
+		(loop (sequentially first-proc (car rest-procs))
+			  (cdr rest-procs))))
+  (let ((procs (map analyze exps)))
+	(if (null? procs) (error "Empty sequence: ANALYZE"))
+	(loop (car procs) (cdr procs))))
+
+(define (analyze-application exp)
+  (let ((fproc (analyze (operator exp)))
+		(aprocs (map analyze (operands exp))))
+	(lambda (env)
+	  (execute-application
+	   (fproc env)
+	   (map (lambda (aproc) (aproc env))
+			aprocs)))))
+(define (execute-application proc args)
+  (cond ((primitive-procedure? proc)
+		 (apply-primitive-procedure proc args))
+		((compound-procedure? proc)
+		 ((procedure-body proc)
+		  (extend-environment
+		   (procedure-parameters proc)
+		   args
+		   (procedure-environment proc))))
+		(else
+		 (error "Unknown procedure type: EXECUTE-APPLICATION"
+			  proc))))
+
 ;;  4.22
 
  
@@ -61,7 +95,7 @@
  
 
 (define (analyze exp)
-  (cond ((self-evaluationg? exp) (analyze-self-evaluating exp))
+  (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
 		((quoted? exp) (analyze-quoted exp))
 		((variable? exp) (analyze-variable exp))
 		((assignment? exp) (analyze-assignment exp))
@@ -99,3 +133,24 @@
 ;; Alyssaの方は解析が全部終わてない (execute-sequence...)が頭についたリストになってしまうところが
 ;; analyze感が無いみたい
 ;; http://community.schemewiki.org/?sicp-ex-4.23
+
+;; 4.24
+;; 時間を計測する方法　http://d.hatena.ne.jp/tmurata/20100423/1272021761
+;; 問題のfibonazziをやろうとすると計算 (+ - = ) が無いのでprimitiveに追加して・・
+;; driver-loopで↓を実行
+;;; M-Eval input:
+;;(define (fib n) (define (iter a b count) (if (= count 0) b (iter (+ a b) a (- count 1)))) (iter 1 0 n))
+;; (fib 10000)
+
+;; 普通版
+;(time (eval input the-global-environment))
+; real   0.214
+; user   0.202
+; sys    0.000
+
+;; analyze版
+;;(fib 10000)
+;(time (eval input the-global-environment))
+; real   0.148
+; user   0.218
+; sys    0.000
