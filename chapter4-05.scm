@@ -43,7 +43,7 @@
 
 ;; unless->if を作ればよい。これは特殊形式になってしまうけど。
 (load "./chapter4-repl.scm")
-
+(driver-loop)
 (define test-case
   (list 'unless 
 		'(= b 0) ;; condition
@@ -77,3 +77,6 @@ test-case
 
 ;; unless を特殊形式でなく手続きとして持つほうが役に立つ状況の例
 ;; なんだろ filterとかmapとかに引数で入れられるってことかな。
+
+;; L-Evalを作って chapter4-lreplって名前で置いといた。
+
