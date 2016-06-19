@@ -150,7 +150,7 @@
   (eq? (cond-predicate clause) 'else))
 (define (cond-predicate clause) (car clause))
 (define (cond-actions clause) (cdr clause))
-(define (cond-if exp) (expand-clauses (cond-clauses exp)))
+(define (cond->if exp) (expand-clauses (cond-clauses exp)))
 (define (expand-clauses clauses)
   (if (null? clauses)
       'false
@@ -277,6 +277,7 @@
         (list 'null? null?)
 		(list '+ +) ;; for 4.24
 		(list '- -)
+		(list '* *) ;; for 4.29
 		(list '= =)
         ))
 
@@ -357,6 +358,13 @@
 		((evaluated-thunk? obj) (thunk-value obj))
 		(else obj)))
 
+;; メモ化しないバージョン 4.29で使う
+;; (define (force-it obj)
+;;   (cond ((thunk? obj)
+;; 		 (let ((result (actual-value (thunk-exp obj)
+;; 									 (thunk-env obj))))
+;; 		   result))
+;; 		(else obj)))
 
 (define (list-of-arg-values exps env)
   (if (no-operands? exps)
@@ -379,12 +387,13 @@
 	  (eval (if-alternative exp) env)))
 (define input-prompt ";;; L-Eval input:")
 (define output-prompt ";;; L-Eval value:")
+
 (define (driver-loop)
   (prompt-for-input input-prompt)
   (let ((input (read)))
 	(let ((output
-		   (actual-value
-			input the-global-environment)))
+		   (time (actual-value
+			  input the-global-environment))))
 	  (announce-output output-prompt)
 	  (user-print output)))
   (driver-loop))
