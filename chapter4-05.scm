@@ -285,3 +285,37 @@ count
 ;; 何もしてない場合、actual-valueが登場するのは
 ;; evalとlist-of-arg-values
 ;; わからなかったのでここで諦めた。
+
+;; 4.32
+;; 3章のストリームはcarは遅延してない方式だったので、ここの違いが
+;; ある。例は
+;; lazyなリスト　とか lazyな木　とか。
+
+;; 4.33
+;; mつけた
+(define (mcons x y) (lambda (m) (m x y)))
+(define (mcar z) (z (lambda (p q) p)))
+(define (mcdr z) (z (lambda (p q) q)))
+(define l (mcons 'a 'b))
+l
+;; gosh> #<closure (mcons mcons)>
+
+(mcar l)
+;; gosh> a
+(mcdr l)
+;; gosh> b
+;; なるねえ。
+;; list（というかcons）の状態だけが違うって感じ。ナゾの引数mをとって x y を返すってなっている。
+;; mにlistを入れちゃえばいいのかも
+(l list)
+;; gosh> (a b)
+;; んでとりあえずこれをL-evalで動かしてみる
+;; (load "./chapter4-lrepl.scm")
+;; ;;; L-Eval input:
+;; (car '(a b))
+;; *** ERROR: Too few arguments supplied (z (z (lambda (p q) p))) ((thunk (quote (a b)) #0=(((false true car cdr cons null? + - * =) #f #t (procedure (z (z (lambda (p q) p))) () #0#) (procedure (z) ((z (lambda (p q) q))) #0#) (procedure (x y) ((lambda (m) (m x y))) #0#) (primitive #<subr null?>) (primitive #<subr +>) (primitive #<subr ->) (primitive #<subr *>) (primitive #<subr =>)))))
+;; 大変なことになった
+
+;; 4.34
+;; 諦めた
+
