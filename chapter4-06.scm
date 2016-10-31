@@ -74,6 +74,7 @@
 ;;
 ;; 8とおり
 
+
 ;; 4.39
 ;; 最初におもいっきりへらせたほうが後の方のたんさくが速そう
 ;; 全可能性は 5! = 60とおり
@@ -101,4 +102,43 @@
 
 ;; 4.40 問題の意味がかなり謎
 ;; ひとりずつ決めた後に条件つけてけばいいきがするけどうごかないのでよくわからないね。
+
+;; 4.41 うごかないうごかない言ってたから本当にうごかさないといけないの出てきた・・
+(define members '(baker cooper fletcher miller smith))
+(define all-possibilities (list  (cons 1 members) (cons 2 members) (cons 3 members) (cons 4 members) (cons 5 members)))
+all-possibilities
+((1 baker cooper fletcher miller smith) (2 baker cooper fletcher miller smith) (3 baker cooper fletcher miller smith) (4 baker cooper fletcher miller smith) (5 baker cooper fletcher miller smith))
+
+;; 単純なやつ
+(define (filtered-member-by-floor floor member member-list)
+  (define (filter-member member members)
+	(filter (lambda (m) (not (equal? member m))) members))
+  (let ((floor-number (car member-list))
+		(members (cdr member-list)))
+	(if (not (= floor floor-number)) member-list
+		(cons floor-number (filter-member member members)))))
+(filtered-member-by-floor 1 'baker (cons 1 members))
+;; gosh> (1 cooper fletcher miller smith)
+(define (filter-all-floor-member-by-floor floor member member-list)
+  (if (eq? member-list '()) '()
+	  (cons (filtered-member-by-floor floor member (car member-list))
+			(filter-all-floor-member-by-floor floor member (cdr member-list)))))
+(filter-all-floor-member-by-floor 1 'baker all-possibilities)
+;; gosh> ((1 cooper fletcher miller smith) (2 baker cooper fletcher miller smith) (3 baker cooper fletcher miller smith) (4 baker cooper fletcher miller smith) (5 baker cooper fletcher miller smith))
+;; これで上の方のやつはできそう
+(define (normal-scheme-distinct member-list)
+  (begin
+	(set! member-list (filter-all-floor-member-by-floor 5 'baker member-list))
+	(set! member-list (filter-all-floor-member-by-floor 1 'cooper member-list))
+	(set! member-list (filter-all-floor-member-by-floor 5 'fletcher member-list))
+	(set! member-list (filter-all-floor-member-by-floor 1 'fletcher member-list))
+	))
+(normal-scheme-distinct all-possibilities)
+;; gosh> ((1 baker miller smith) (2 baker cooper fletcher miller smith) (3 baker cooper fletcher miller smith) (4 baker cooper fletcher miller smith) (5 cooper miller smith))
+
+;; のこりもこんな感じで頑張ればいけるかもだけどくじけた。
+
+
+
+
 
