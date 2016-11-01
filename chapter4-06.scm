@@ -137,8 +137,61 @@ all-possibilities
 ;; gosh> ((1 baker miller smith) (2 baker cooper fletcher miller smith) (3 baker cooper fletcher miller smith) (4 baker cooper fletcher miller smith) (5 cooper miller smith))
 
 ;; のこりもこんな感じで頑張ればいけるかもだけどくじけた。
+;; これつかうと楽にできるっぽい https://practical-scheme.net/gauche/man/gauche-refj/Zu-miHe-wase.html
 
 
 
+;; 4.42
+;; どうせ動かないけど4.38風にやればいいのだろう
+(define (distinct? items)
+  (cond ((null? items) true)
+		((null? (cdr items)) true)
+		((member (car items) (cdr items)) false)
+		(else (distinct? (cdr items)))))
+;; requireのところは両方真のことはないのでxorだ
+;; https://ja.wikipedia.org/wiki/XOR%E3%82%B2%E3%83%BC%E3%83%88
+;; これのっけたことにした
+(define (xor a b)
+  (define (nand a b)
+	(not (and a b)))
+  (let* ((first-gate-out (nand a b))
+		 (second-above-out (nand a first-gate-out))
+		 (second-below-out (nand b first-gate-out)))
+	(nand second-above-out second-below-out)))
 
+(define (multiple-dwelling)
+  (let ((betty (amb 1 2 3 4 5)) (ethel (amb 1 2 3 4 5))
+		(joan (amb 1 2 3 4 5)) (kitty (amb 1 2 3 4 5))
+		(mary (amb 1 2 3 4 5)))
+	(require 
+	 (distinct? (list betty ethel joan kitty mary)))
+	(require (xor (= kitty 2) (= betty 3)))
+	(require (xor (= ethel 1) (= joan 2)))
+	(require (xor (= joan 3) (= ethel 5)))
+	(require (xor (= kitty 2) (= mary 4)))
+	(require (xor (= mary 4) (= betty 1)))
+	(list (list 'betty betty) (list 'ethel ethel)
+		  (list 'joan joan) (list 'kitty kitty)
+		  (list 'mary mary))))
 
+;; 4.43 同じ感じでやるとこんな
+(define (multiple-dwelling)
+  (let ((moore (amb 'gabrielle 'lorna 'rosalind 'melissa 'mary)) 
+		(dawning (amb 'gabrielle 'lorna 'rosalind 'melissa 'mary)) 
+		(hall (amb 'gabrielle 'lorna 'rosalind 'melissa 'mary)) 
+		(barnacle  (amb 'gabrielle 'lorna 'rosalind 'melissa 'mary)) 
+		(parker (amb 'gabrielle 'lorna 'rosalind 'melissa 'mary)) 
+	(require 
+	 (distinct? (list 'betty 'ethel 'joan 'kitty 'mary)))
+	(require (= moore 'mary))
+	(require (not (= barnacle 'gabrielle)))
+	(require (not (= moore 'lorna)))
+	(require (not (= downing 'melissa)))
+	(require (= barnacle 'melissa))
+	(require (= parer 'mery))
+	(list (list 'moore moore) (list 'dawning dawning)
+		  (list 'hall hall) (list 'barnacle barnacle)
+		  (list 'parker parker)))))
+
+;; 4.44
+;; 8クイーン解けない・・
