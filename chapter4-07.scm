@@ -79,7 +79,7 @@ try-again
 try-again
 try-again
 ;; ;;; Starting a new problem 
-;; ;;; Amb-Eval value:
+;; ;;; Amb-Eval value:s
 ;; (sentence (simple-noun-phrase (article the) (noun professor)) (verb-phrase (verb-phrase (verb-phrase (verb lectures) (prep-phrase (prep to) (simple-noun-phrase (article the) (noun student)))) (prep-phrase (prep in) (simple-noun-phrase (article the) (noun class)))) (prep-phrase (prep with) (simple-noun-phrase (article the) (noun cat)))))
 
 ;; ;;; Amb-Eval input:
@@ -106,3 +106,13 @@ try-again
 
 ;; ;;; There are no more values of
 ;; (parse '(the professor lectures to the student in the class with the cat))
+
+
+;; 4.46
+;; 構文評価は頭からやらないとできないやん。
+
+;; 4.47
+; maybe-extend をつかわない方式ってことね。
+; parse-simple-nown-phraseとにたようなかんじになるってことか。
+; 「あるかもしれないしないかもしれない」を削ると動詞と前置詞句がかならず無いと構文解析できないものになりそう。
+
