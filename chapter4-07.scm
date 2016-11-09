@@ -132,3 +132,39 @@ try-again
 ;; (sentence (noun-phrase (simple-noun-phrase (article the) (adjective good) (noun student)) (prep-phrase (prep with) (simple-noun-phrase (article the) (adjective red) (noun cat)))) (verb-phrase (verb sleeps) (prep-phrase (prep in) (simple-noun-phrase (article the) (adjective ugly) (noun class)))))
 ;; ただこうするとかならず形容詞が必要になっちゃう
 ;; まいっか。
+
+;; 4.49
+;; word-listから適当にとってくるやつを作ればいいって話かな
+(define (an-element-of items)
+  (require (not (null? items)))
+  (amb (car items) (an-element-of (cdr items))))
+(define (parse-word word-list)
+  (an-element-of (cdr word-list)))
+(parse-word nouns)
+try-again
+(list (parse-word nouns) (parse-word verbs) (parse-word nouns))
+try-again
+;;; Amb-Eval value:
+;; (student studies student)
+;;; Amb-Eval input:
+try-again
+;;; Amb-Eval value:
+;; (student studies professor)
+;;; Amb-Eval input:
+try-again
+;;; Amb-Eval value:
+;; (student studies cat)
+;;; Amb-Eval input:
+try-again
+;;; Amb-Eval value:
+;; (student studies class)
+;;; Amb-Eval input:
+try-again
+;;; Amb-Eval value:
+;; (student lectures student)
+;;; Amb-Eval input:
+try-again
+;;; Amb-Eval value:
+;; (student lectures professor)
+
+;; 出来たようなきがする　名詞句とかもできんのかな。しらん。
