@@ -116,3 +116,19 @@ try-again
 ; parse-simple-nown-phraseとにたようなかんじになるってことか。
 ; 「あるかもしれないしないかもしれない」を削ると動詞と前置詞句がかならず無いと構文解析できないものになりそう。
 
+;; 4.48
+; あんまよくわかってないから形容詞でも入れてみよう
+; noun phrase が article adjective noun になるやつをつくってみる
+
+(define adjectives '(adjective red good ugly sleepy))
+
+(define (parse-simple-noun-phrase)
+  (list 'simple-noun-phrase
+		(parse-word articles)
+		(parse-word nouns)))
+;; これでいいような気がするので試
+(parse '(the good student with the red cat sleeps in the ugly class))
+;;; Amb-Eval value:
+;; (sentence (noun-phrase (simple-noun-phrase (article the) (adjective good) (noun student)) (prep-phrase (prep with) (simple-noun-phrase (article the) (adjective red) (noun cat)))) (verb-phrase (verb sleeps) (prep-phrase (prep in) (simple-noun-phrase (article the) (adjective ugly) (noun class)))))
+;; ただこうするとかならず形容詞が必要になっちゃう
+;; まいっか。
