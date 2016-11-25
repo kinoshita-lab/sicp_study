@@ -651,6 +651,6 @@
 
 
 ;; これを解き放つとrepl
-(driver-loop)
+;;(driver-loop)
 ;; 試
 ;;(list (amb 1 2 3) (amb 'a b))
