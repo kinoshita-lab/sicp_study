@@ -284,6 +284,7 @@
 		(list 'list list) ;; これないと試しづらい
 		(list 'not not)
 		(list 'eq? eq?)
+		(list 'even? even?)
         ))
 
 (define (primitive-procedure-names)

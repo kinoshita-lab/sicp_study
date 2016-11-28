@@ -210,9 +210,10 @@
 ;;;;In the driver loop, do
 (define (require p)
  (if (not p) (amb)))
+;; loadからここまでは毎回実行する必要がある。
 
 (define count 0)
-;; an-element-of ってなんだ ambでいいのかな。
+;; an-element-of ってなんだ
 ;; 本文にあった
 (define (an-element-of items)
   (require (not (null? items)))
@@ -235,3 +236,69 @@ try-again
 ;; .
 ;; 最後まで１だった。
 
+;; --------------------- ここでrepl終了
+
+;; 4.52
+;; 意味がわかりづらい
+;; (if-fail (やってみようとすること　上手く行ったらこの中を返す)
+;;          (ダメだった時返すもの))
+;; みたいな感じ
+
+
+(load "./chapter4-ambrepl.scm")
+(use slib) 
+(require 'trace)
+(trace apply-primitive-procedure)
+
+;; 上書きシリーズ
+(define (if-fail-try exp)  (cadr exp))
+(define (if-fail-fail exp) (caddr exp))
+
+;; ifをちょっと変えたくらいでなんとかならないのか
+(define (analyze-if-fail exp)
+  (let ((tproc (analyze (if-fail-try exp)))
+		(fproc (analyze (if-fail-fail exp))))
+	(lambda (env succeed fail)
+	  (tproc env
+			 (lambda (value fail2) ;; ifのsuceedのとこ風
+			   (succeed value fail2))
+			 (lambda ()
+			   (fproc env succeed fail)))))) ;; failそのままだと呼ばれなかったので実行してもらう感じ
+
+;; analyzeに組み込む
+(define (if-fail? exp) (tagged-list? exp 'if-fail))
+(define (analyze exp)
+  (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
+		((quoted? exp) (analyze-quoted exp))
+		((amb? exp) (analyze-amb exp))
+		((if-fail? exp) (analyze-if-fail exp)) ;; これ足した！
+		((variable? exp) (analyze-variable exp))
+		;;((permanent-assignment? exp) (analyze-permanent-assignment exp))
+		((assignment? exp) (analyze-assignment exp))
+		((definition? exp) (analyze-definition exp))
+		((if? exp) (analyze-if exp))
+		((lambda? exp) (analyze-lambda exp))
+		((begin? exp) (analyze-sequence (begin-actions exp)))
+		((cond? exp) (analyze (cond->if exp)))
+		((let? exp) (analyze (let->combination exp))) 
+		((application? exp) (analyze-application exp))
+		(else (error "Unknown expression type: ANALYZE" exp))))
+
+(define the-global-environment (setup-environment))
+
+(driver-loop)
+
+;;;;In the driver loop, do
+(define (require p)
+ (if (not p) (amb)))
+(define (an-element-of items)
+  (require (not (null? items)))
+  (amb (car items) (an-element-of (cdr items))))
+;; even? をprimitive-proceduresに入れても無視されるので自作
+
+(if-fail (let ((x (an-element-of '(1 3 5))))
+		   (require (even? x))
+		   x)
+		 'all-odd)
+
+;; これでいい予定何だけど動かない・・
