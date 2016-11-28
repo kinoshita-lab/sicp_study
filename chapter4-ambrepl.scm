@@ -282,6 +282,8 @@
 		(list '- -)
 		(list '= =)
 		(list 'list list) ;; これないと試しづらい
+		(list 'not not)
+		(list 'eq? eq?)
         ))
 
 (define (primitive-procedure-names)
@@ -437,12 +439,14 @@
 		(else (error "Unknown expression type: ANALYZE" exp))))
 
 ;; 問題4.22からlet拾ってくる
-(define (let->combination exp)
-  (let ((vars-exps (cadr test-case))
-		(body (caddr test-case)))
-	((make-lambda (vars sexp)
-				  body
-				  env) (vals exp)))) 
+ (define (let-vars expr) (map car (cadr expr))) 
+ (define (let-inits expr) (map cadr (cadr expr))) 
+ (define (let-body expr) (cddr expr)) 
+
+ (define (let->combination expr) 
+   (cons (make-lambda (let-vars expr) (let-body expr)) 
+         (let-inits expr))) 
+
 ;; ↑で必要なのを作る
 (define (vars s)
   (cond ((eq? s '()) '())
@@ -506,7 +510,7 @@
 			 ;; pred-valueを得るための
 			 ;; 述語の評価に対する成功継続
 			 (lambda (pred-value fail2)
-			   (if (true? pref-value)
+			   (if (true? pred-value)
 				   (cproc env succeed fail2)
 				   (aproc env succeed fail2)))
 			 ;; 述語の評価に対する失敗継続
@@ -534,7 +538,7 @@
 ;; 定義と代入
 (define (analyze-definition exp)
   (let ((var (definition-variable exp))
-		(proc (analyze (definition-value exp))))
+		(vproc (analyze (definition-value exp))))
 	(lambda (env succeed fail)
 	  (vproc env
 			 (lambda (val fail2)

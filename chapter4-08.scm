@@ -139,4 +139,99 @@
 ;; なんとなくバラけたようなきがする
 ;; Alyssa の問題を解く というかtry-againした時に色々な単語が選ばれるので面白い
 
+;; 連続で実行できないのでここでインタプリタ終了　---------------------
+
+;; 4.51
+;; permanent-set!はset!を元の評価器にしたみたいなものを作れば良さそう
+;; analyzeに追加
+(define (analyze exp)
+  (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
+		((quoted? exp) (analyze-quoted exp))
+		((amb? exp) (analyze-amb exp))
+		((ramb? exp) (analyze-ramb exp)) 
+		((variable? exp) (analyze-variable exp))
+		((permanent-assignment? exp) (analyze-permanent-assignment exp)) ;; これ足した！
+		((assignment? exp) (analyze-assignment exp))
+		((definition? exp) (analyze-definition exp))
+		((if? exp) (analyze-if exp))
+		((lambda? exp) (analyze-lambda exp))
+		((begin? exp) (analyze-sequence (begin-actions exp)))
+		((cond? exp) (analyze (cond->if exp)))
+		((let? exp) (analyze (let->combination exp))) 
+		((application? exp) (analyze-application exp))
+		(else (error "Unknown expression type: ANALYZE" exp))))
+
+;; 代入
+(define (permanent-assignment? exp) (tagged-list? exp 'permanent-set!))
+(define (permanent-assignment-variable exp) (cadr exp))
+(define (permanent-assignment-value exp) (caddr exp))
+
+;; もともとのやつ
+;; (define (analyze-assignment exp)
+;;   (let ((var (assignment-variable exp))
+;; 		(vproc (analyze (assignment-value exp))))
+;; 	(lambda (env)
+;; 	  (set-variable-value! var (vproc env) env)
+;; 	  'ok)))
+
+;; amb状態
+;; (define (analyze-assignment exp)
+;;   (let ((var (assignment-variable exp))
+;; 		(vproc (analyze (assignment-value exp))))
+;; 	(lambda (env succeed fail)
+;; 	  (vproc env
+;; 			 (lambda (val fail2)
+;; 			   (let ((old-value
+;; 					  (lookup-variable-value var env)))
+;; 				 (set-variable-value! var val env)
+;; 				 (succeed 'ok
+;; 						  (lambda ()
+;; 							(set-variable-value!
+;; 							 var old-value env)
+;; 							(fail2)))))
+;; 			 fail))))
+;; succeedとかfailがあるからそのままはできなさそう
+(define (analyze-permanennt-assignment exp)
+  (let ((var (assignment-variable exp))
+		(vproc (analyze (assignment-value exp))))
+	(lambda (env succeed fail)
+	  (vproc env
+			 (lambda (val fail2)
+			   (begin
+				 (set-variable-value! var val env)
+				 (succeed 'ok
+						  fail2)))
+	  fail))))
+;; こんなかな。
+;; どんな値が出るか？　はambevalをset!で回せば出るよね。
+(load "./chapter4-ambrepl.scm")
+(define the-global-environment (setup-environment))
+(driver-loop)
+;;;;In the driver loop, do
+(define (require p)
+ (if (not p) (amb)))
+
+(define count 0)
+;; an-element-of ってなんだ ambでいいのかな。
+;; 本文にあった
+(define (an-element-of items)
+  (require (not (null? items)))
+  (amb (car items) (an-element-of (cdr items))))
+
+(let ((x (an-element-of '(a b c)))
+	  (y (an-element-of '(a b c))))
+  (set! count (+ count 1))
+  (require (not (eq? x y)))
+  (list x y count))
+;; (a b 1)
+try-again
+;; ;;; Amb-Eval value:
+;; (a c 1)
+;; ;;; Amb-Eval input:
+;; ;;; Amb-Eval value:
+;; (b a 1)
+;; .
+;; .
+;; .
+;; 最後まで１だった。
 
