@@ -302,3 +302,18 @@ try-again
 		 'all-odd)
 
 ;; これでいい予定何だけど動かない・・
+
+;; 4.53
+;; prime-sum-paireをみつけたらpairsに追加、なかったらambでリトライという動きをする。
+
+;; 4.54
+;; むしろ特殊形式にして欲しいわ　まいかい定義するのめんどくさすぎ
+(define (analyze-require exp)
+  (let ((pproc (analyze (require-predicate exp))))
+	(lambda (env succeed fail)
+	  (pproc env
+			 (lambda (pred-value fail2)
+			   (if (false? pred-value)
+				   (fail) 
+				   (succeed 'ok fail2)))
+			 fail))))
