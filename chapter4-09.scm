@@ -18,3 +18,16 @@
 (and (not (job ?x (computer . ?type)))
 	 (supervisor ?x ?y)
 	 (job ?x ?z))
+
+;; 4.57
+; a.
+(can-do-job ?name (job (Fect Cy D)))
+
+; b.
+; 謎。答えみても謎。a.も違うっぽい
+
+;; 4.58
+;; これも違うとおもう。感覚がよくわかってない
+(rule (big-shot ?person)
+	  (and (not (supervisor ?person ?boss))
+		   (not (same ?person ?person)))
