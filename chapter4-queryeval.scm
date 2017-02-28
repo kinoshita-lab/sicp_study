@@ -1,7 +1,36 @@
 ;;; 4.4.4 クエリシステムの実装
 
-;; put/get必要?
+;; put/get必要
+(load "./chapter2_utility.scm")
+(clear-putlist)
 
+;; the-empty-stream 必要
+(load "./stream.scm")
+
+;; stream-appendとかがない
+(define (stream-append s1 s2)
+  (if (stream-null? s1)
+	  s2
+	  (cons-stream (stream-car s1)
+				   (stream-append (stream-cdr s1) s2))))
+
+;; extend 最初につくっとかないとだめ
+(define (extend variable value frame)
+  (cons (make-binding variable value) frame))
+
+;; prompt-for-input がない
+(define (prompt-for-input string)
+  (newline) (newline) (display string) (newline))
+
+;; true/false がない
+(define false #f)
+(define true #t)
+
+;; tagged-list? がない
+(define (tagged-list? exp tag)
+  (if (pair? exp)
+	  (eq? (car exp) tag)
+	  false))
 
 ;;;
 (define input-prompt  ";;; Query input:")
@@ -42,7 +71,7 @@
   (copy exp))
 
 (define (qeval query frame-stream)
-  (let ((qproc (get type query) 'qeval))
+  (let ((qproc (get (type query) 'qeval)))
 	(if qproc
 		(qproc (contents query) frame-stream)
 		(simple-query query frame-stream))))
@@ -127,7 +156,8 @@
 
 (define (extend-if-consistent var dat frame)
   (let ((binding (binding-in-frame var frame)))
-	(if binding (pattern-match (binding-value binding) dat frame)
+	(if binding
+		(pattern-match (binding-value binding) dat frame)
 		(extend var dat frame))))
 
 (define (apply-rules pattern frame)
@@ -227,12 +257,14 @@
   (if (rule? assertion)
 	  (add-rule! assertion)
 	  (add-assertion! assertion)))
-(define (add-assertion-body assertion)
+
+(define (add-assertion! assertion)
   (store-assertion-in-index assertion)
   (let ((old-assertions THE-ASSERTIONS))
 	(set! THE-ASSERTIONS
 		  (cons-stream assertion old-assertions))
 	'ok))
+
 (define (add-rule! rule)
   (store-rule-in-index rule)
   (let ((old-rules THE-RULES))
@@ -255,9 +287,8 @@
 	(if (indexable? pattern)
 		(let ((key (index-key-of pattern)))
 		  (let ((current-rule-stream
-				 (get-stream key 'rules-stream)))
-			(put key
-				 'rule-stream
+				 (get-stream key 'rule-stream)))
+			(put key 'rule-stream
 				 (cons-stream rule
 							  current-rule-stream)))))))
 
@@ -270,6 +301,7 @@
 	(if (var? key) '? key)))
 
 (define (use-index? pat) (constant-symbol? (car pat)))
+
 ;; stream 必要
 (define (stream-append-delayed s1 delayed-s2)
   (if (stream-null? s1)
@@ -303,6 +335,7 @@
   (if (pair? exp)
 	  (car exp)
 	  (error "Unknown expression TYPE" exp)))
+
 (define (contents exp)
   (if (pair? exp)
 	  (cdr exp)
@@ -312,8 +345,8 @@
 ;; 規則と表明が (assert! <rule-or-assertion>) の形式の式によってデー
 ;; タベースに追加されるということを規定します。
 (define (assertion-to-be-added? exp)
-  (eq? (type exp) 'asser))
-(define (add-assertion-body exp) (car 9contents exp))
+  (eq? (type exp) 'assert!))
+(define (add-assertion-body exp) (car (contents exp)))
 
 (define (empty-conjunction? exps) (null? exps))
 (define (first-conjunct exps) (car exps))
@@ -369,8 +402,7 @@
   (cons variable value))
 (define (binding-variable binding) (car binding))
 (define (binding-value binding) (cdr binding))
-(define (binding-in-frame variable flame)
+(define (binding-in-frame variable frame)
   (assoc variable frame))
-(define (extend variable value frame)
-  (cons (make-binding variable value) frame))
 
+(query-driver-loop)
