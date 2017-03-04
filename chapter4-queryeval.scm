@@ -1,8 +1,7 @@
 ;;; 4.4.4 クエリシステムの実装
 
-;; put/get必要
-(load "./chapter2_utility.scm")
-(clear-putlist)
+;; put/get必要 自作のがうまく動かなかったので公式のものにした
+(load "./code_from_text/put_get.scm") 
 
 ;; the-empty-stream 必要
 (load "./stream.scm")
@@ -123,8 +122,9 @@
    frame-stream))
 (put 'lisp-value 'qeval lisp-value)
 
+(define user-initial-environment interaction-environment)
 (define (execute exp)
-  (apply (eval (predicate exp) user-initial-environment)
+  (apply (eval (predicate exp) interaction-environment)
 		 (args exp)))
 
 
@@ -322,6 +322,7 @@
 
 (define (stream-flatmap proc s)
   (flatten-stream (stream-map proc s)))
+
 (define (flatten-stream stream)
   (if (stream-null? stream)
 	  the-empty-stream
@@ -408,6 +409,7 @@
 (query-driver-loop)
 
 
+
 (assert! (address (Bitdiddle Ben) (Slumerville (Ridge Road) 10)))
 (assert! (job (Bitdiddle Ben) (computer wizard)))
 (assert! (salary (Bitdiddle Ben) 60000))
@@ -450,6 +452,9 @@
 (assert! (can-do-job (administration secretary)))
 (assert! (administration big wheel))
 
+;; test1
+(job ?x ( computer programmer ))
 
-
+;; test2
+(job ?x ( computer ?y))
 
