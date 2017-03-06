@@ -88,9 +88,9 @@
 	  frame-stream
 	  (conjoin (rest-conjuncts conjuncts)
 			   (qeval (first-conjunct conjuncts) frame-stream))))
-
+(put 'and 'qeval conjoin )
 (define (disjoin disjuncts frame-stream)
-  (if (empty-dusjunction? disjuncts)
+  (if (empty-disjunction? disjuncts)
 	  the-empty-stream
 	  (interleave-delayed
 	   (qeval (first-disjunct disjuncts) frame-stream)
