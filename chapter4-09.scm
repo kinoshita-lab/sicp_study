@@ -74,3 +74,86 @@
 ;; うには、彼女はどのようなクエリを作るべきだろうか。
 (meeting-time (Hacker Alyssa P) (Wednesday ?hoge))
 
+
+;; 4.60
+;;lives-nearを追加
+(assert! (rule (lives-near ?person-1 ?person-2 )
+			   (and (address ?person-1 (?town . ?rest-1 ))
+					(address ?person-2 (?town . ?rest-2 ))
+					(not (same ?person-1 ?person-2 )))))
+;; sameも追加
+(assert! (rule (same ?x ?x)))
+
+;; 試
+(lives-near ?x (Bitdiddle Ben))
+;; ;;; Query results:
+;; (lives-near (Aull DeWitt) (Bitdiddle Ben))
+;; (lives-near (Reasoner Louis) (Bitdiddle Ben))
+
+;; 問題の
+(lives-near ?person-1 ?person-2)
+;;; Query results:
+;; (lives-near (Aull DeWitt) (Reasoner Louis))
+;; (lives-near (Aull DeWitt) (Bitdiddle Ben))
+;; (lives-near (Reasoner Louis) (Aull DeWitt))
+;; (lives-near (Reasoner Louis) (Bitdiddle Ben))
+;; (lives-near (Hacker Alyssa P) (Fect Cy D))
+;; (lives-near (Fect Cy D) (Hacker Alyssa P))
+;; (lives-near (Bitdiddle Ben) (Aull DeWitt))
+;; (lives-near (Bitdiddle Ben) (Reasoner Louis))
+;; こうなる。
+;; なぜ起こるのか？ person-1に誰かが入ってる時とperson-2に誰かが入ってる時両方でクエリが
+;; 呼ばれてしまうから。
+;; 
+;; 1回しかあらわれないようにするには？
+;; 表示したやつをputのlistとかに入れといて、交換したやつがすでにlistに入ってれば出さない、 とかやればいいような気がする
+;; あんまり普遍的ではないけど。
+;; 説明した からいいのかなこれで。
+
+;; プログラムとしての論理
+;; interpreter再起動
+(load "./chapter4-queryeval.scm")
+(assert! (rule (append-to-form () ?y ?y)))
+(assert! (rule (append-to-form (?u . ?v) ?y (?u . ?z))
+			   (append-to-form ?v ?y ?z)))
+
+(append-to-form (a b) (c d) ?z)
+;;; Query results:
+;; (append-to-form (a b) (c d) (a b c d))
+;;
+;;
+(append-to-form (a b) ?y (a b c d))
+;;; Query results:
+;;(append-to-form (a b) (c d) (a b c d))
+(append-to-form ?x ?y (a b c d))
+;; ;;; Query results:
+;; (append-to-form (a b c d) () (a b c d))
+;; (append-to-form () (a b c d) (a b c d))
+;; (append-to-form (a) (b c d) (a b c d))
+;; (append-to-form (a b) (c d) (a b c d))
+;; (append-to-form (a b c) (d) (a b c d))
+
+;; 4.61
+;; ルールを追加
+(assert! (rule (?x next-to ?y in (?x ?y . ?u))))
+(assert! (rule (?x next-to ?y in (?v . ?z))
+			   (?x next-to ?y in ?z)))
+
+(?x next-to ?y in (1 (2 3) 4))
+;;; Query results:
+;; ((2 3) next-to 4 in (1 (2 3) 4))
+;; (1 next-to (2 3) in (1 (2 3) 4))
+
+(?x next-to 1 in (2 1 3 1))
+;;; Query results:
+;; (3 next-to 1 in (2 1 3 1))
+;; (2 next-to 1 in (2 1 3 1))
+;; すげー 
+;; ちょっと試
+(?x next-to 1 in (2 1 3 1 2 1 3 1))
+;;; Query results:
+;; (3 next-to 1 in (2 1 3 1 2 1 3 1))
+;; (2 next-to 1 in (2 1 3 1 2 1 3 1))
+;; (3 next-to 1 in (2 1 3 1 2 1 3 1))
+;; (2 next-to 1 in (2 1 3 1 2 1 3 1))
+
