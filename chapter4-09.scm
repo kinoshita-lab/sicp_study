@@ -157,3 +157,43 @@
 ;; (3 next-to 1 in (2 1 3 1 2 1 3 1))
 ;; (2 next-to 1 in (2 1 3 1 2 1 3 1))
 
+;; appendのとこをよく把握しとく必要あるな
+(load "./chapter4-queryeval.scm")
+(rule (append-to-form () ?y ?y)) ;; 任意のリスト y について、空リストと y を append すると y になる。 のrule
+(rule (append-to-form (?u . ?v) ?y (?u . ?z)) ;; (cons u v) と y を append すると (cons u z) になる。
+	  (append-to-form ?v ?y ?z)) ;; ;; v と y を append すると z になるならば
+
+;; last-pair は 最後のやつを表示するやつだった
+;; (last-pair (1 2 3 4)) => (4) みたいな
+;; これをappend風にあらわす。 2番目のruleはなぜ逆なのだろう。逆にするとどうなるんだ？
+;; interpreter再起動
+(load "./chapter4-queryeval.scm")
+(assert! (rule (append-to-form () ?y ?y))) ;; 任意のリスト y について、空リストと y を append すると y になる。 のrule
+(assert! (rule (append-to-form ?v ?y ?z) ;; ;; v と y を append すると z になるならば
+			   (append-to-form (?u . ?v) ?y (?u . ?z)))) ;; (cons u v) と y を append すると (cons u z) になる。
+;; 答かえってこなくなった
+
+;; 4.62
+;; append風にあらわせればいいってことだ
+(load "./chapter4-queryeval.scm")
+(assert! (rule (last-pair (?y . ()) (?y)))) ; 任意のリストyについて、 (cons y '()) の last-pairはyになる のrule
+(assert! (rule (last-pair (?u . ?v) ?z) ;; (cons u v) の last-pair がzになるならば  
+			   (last-pair ?v ?z)))    ;;  vのlast-pairはzになる
+
+(last-pair (3) ?x)
+;;; Query results:
+;; (last-pair (3) (3))
+
+
+(last-pair (1 2 3) ?x)
+;;; Query results:
+;; (last-pair (1 2 3) (3))
+
+(last-pair (2 ?x) (3))
+;;; Query results:
+;; (last-pair (2 3) (3))
+
+;; ↓ 実行注意!
+;; (last-pair ?x (3))
+;; 返事がかえってこなくなった
+;; 「last-pairが 3 になるリスト全て」 というのは無限にあるから答えがかえってこなくなった。
