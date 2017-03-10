@@ -197,3 +197,43 @@
 ;; (last-pair ?x (3))
 ;; 返事がかえってこなくなった
 ;; 「last-pairが 3 になるリスト全て」 というのは無限にあるから答えがかえってこなくなった。
+
+
+;; 4.63
+;; interpreter再起動
+(load "./chapter4-queryeval.scm")
+;; データベースつくる
+(assert! (son Adam Cain))
+(assert! (son Cain Enoch ))
+(assert! (son Enoch Irad))
+(assert! (son Irad Mehujael))
+(assert! (son Mehujael Methushael))
+(assert! (son Methushael Lamech))
+(assert! (wife Lamech Ada))
+(assert! (son Ada Jabal))
+(assert! (son Ada Jubal))
+
+(son ?x ?y)
+;; ;;; Query results:
+;; (son Ada Jubal)
+;; (son Ada Jabal)
+;; (son Methushael Lamech)
+;; (son Mehujael Methushael)
+;; (son Irad Mehujael)
+;; (son Enoch Irad)
+;; (son Cain Enoch)
+;; “もし S が f の息子であり、かつ、f が G の息子ならば、S は Gの孫である”
+(assert! (rule (grandson ?g ?s)
+			   (and (son ?g ?u)
+					(son ?u ?s))))
+(grandson Adam ?x)
+;; (grandson Adam Enoch)
+;; “もし W が M の妻であり、かつ、S が W の息子ならば、S は M の息子である”
+(assert! (rule (son-m ?w ?s)
+			   (and (wife ?w ?h)
+					(son ?h ?s))))
+
+(son-m Lamech ?x)
+;;; Query results:
+;; (son-m Lamech Jubal)
+;; (son-m Lamech Jabal)
