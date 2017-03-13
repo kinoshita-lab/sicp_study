@@ -237,3 +237,34 @@
 ;;; Query results:
 ;; (son-m Lamech Jubal)
 ;; (son-m Lamech Jabal)
+
+
+;; 4.64
+;; interpreter再起動
+(load "./chapter4-queryeval.scm")
+
+;; Louisのoutranked-by
+;; (rule (outranked-by ?staff-person ?boss)
+;; 	  (or (supervisor ?staff-person ?boss)
+;; 		  (and (outranked-by ?middle-manager ?boss)
+;; 			   (supervisor ?staff-person
+;; 						   ?middle-manager))))
+;; もともとの
+;; (rule (outranked-by ?staff-person ?boss)
+;; 	  (or (supervisor ?staff-person ?boss)
+;; 		  (and (supervisor ?staff-person
+;; 						   ?middle-manager)
+;; 			   (outranked-by ?middle-manager ?boss))));
+
+;; ちがうのはandの条件の順番
+;;  (outranked-by ?middle-manager ?boss)
+;; がパターン変数が何にも束縛されないで呼ばれちゃうから無限になってしまう。
+;; もともとのやつだと1番目の条件できまったストリームを、削るためにつかってた。
+
+;; 4.65
+;; wheelはこんなかんじ
+;; (rule (wheel ?person)
+;; 	  (and (supervisor ?middle-manager ?person)
+;; 		   (supervisor ?x ?middle-manager)))
+;; 条件に合えば有効な結果として表示されるようになっているので、
+;; Warbucks Oliverが色々な人のsupervisorだと、このようになる。
