@@ -268,3 +268,71 @@
 ;; 		   (supervisor ?x ?middle-manager)))
 ;; 条件に合えば有効な結果として表示されるようになっているので、
 ;; Warbucks Oliverが色々な人のsupervisorだと、このようになる。
+
+;; 4.66
+;; 問題4.65と同じことがおきて、何回も計算してしまう人がでてきてしまう。
+;; 「状況打開に使える方法の概要」はuniqみたいなことができればよい。で概要になってるのかな。
+;; 実装した評価器であらわすと、超てっとりばやいのはdriver-loopで結果を表示してるところで
+;; streamを表示するまえにuniqueにすればいい。
+
+;; 4.67
+;; 無限ループを発生させてtraceを見てみる
+;; interpreter再起動
+(load "./chapter4-queryeval.scm")
+;; Louisの
+(assert! (rule (outranked-by ?staff-person ?boss)
+			   (or (supervisor ?staff-person ?boss)
+				   (and (outranked-by ?middle-manager ?boss)
+						(supervisor ?staff-person
+									?middle-manager)))))
+;; 無限ループ注意!
+(outranked-by (Bitdiddle Ben) ?who)
+;;  26  (force delayed-s2)
+;;         at "./chapter4-queryeval.scm":320
+;;  27  (proc)
+;;         at "./stream.scm":12
+;;  28  (proc)
+;;         at "./stream.scm":12
+;;  29  (proc)
+;;         at "./stream.scm":12
+;;  30  (proc)
+;;         at "./stream.scm":12
+;; ... (more stack dump truncated)
+;; こんなかんじになったので streamが無限になっちゃってるっぽい
+;; streamは無実 (?)なのでその手前でとめてあげたい。
+;; streamは1こずつqevalで評価されて出てくるので、ここに入ってくるqueryとframe-streamを毎回どっかにつっこんでおいて、同じのがあったらループとする・・・というのはどうだろう
+
+;; 4.68
+;; まずreverseがどうだったかというとこんなだった
+(define (reverse items)
+  (define (reverse-iter reversed items)
+    (if (null? items)
+        reversed
+        (reverse-iter (append (list (car items)) reversed) (cdr items))))
+  (reverse-iter '() items))
+(reverse '(1 2 3))
+;; これとappend-to-formをどうやってくみあわせればいいのかな。
+;; とりあえずinterpreter再起動
+(load "./chapter4-queryeval.scm")
+;; とりあえずappend-to-form
+(assert! (rule (append-to-form () ?y ?y)))
+(assert! (rule (append-to-form (?u . ?v) ?y (?u . ?z))
+			   (append-to-form ?v ?y ?z)))
+;; いろいろやってくじけた
+;; reverseをiterじゃないやつにしたほうがいいのではないか
+(define (reverse items)
+  (if (eq? '() items) items
+	  (append (reverse (cdr items)) (list (car items)))))
+(reverse '(1 2 3))
+;; > (3 2 1)
+;; ↑をruleにしてみればいいのかな
+;; (assert! (rule (reverse () ())))
+;; (assert! (rule (reverse (?x . ?y) ?z) ;; x,yはcar/cdrにわかれたい
+;; 			   (and (reverse ?z (?x . ?y))
+;; 					(append-to-form ?z ?x ?y))))
+;; これもだめだった。
+
+;; 4.69
+;; 問題のいみがよくわからない・・・パス
+
+
