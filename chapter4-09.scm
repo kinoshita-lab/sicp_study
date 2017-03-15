@@ -335,4 +335,40 @@
 ;; 4.69
 ;; 問題のいみがよくわからない・・・パス
 
+;; 4.70
+;; old-assertionを保存しときたいから。cons-streamの2番目の引数はdelayになるので、評価するときの
+;; 全部のTHE-ASSERTIONが同じな上、永久につづくものになっしまうが、ここでほしいのは現在の状態のため。
+
+;; 4.71
+;; これはquery evaluatorではなくてstreamの問題なのではないか
+;; streamがなくなるまで評価してから出すか、1個ずつ出すかの違いだとおもう。
+;; なので無限ループの時に結果がでたり出なかったりする。
+
+;; 4.72
+;; これもstreamの問題のような気がする
+;; interleaveにした理由は、片方が無限だった場合に、組みあわせの結果が得られないから。 っていうのをstreamのところでやった。
+
+
+;; 4.73
+;; 4.71と同様にstreamが最後までいかないとinterleaveされなくなってしまうから。
+
+;; 4.74
+;; a
+;; Alyssaのやつを作る
+;; これは同じ
+(define (simple-stream-flatmap proc s)
+  (simple-flatten (stream-map proc s)))
+
+;; これつくる
+(define (simple-flatten stream )
+  (stream-map stream-car ;; 全部をstream-carしていく ということができればいいのだとおもう
+			  (stream-filter (lambda (s)
+							   (not (stream-null? s))) ;; nullのやつをなくす
+							 stream)))
+
+;; b
+;; delay&interleaveしなくて大丈夫？ってことかな。
+;; 無限ループのときは、ここまでの問題と同じく表示されなくなるなどのふるまいの違いがあるのではないかって思った。
+
+
 
