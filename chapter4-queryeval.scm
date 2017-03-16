@@ -122,6 +122,29 @@
    frame-stream))
 (put 'lisp-value 'qeval lisp-value)
 
+;; 4.75 begin
+(define (stream-length stream)
+  (define (iter stream n)
+	(if (stream-null? stream) n
+		(iter (stream-cdr stream) (+ 1 n))))
+  (iter stream 0))
+
+(define (uniqued-query exps) (car exps))
+(define (uniquely-asserted assertions frame-stream)
+  ;; flatmapした結果をつくって
+  (define mapped
+	(stream-flatmap
+	 (lambda (frame)
+	   (qeval (uniqued-query assertions)
+			  (singleton-stream frame)))
+	 frame-stream))
+  (if (= 1 (stream-length mapped)) ;; 1こだったらそれ返す
+	  mapped
+	  the-empty-stream))
+
+(put 'unique 'qeval uniquely-asserted)
+;; 4.75 end
+
 (define user-initial-environment interaction-environment)
 (define (execute exp)
   (apply (eval (predicate exp) interaction-environment)

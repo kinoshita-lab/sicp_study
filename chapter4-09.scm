@@ -370,5 +370,49 @@
 ;; delay&interleaveしなくて大丈夫？ってことかな。
 ;; 無限ループのときは、ここまでの問題と同じく表示されなくなるなどのふるまいの違いがあるのではないかって思った。
 
+;; 4.75
+;; 評価して長さが1だったらいいっていうことでできないかな？
+(define (stream-length stream)
+  (define (iter stream n)
+	(if (stream-null? stream) n
+		(iter (stream-cdr stream) (+ 1 n))))
+  (iter stream 0))
 
+;; 試
+(define  s1 the-empty-stream)
+(stream-length s1)
+;; 0
+(define s2 (cons-stream s1 s1))
+(stream-length s2)
+;; 1
+;; よさげ
 
+;; なんかこういうの必要っぽい
+(define (uniqued-query exps) (car exps))
+
+(define (uniquely-asserted assertions frame-stream)
+  ;; flatmapした結果をつくって
+  (define mapped
+	(stream-flatmap
+	 (lambda (frame)
+	   (qeval (uniqued-query assertions)
+			  (singleton-stream frame)))
+	 frame-stream))
+  (if (= 1 (stream-length mapped)) ;; 1こだったらそれ返す
+	  mapped
+	  the-empty-stream))
+(put 'unique 'qeval uniquely-asserted)
+
+;; 試 (chapter4-queryevalのlisp-valueあたりに足して)
+(load "./chapter4-queryeval.scm")
+(unique (job ?x (computer wizard)))
+;;; Query results:
+;; (unique (job (Bitdiddle Ben) (computer wizard)))
+;; きた
+(unique (job ?x ( computer programmer )))
+;;; Query results:
+;;
+(and (job ?x ?j) (unique (job ? anyone ?j)))
+;;; Query results:
+;;
+;; これも空かな。
