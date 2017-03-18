@@ -11,6 +11,51 @@
  (assign p (reg t1))
  (assign c (reg t2))
  (goto (label test-b))
+ fact-done
  )
 ;; こんなかな。
+
+;; 5.3
+;; 1.1.7 節に示したニュートン法によって平方根を求めるマシンを設計せよ。
+(define (sqrt x)
+  (define (good-enough? guess)
+	(< (abs (- (square guess) x)) 0.001))
+  (define (improve guess)
+	(average guess (/ x guess)))
+  (define (sqrt-iter guess)
+	(if (good-enough? guess)
+		guess
+		(sqrt-iter (improve guess))))
+  (sqrt-iter 1.0))
+
+;; good-enough?とimproveが使える版
+(controller
+ (assign guess (const 1.0))
+ (assign x (op read))
+ test-good-enough
+ (test (op good-enough?) (reg guess))
+ (goto (label sqrt-done))
+ (assign (reg t) (op improve) (reg guess))
+ (assign (reg guess) (reg t))
+ (goto test-good-enough)
+ sqrt-done
+ )
+
+;; good-enough?とimproveを自分で作る版
+(controller
+ (assign guess (const 1.0))
+ (assign x (op read))
+ test-good-enough
+ ;; good enoughってただの計算じゃね？
+ (assign t1 (op *) (reg guess) (reg guess)) ; square
+ (assign t2 (op -) (reg t1) (reg x)) ;
+ (assign t3 (op abs) (reg t2)) ;; absが使えることにした
+ (test (op <) (reg t3) (const 0.001))
+ (goto (label sqrt-done))
+ ;; improveってただの計算じゃね?
+ (assign (reg t) (op /) (reg x) (reg guess))
+ (assign (reg guess) (reg t))
+ (goto test-good-enough)
+ sqrt-done
+ )
 
