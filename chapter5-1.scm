@@ -109,3 +109,92 @@
  (goto (label expt-iter-loop))
  expt-done
  )
+
+
+;; 5.5
+;;  (fact 3)  くらいで。
+;; fact-loop最初に突入して、 (goto (label fact-loop)にきたとき
+n <- 3
+val <- 未設定
+stack <- 3
+continue <- fact-done
+
+;; test opが真になって base-caseへ飛ぶとき
+n <- 1
+val <- 未設定
+stack <- 2,3 
+continue <- after-fact, after-fact, fact-done
+
+;; base-caseでgoto (reg continue) に来たとき
+n <- 1
+val <- 1
+stack <- 2, 3
+continue <- after-fact なので gotoはafter-factへ移動
+
+;; after-factで (goto (reg continue))に来たとき
+n <- 2
+val <- 2
+stack 3
+continue <- after-fact, fact-done
+
+;; もう1度after-factがまわって、 (goto (reg continue)) に来たとき
+n <- 3
+val <- 6
+stack 空
+continue <- fact-done
+;; でfact-doneに飛んで終了。
+
+
+(fib 4) ;; くらいで。
+;; 最初に fib-loop入った時
+continue <- fib-done
+n <- 4
+stack 空
+val <= 未設定
+;; (goto (label fib-loop)) に最初に来たとき
+continue <- afterfib-n-1
+stack 4,fib-done
+n <- 3
+val <- 未設定
+;; (goto (label fib-loop)) に次に来たとき
+continue <- afterfib-n-1
+stack 3, afterfib-n-1, 4,fib-done
+n <- 2
+val <- 未設定
+;; (goto (label fib-loop)) にその次に来たとき
+continue <- afterfib-n-1
+stack 2, afterfib-n-1, 3, afterfib-n-1, 4, fib-done
+n <- 1
+;; そのあと immediate-answerに行って (goto (reg continue))に来たとき
+val <- 1
+;; continue にはafterfib-n-1が入ってるので、 afterfib-n-1へ
+;; (restore n)
+;; (restore continue) すると
+n <- 2
+continue <- afterfib-n-1
+stack 3, afterfib-n-1, 4, fib-done
+n <- 0
+continue <- afterfib-n-2
+stack 1, afterfib-n-1, 3, afterfib-n-1, 4, fib-done
+;; fib-loopへ
+;; immediate-answerへ
+continueはafterfib-n-2
+;; afterfib-n-2
+n <- 1
+val <- 1
+continue <- afterfib-n-1
+val <- 2 ;; やっと足した
+stack 3, afterfib-n-1, 4, fib-done
+;; afterfib-n-1へ
+;; ... というかんじで進む。
+
+
+;; 5.6
+afterfib-n-1
+; リターン時に Fib(n − 1) は val に入って
+(restore n)
+(restore continue)
+;; Fib(n − 2) を求める準備
+(assign n (op -) (reg n) (const 2))
+(save continue )
+;; ここの restore continue/save continue は同じ値を入れて出してるので不要な操作
