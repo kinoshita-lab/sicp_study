@@ -23,7 +23,7 @@
 ;; おお動いた!
 
 
-;; 5.6
+;; 5.7
 (define recurcive-expt
   (make-machine
    '(b n continue val)
@@ -71,3 +71,46 @@
 (start expt-iter-machine)
 (get-register-contents expt-iter-machine 'product)
 ;; gosh> 1024
+
+;; 5.8
+;; 適当なmachineを作って、まわしてから考えるとわかりやすいかも。
+
+(define ex58-machine
+  (make-machine
+   '(a)
+   '()
+   '(
+	 start
+	 (goto (label here))
+	 here
+	 (assign a (const 3))
+	 (goto (label there))
+	 here
+	 (assign a (const 4))
+	 (goto (label there))
+	 there
+	)))
+
+(start ex58-machine)
+(get-register-contents ex58-machine 'a) ;; 3だった
+;; どこかの時点でラベルが複数あることを検出すればいい気がするがcpsで大変わかりづらい。
+;; labelsに入ってるっぽい
+;; ((here ((assign a (const 3))) ((goto (label there))) ((assign a (const 4))) ((goto (label there)))) (here ((assign a (const 4))) ((goto (label there)))) (there))
+;; のでこんなかんじにした。
+(define (extract-labels text receive)
+  (if (null? text)
+      (receive '() '())
+      (extract-labels (cdr text)
+       (lambda (insts labels)
+         (let ((next-inst (car text)))
+           (if (symbol? next-inst) ;; ここがlabelの時来るところ
+			   (begin
+				 (if (assoc next-inst labels) ;; labelは頭についてるのでそこひっかけて
+					 (error "duplicate label name" next-inst) ;; かぶってたらerror
+					 (receive insts
+						 (cons (make-label-entry next-inst
+												 insts)
+							   labels))))
+               (receive (cons (make-instruction next-inst)
+                              insts)
+				   labels)))))))

@@ -179,14 +179,17 @@
       (extract-labels (cdr text)
        (lambda (insts labels)
          (let ((next-inst (car text)))
-           (if (symbol? next-inst)
-               (receive insts
-                        (cons (make-label-entry next-inst
-                                                insts)
-                              labels))
+           (if (symbol? next-inst) ;; ここがlabelの時来るところ
+			   (begin
+				 (if (assoc next-inst labels) ;; labelは頭についてるのでそこひっかけて
+					 (error "duplicate label name" next-inst) ;; かぶってたらerror
+					 (receive insts
+						 (cons (make-label-entry next-inst
+												 insts)
+							   labels))))
                (receive (cons (make-instruction next-inst)
                               insts)
-                        labels)))))))
+				   labels)))))))
 
 (define (update-insts! insts labels machine)
   (let ((pc (get-register machine 'pc))
