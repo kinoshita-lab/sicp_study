@@ -1,7 +1,6 @@
 ;; 5.2 レジスタマシンシミュレータ
 ;; これは実物があるっぽいので入れといた。
-(define true #t)
-(define false #f)
+
 (load "./code_from_text/ch5-regsim.scm")
 
 (define gcd-machine
@@ -85,7 +84,7 @@
 	 here
 	 (assign a (const 3))
 	 (goto (label there))
-	 here
+	 where
 	 (assign a (const 4))
 	 (goto (label there))
 	 there
@@ -114,3 +113,56 @@
                (receive (cons (make-instruction next-inst)
                               insts)
 				   labels)))))))
+
+
+;; 5.9 本当にそうなの？ ってことで 5.8のmachineでためしてみる。
+(define ex59-machine
+  (make-machine
+   '(a)
+   (list (list '= =)) ;; これ足してみた
+   '(
+	 start
+	 (goto (label here))
+	 here
+	 (assign a (const 3))
+	 (test (op =) (label here) (label here)) ;; これ足してみた
+	 (goto (label there))
+	 where
+	 (assign a (const 4))
+	 (goto (label there))
+	 there
+	)))
+;; > ex59-machine
+;; できた。↑を作るときにミスったのでcall stack見えた
+;;  1  (make-operation-exp condition machine labels operations)
+;;        at "./code_from_text/ch5-regsim.scm":279。
+(define (make-operation-exp exp machine labels operations)
+  (let ((op (lookup-prim (operation-exp-op exp) operations))
+        (aprocs
+         (map (lambda (e)
+				(if (label-exp? e)
+					(error "cannot perform label operation!") ;; 5.9で足した
+					(make-primitive-exp e machine labels)))
+              (operation-exp-operands exp))))
+    (lambda ()
+      (apply op (map (lambda (p) (p)) aprocs)))))
+;; こうやってから実行すると
+;; gosh> *** ERROR: cannot perform label operation!
+
+;; 5.10
+;; 構文って何よ？
+;; make-execution-procedureで定義してるやつだとおもう
+;; レジスタの0クリアでもつくってみるか ってことで実装の方をいじった。
+(define ex510-machine
+  (make-machine
+   '(a)
+   (list (list '= =)) ;; これ足してみた
+   '(
+	 start
+	 (assign a (const 3))
+	 (clear a)
+	 there
+	)))
+(start ex510-machine)
+(get-register-contents ex510-machine 'a)
+;; 0だった

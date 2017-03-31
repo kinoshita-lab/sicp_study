@@ -11,7 +11,9 @@
 ;;;  one you want last, or by commenting one of them out.
 ;;; Also, comment in/out the print-stack-statistics op in make-new-machine
 ;;; To find this stack code below, look for comments with **
-
+;; これ必要
+(define true #t) 
+(define false #f)
 
 (define (make-machine register-names ops controller-text)
   (let ((machine (make-new-machine)))
@@ -243,9 +245,18 @@
          (make-restore inst machine stack pc))
         ((eq? (car inst) 'perform)
          (make-perform inst machine labels ops pc))
+		((eq? (car inst) 'clear) ;; 5.10で足した
+		 (make-clear inst machine labels ops pc)) ;;5.10で足した
         (else (error "Unknown instruction type -- ASSEMBLE"
                      inst))))
 
+;;; この関数を 5.10で足した
+(define (make-clear inst machine labels operations pc)
+  (let ((target
+         (get-register machine (assign-reg-name inst))))
+	(lambda ()                ; execution procedure for clear
+	  (set-contents! target 0)
+	  (advance-pc pc))))
 
 (define (make-assign inst machine labels operations pc)
   (let ((target
@@ -258,7 +269,7 @@
                (make-primitive-exp
                 (car value-exp) machine labels))))
       (lambda ()                ; execution procedure for assign
-        (set-contents! target (value-proc))
+        (set-contents! target (=value-proc))
         (advance-pc pc)))))
 
 (define (assign-reg-name assign-instruction)
@@ -382,7 +393,9 @@
   (let ((op (lookup-prim (operation-exp-op exp) operations))
         (aprocs
          (map (lambda (e)
-                (make-primitive-exp e machine labels))
+				(if (label-exp? e)
+					(error "cannot perform label operation!") ;; 5.9で足した
+					(make-primitive-exp e machine labels)))
               (operation-exp-operands exp))))
     (lambda ()
       (apply op (map (lambda (p) (p)) aprocs)))))
