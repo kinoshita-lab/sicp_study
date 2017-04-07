@@ -79,7 +79,8 @@
       (set! s (cons x s))
       (set! number-pushes (+ 1 number-pushes))
       (set! current-depth (+ 1 current-depth))
-      (set! max-depth (max current-depth max-depth)))
+	  (set! max-depth (max current-depth max-depth))) 
+	
     (define (pop)
       (if (null? s)
           (error "Empty stack -- POP")
@@ -269,7 +270,7 @@
                (make-primitive-exp
                 (car value-exp) machine labels))))
       (lambda ()                ; execution procedure for assign
-        (set-contents! target (=value-proc))
+        (set-contents! target (value-proc))
         (advance-pc pc)))))
 
 (define (assign-reg-name assign-instruction)
