@@ -220,3 +220,42 @@
 ;;			  (op +) (reg val) (reg n))
 
 
+;; b
+;; stackそのものは変えなくてよさそうで、 make-save, make-restoreでpairを入れればよさげ。
+(load "./code_from_text/ch5-regsim.scm")
+;; loadしたあとで make-saveとmake-restoreを上書き 
+(define (make-save inst machine stack pc)
+  (let ((reg (get-register machine
+                           (stack-inst-reg-name inst)))
+        (regname (stack-inst-reg-name inst))) ;; これ増えた
+    (lambda ()
+      (push stack (cons (get-contents reg) regname)) ;; consったpair的なものを入れる
+      (advance-pc pc))))
+
+(define (make-restore inst machine stack pc)
+  (let ((reg (get-register machine
+                           (stack-inst-reg-name inst)))
+        (regname (stack-inst-reg-name inst)))
+    (lambda ()
+      (let* ((popped-pair (pop stack))
+             (popped-regname (cdr popped-pair))) ;; 名前ひろってきて
+        (if (equal? regname popped-regname) ;; 同じかチェック
+            (begin                          ;; 同じならrestore
+              (set-contents! reg (pop stack))
+              (advance-pc pc))
+            (error "different reg pop")))))) ;; 違ったらerror
+
+;; 試
+(define ex511b-machine
+  (make-machine
+   '(a b)
+   '()
+   '(
+	 start
+	 (save a)
+     (save b)
+     (restore a) ;; エラー
+	)))
+(start ex511b-machine)
+;;  (display "make-restore!")
+
