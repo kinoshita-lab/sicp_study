@@ -241,7 +241,7 @@
              (popped-regname (cdr popped-pair))) ;; 名前ひろってきて
         (if (equal? regname popped-regname) ;; 同じかチェック
             (begin                          ;; 同じならrestore
-              (set-contents! reg (pop stack))
+              (set-contents! reg (car popped-pair))
               (advance-pc pc))
             (error "different reg pop")))))) ;; 違ったらerror
 
