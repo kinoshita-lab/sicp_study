@@ -259,3 +259,19 @@
 (start ex511b-machine)
 ;;  (display "make-restore!")
 
+;; c
+;; 問題の意味がイマイチよくわからないけど、reg毎にstackを別にしろってことなのかな。
+;; おおごとになったので別
+(load "./ch5_511c.scm")
+
+(define ex511c-machine
+  (make-machine
+   '(a b)
+   '()
+   '(
+	 start
+	 (save a)
+     (save b)
+     (restore a) ;; エラーにならずにaのstackからpop
+	)))
+(start ex511c-machine)
