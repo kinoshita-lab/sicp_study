@@ -142,13 +142,26 @@
               (begin
                 ((instruction-execution-proc (car insts)))
                 (execute)))))
-      ;; 5.12用
+      ;; 5.12 ここから
+      ;; listをuniqにするやつを作った
+      (define (unique-sequence s)
+        (map car (group-sequence s)))
+      
+      ;; 命令を拾ってくる
       (define (instructions)
-        (define (unique-sequence s)
-          (map car (group-sequence s)))
         (let* ((tmp1 (map (lambda (insts) (car insts)) the-instruction-sequence))
                (tmp2 (map car tmp1)))
           (sort (unique-sequence tmp2))))
+
+      ;; labelを拾ってくる
+      (define (entry-points)
+        (let* ((tmp1 (map (lambda (insts) (car insts)) the-instruction-sequence))
+               (tmp2 (filter (lambda (inst) (eq? (car inst) 'goto))
+                             tmp1)) ;; こんなのになる ((goto (label fib-loop)) (goto (label fib-loop)) (goto (reg continue)) (goto (reg continue)))
+               (tmp3 (map cadr tmp2)) ; こんなのになる ((label fib-loop) (label fib-loop) (reg continue) (reg continue))
+               (tmp4 (map cadr (filter (lambda (label-or-reg) (eq? (car label-or-reg) 'reg))
+                             tmp3)))) 
+          (sort (unique-sequence tmp4))))
 
       (define (dispatch message)
         (cond ((eq? message 'start)
@@ -163,6 +176,7 @@
               ((eq? message 'stack) stack)
               ((eq? message 'operations) the-ops)
               ((eq? message 'instructions) (instructions))
+              ((eq? message 'entry-points) (entry-points))
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
 
