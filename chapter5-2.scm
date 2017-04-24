@@ -275,3 +275,37 @@
      (restore a) ;; エラーにならずにaのstackからpop
 	)))
 (start ex511c-machine)
+
+;; 5.12
+;; これも別ファイルにしたほうが確実だよなあ。ってことでそうした。
+;; やったこと
+;; the-instruction-sequenceってのに必要そうなのが入ってて
+;; (((save a) . #<closure ((make-save make-save))>) ((save b) . #<closure ((make-save make-save))>) ((restore a) . #<closure ((make-restore make-restore))>))
+;; (define tmp1 (map (lambda (op) (car op)) (ex512-machine 'instructions)))
+;((save a) (save b) (restore a))
+;; (define tmp2 (map (lambda (op-and-args) (car op-and-args)) tmp1))
+; (save save restore)
+;; gaucheの力でuniq
+;; (use gauche.sequence)
+;; (define (unique-sequence s)
+;;   (map car (group-sequence s)))
+;; (define tmp3 (unique-sequence tmp2))
+; (save restore)
+;; gaucheの力でsort
+;; (sort tmp3)
+; (restore save)
+
+(load "./ch5-5.12.scm")
+(define ex512-machine
+  (make-machine
+   '(a b)
+   '()
+   '(
+	 start
+	 (save a)
+     (save b)
+     (restore a) ;; エラーにならずにaのstackからpop
+	)))
+(ex512-machine 'instructions)
+; (restore save)
+
