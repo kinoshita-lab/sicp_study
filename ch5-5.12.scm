@@ -163,6 +163,38 @@
                              tmp3)))) 
           (sort (unique-sequence tmp4))))
 
+      ;; 3問目 save restoreを拾ってきてregnameでuniqすればよいやつ
+      ;; unique-sequenceがイマイチ仕事してなかったので作った
+      (define (uniq-regname regs)
+        (let loop ((r regs)
+                   (ret '()))
+          (if (eq? r '()) ret
+              (if (memq (car r) ret)
+                  (loop (cdr r) ret)
+                  (loop (cdr r) (cons (car r) ret))))))
+
+      (define (save-restore)
+        (let* ((tmp1 (map car the-instruction-sequence))
+               (tmp2 (filter (lambda (inst) (or (eq? (car inst) 'save)
+                                               (eq? (car inst) 'restore))) tmp1))
+               ;; save/restoreをけずる
+               (tmp3 (map cadr tmp2)))
+          (sort (uniq-regname tmp3))))
+
+      ;; 4問目 assignを拾ってくる 
+      (define (assigns)
+        (let* ((tmp1 (map car the-instruction-sequence)) ;; これでよかった
+               (tmp2 (filter (lambda (inst) (eq? (car inst) 'assign)) tmp1)) ;; こんなのが出る ((assign continue (label fib-done)) (assign continue (label afterfib-n-1)) (assign n (op -) (reg n) (const 1)) (assign n (op -) (reg n) (const 2)) (assign continue (label afterfib-n-2)) (assign n (reg val)) (assign val (op +) (reg val) (reg n)) (assign val (reg n)))
+               ;; assignを削る
+               (tmp3 (map cdr tmp2))) ;; こんなのが出る ((continue (label fib-done)) (continue (label afterfib-n-1)) (n (op -) (reg n) (const 1)) (n (op -) (reg n) (const 2)) (continue (label afterfib-n-2)) (n (reg val)) (val (op +) (reg val) (reg n)) (val (reg n)))
+          ;; めんどいのでtmp3をsortすればいいことにする。
+          (sort tmp3)))
+
+               
+
+
+      ;; 5.12ここまで
+
       (define (dispatch message)
         (cond ((eq? message 'start)
                (set-contents! pc the-instruction-sequence)
@@ -175,8 +207,11 @@
                (lambda (ops) (set! the-ops (append the-ops ops))))
               ((eq? message 'stack) stack)
               ((eq? message 'operations) the-ops)
+              ;; ここから下 5.12で増えた
               ((eq? message 'instructions) (instructions))
               ((eq? message 'entry-points) (entry-points))
+              ((eq? message 'save-restore) (save-restore))
+              ((eq? message 'assigns) (assigns))
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
 

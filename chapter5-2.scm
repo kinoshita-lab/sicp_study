@@ -350,4 +350,14 @@
 	  (goto (reg continue))
 	  fib-done)))
 (ex512-2-fib-machine 'entry-points)
-;; (continue)
+;; (continue) ;; できた
+
+;; それぞれのレジスタに対する代入元の (重複なし) リスト (例えば、図 5.11の階乗マシンでは、レジスタ val の代入元は(const 1) と ((op *) (reg n) (reg val)) である)。
+;; ただのlistいじりになってきた ここはassignをひろってくればできるとおもう
+(ex512-2-fib-machine 'assigns)
+;; ((continue (label afterfib-n-1)) (continue (label afterfib-n-2)) (continue (label fib-done)) (n (op -) (reg n) (const 1)) (n (op -) (reg n) (const 2)) (n (reg val)) (val (op +) (reg val) (reg n)) (val (reg n)))
+
+;; これやってなかった
+;; save または restore されるレジスタの (重複なし) リスト。
+(ex512-2-fib-machine 'save-restore)
+;;  (continue n val)
