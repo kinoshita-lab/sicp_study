@@ -411,3 +411,77 @@
 (start fib-machine)
 (get-register-contents fib-machine 'n)
 ;; gosh> 21
+
+;; 5.14
+;; 小さな n の値について n! の計算に必要となる push の回数とスタ
+;; ックの最大の深さを計測せよ。そのデータから、任意の n > 1 に
+;; ついて、n! を計算するのに使われる push 演算の総数とスタック
+;; の最大の深さを表す n の方程式を決定せよ。
+;; 
+;; regsimにはstackの拡張が組み込まれてるのでそれ使う。
+(load "./code_from_text/ch5-regsim.scm")
+;; fact machineつくる
+(define fact-machine
+  (make-machine
+   '(continue n val)
+   (list (list '= =) (list '- -) (list '* *))
+   '(
+     (assign continue (label fact-done))                        ;set up final return address    
+     fact-loop
+     (test (op =) (reg n) (const 1))
+     (branch (label base-case))
+     (save continue)
+     (save n)
+     (assign n (op -) (reg n) (const 1))
+     (assign continue (label after-fact))
+     (goto (label fact-loop))
+     after-fact
+     (restore n)
+     (restore continue)
+     (assign val (op *) (reg n) (reg val)) ;val now contains n(n - 1)!
+     (goto (reg continue))
+     base-case
+     (assign val (const 1))
+     (goto (reg continue))
+     fact-done)))
+;; n = 1
+(set-register-contents! fact-machine 'n 1)
+(start fact-machine)
+(get-register-contents fact-machine 'val)
+((fact-machine 'stack) 'print-statistics)
+;; (total-pushes = 0 maximum-depth = 0)
+
+;; n = 2
+(set-register-contents! fact-machine 'n 2)
+(start fact-machine)
+(get-register-contents fact-machine 'val)
+((fact-machine 'stack) 'print-statistics)
+;; (total-pushes = 2 maximum-depth = 2)
+
+;; n = 3
+(set-register-contents! fact-machine 'n 3)
+(start fact-machine)
+(get-register-contents fact-machine 'val)
+((fact-machine 'stack) 'print-statistics)
+;; (total-pushes = 4 maximum-depth = 4)
+
+;; n = 4
+(set-register-contents! fact-machine 'n 4)
+(start fact-machine)
+(get-register-contents fact-machine 'val)
+((fact-machine 'stack) 'print-statistics)
+;; (total-pushes = 6 maximum-depth = 6)
+
+;; n = 5
+(set-register-contents! fact-machine 'n 5)
+(start fact-machine)
+(get-register-contents fact-machine 'val)
+((fact-machine 'stack) 'print-statistics)
+;; (total-pushes = 8 maximum-depth = 8)
+
+
+;; push演算の総数  2 * (n - 1)
+;; 最大の深さ 2 * (n - 1)
+
+
+
