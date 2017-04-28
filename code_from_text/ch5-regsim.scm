@@ -112,7 +112,8 @@
   (let ((pc (make-register 'pc))
         (flag (make-register 'flag))
         (stack (make-stack))
-        (the-instruction-sequence '()))
+        (the-instruction-sequence '())
+        (instruction-counter 0)) ;; 5.15 で追加
     (let ((the-ops
            (list (list 'initialize-stack
                        (lambda () (stack 'initialize)))
@@ -139,8 +140,17 @@
           (if (null? insts)
               'done
               (begin
+                (set! instruction-counter (+ 1 instruction-counter))  ;; 5.15で追加
                 ((instruction-execution-proc (car insts)))
                 (execute)))))
+      ;; 5.15で追加
+      (define (get-instruction-counter)
+        instruction-counter)
+      
+      ;; 5.15で追加
+      (define (reset-instruction-counter)
+        (set! instruction-counter 0))
+      
       (define (dispatch message)
         (cond ((eq? message 'start)
                (set-contents! pc the-instruction-sequence)
@@ -153,6 +163,8 @@
                (lambda (ops) (set! the-ops (append the-ops ops))))
               ((eq? message 'stack) stack)
               ((eq? message 'operations) the-ops)
+              ((eq? message 'get-instruction-counter) (get-instruction-counter)) ;; 5.15で追加
+              ((eq? message 'reset-instruction-counter) (reset-instruction-counter)) ;; 5.15で追加
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
 

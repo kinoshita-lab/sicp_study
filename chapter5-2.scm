@@ -483,5 +483,46 @@
 ;; push演算の総数  2 * (n - 1)
 ;; 最大の深さ 2 * (n - 1)
 
+;; 5.15
+;; regsimに追加してみる
+;; factで試
+(load "./code_from_text/ch5-regsim.scm")
+;; fact machineつくる
+(define fact-machine
+  (make-machine
+   '(continue n val)
+   (list (list '= =) (list '- -) (list '* *))
+   '(
+     (assign continue (label fact-done))                        ;set up final return address    
+     fact-loop
+     (test (op =) (reg n) (const 1))
+     (branch (label base-case))
+     (save continue)
+     (save n)
+     (assign n (op -) (reg n) (const 1))
+     (assign continue (label after-fact))
+     (goto (label fact-loop))
+     after-fact
+     (restore n)
+     (restore continue)
+     (assign val (op *) (reg n) (reg val)) ;val now contains n(n - 1)!
+     (goto (reg continue))
+     base-case
+     (assign val (const 1))
+     (goto (reg continue))
+     fact-done)))
 
+;; 
+(set-register-contents! fact-machine 'n 4)
+(start fact-machine)
+(fact-machine 'get-instruction-counter)
+;; 38 ;; instruction-counter動いた
+(fact-machine 'reset-instruction-counter)
+(fact-machine 'get-instruction-counter)
+;; 0 ; reset 動いた
 
+;; でかめ
+(set-register-contents! fact-machine 'n 100)
+(start fact-machine)
+(fact-machine 'get-instruction-counter)
+;; 1094
