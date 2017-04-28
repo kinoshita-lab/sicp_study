@@ -526,3 +526,77 @@
 (start fact-machine)
 (fact-machine 'get-instruction-counter)
 ;; 1094
+
+;; 5.16
+;; 5.15と会場一緒
+
+;; factで試
+(load "./code_from_text/ch5-regsim.scm")
+;; fact machineつくる
+(define fact-machine
+  (make-machine
+   '(continue n val)
+   (list (list '= =) (list '- -) (list '* *))
+   '(
+     (assign continue (label fact-done))                        ;set up final return address    
+     fact-loop
+     (test (op =) (reg n) (const 1))
+     (branch (label base-case))
+     (save continue)
+     (save n)
+     (assign n (op -) (reg n) (const 1))
+     (assign continue (label after-fact))
+     (goto (label fact-loop))
+     after-fact
+     (restore n)
+     (restore continue)
+     (assign val (op *) (reg n) (reg val)) ;val now contains n(n - 1)!
+     (goto (reg continue))
+     base-case
+     (assign val (const 1))
+     (goto (reg continue))
+     fact-done)))
+(fact-machine 'trace-on)
+(set-register-contents! fact-machine 'n 4)
+(start fact-machine)
+
+;; ついでに番号もつけてみた。
+;; (trace: 1 (assign continue (label fact-done)))
+;; (trace: 2 (test (op =) (reg n) (const 1)))
+;; (trace: 3 (branch (label base-case)))
+;; (trace: 4 (save continue))
+;; (trace: 5 (save n))
+;; (trace: 6 (assign n (op -) (reg n) (const 1)))
+;; (trace: 7 (assign continue (label after-fact)))
+;; (trace: 8 (goto (label fact-loop)))
+;; (trace: 9 (test (op =) (reg n) (const 1)))
+;; (trace: 10 (branch (label base-case)))
+;; (trace: 11 (save continue))
+;; (trace: 12 (save n))
+;; (trace: 13 (assign n (op -) (reg n) (const 1)))
+;; (trace: 14 (assign continue (label after-fact)))
+;; (trace: 15 (goto (label fact-loop)))
+;; (trace: 16 (test (op =) (reg n) (const 1)))
+;; (trace: 17 (branch (label base-case)))
+;; (trace: 18 (save continue))
+;; (trace: 19 (save n))
+;; (trace: 20 (assign n (op -) (reg n) (const 1)))
+;; (trace: 21 (assign continue (label after-fact)))
+;; (trace: 22 (goto (label fact-loop)))
+;; (trace: 23 (test (op =) (reg n) (const 1)))
+;; (trace: 24 (branch (label base-case)))
+;; (trace: 25 (assign val (const 1)))
+;; (trace: 26 (goto (reg continue)))
+;; (trace: 27 (restore n))
+;; (trace: 28 (restore continue))
+;; (trace: 29 (assign val (op *) (reg n) (reg val)))
+;; (trace: 30 (goto (reg continue)))
+;; (trace: 31 (restore n))
+;; (trace: 32 (restore continue))
+;; (trace: 33 (assign val (op *) (reg n) (reg val)))
+;; (trace: 34 (goto (reg continue)))
+;; (trace: 35 (restore n))
+;; (trace: 36 (restore continue))
+;; (trace: 37 (assign val (op *) (reg n) (reg val)))
+;; (trace: 38 (goto (reg continue)))
+;; done

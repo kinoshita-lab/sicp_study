@@ -113,7 +113,8 @@
         (flag (make-register 'flag))
         (stack (make-stack))
         (the-instruction-sequence '())
-        (instruction-counter 0)) ;; 5.15 で追加
+        (instruction-counter 0)
+        (trace #f)) ;; 5.15 で追加
     (let ((the-ops
            (list (list 'initialize-stack
                        (lambda () (stack 'initialize)))
@@ -123,6 +124,7 @@
                        (lambda () (stack 'print-statistics)))))
           (register-table
            (list (list 'pc pc) (list 'flag flag))))
+      
       (define (allocate-register name)
         (if (assoc name register-table)
             (error "Multiply defined register: " name)
@@ -130,19 +132,26 @@
                   (cons (list name (make-register name))
                         register-table)))
         'register-allocated)
+      
       (define (lookup-register name)
         (let ((val (assoc name register-table)))
           (if val
               (cadr val)
               (error "Unknown register:" name))))
+      
       (define (execute)
         (let ((insts (get-contents pc)))
           (if (null? insts)
               'done
               (begin
                 (set! instruction-counter (+ 1 instruction-counter))  ;; 5.15で追加
+                (if trace                                                 ;; 5.16 で追加
+                    (begin                                             ;; 5.16 で追加
+                      (display (list "trace:" instruction-counter (caar insts)))  
+                      (newline)))   
                 ((instruction-execution-proc (car insts)))
                 (execute)))))
+      
       ;; 5.15で追加
       (define (get-instruction-counter)
         instruction-counter)
@@ -150,6 +159,10 @@
       ;; 5.15で追加
       (define (reset-instruction-counter)
         (set! instruction-counter 0))
+
+      ;; 5.16で追加
+      (define (set-trace onoff)
+        (set! trace onoff))
       
       (define (dispatch message)
         (cond ((eq? message 'start)
@@ -165,6 +178,8 @@
               ((eq? message 'operations) the-ops)
               ((eq? message 'get-instruction-counter) (get-instruction-counter)) ;; 5.15で追加
               ((eq? message 'reset-instruction-counter) (reset-instruction-counter)) ;; 5.15で追加
+              ((eq? message 'trace-on) (set-trace #t))
+              ((eq? message 'trace-off) (set-trace #f))
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
 
