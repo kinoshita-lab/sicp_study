@@ -600,3 +600,13 @@
 ;; (trace: 37 (assign val (op *) (reg n) (reg val)))
 ;; (trace: 38 (goto (reg continue)))
 ;; done
+
+
+;; 5.17
+;; labelのあつかいがどうなってるかよくわかってないとこまるね。
+;; asembleするとlabbelごとのかたまりの対になっているのか。
+;; これのどこの何番目にいるのかが分かればよさそう。
+;; おおごとになりそうなので別にした上、とけなかった。
+;; cf. http://wat-aro.hatenablog.com/entry/2016/01/29/214707
+(load "./ch5-5.17.scm")
+
