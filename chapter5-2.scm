@@ -609,4 +609,106 @@
 ;; おおごとになりそうなので別にした上、とけなかった。
 ;; cf. http://wat-aro.hatenablog.com/entry/2016/01/29/214707
 (load "./ch5-5.17.scm")
+;; fact machineつくる
+(define fact-machine
+  (make-machine
+   '(continue n val)
+   (list (list '= =) (list '- -) (list '* *))
+   '(
+     (assign continue (label fact-done))                        ;set up final return address    
+     fact-loop
+     (test (op =) (reg n) (const 1))
+     (branch (label base-case))
+     (save continue)
+     (save n)
+     (assign n (op -) (reg n) (const 1))
+     (assign continue (label after-fact))
+     (goto (label fact-loop))
+     after-fact
+     (restore n)
+     (restore continue)
+     (assign val (op *) (reg n) (reg val)) ;val now contains n(n - 1)!
+     (goto (reg continue))
+     base-case
+     (assign val (const 1))
+     (goto (reg continue))
+     fact-done)))
+(fact-machine 'trace-on)
+(set-register-contents! fact-machine 'n 4)
+(start fact-machine)
 
+;; global : (assign continue (label fact-done))
+;; (fact-loop) : (test (op =) (reg n) (const 1))
+;; (fact-loop) : (branch (label base-case))
+;; (fact-loop) : (save continue)
+;; (fact-loop) : (save n)
+;; (fact-loop) : (assign n (op -) (reg n) (const 1))
+;; (fact-loop) : (assign continue (label after-fact))
+;; (fact-loop) : (goto (label fact-loop))
+;; (fact-loop) : (test (op =) (reg n) (const 1))
+;; (fact-loop) : (branch (label base-case))
+;; (fact-loop) : (save continue)
+;; (fact-loop) : (save n)
+;; (fact-loop) : (assign n (op -) (reg n) (const 1))
+;; (fact-loop) : (assign continue (label after-fact))
+;; (fact-loop) : (goto (label fact-loop))
+;; (fact-loop) : (test (op =) (reg n) (const 1))
+;; (fact-loop) : (branch (label base-case))
+;; (fact-loop) : (save continue)
+;; (fact-loop) : (save n)
+;; (fact-loop) : (assign n (op -) (reg n) (const 1))
+;; (fact-loop) : (assign continue (label after-fact))
+;; (fact-loop) : (goto (label fact-loop))
+;; (fact-loop) : (test (op =) (reg n) (const 1))
+;; (fact-loop) : (branch (label base-case))
+;; (base-case) : (assign val (const 1))
+;; (base-case) : (goto (reg continue))
+;; (after-fact) : (restore n)
+;; (after-fact) : (restore continue)
+;; (after-fact) : (assign val (op *) (reg n) (reg val))
+;; (after-fact) : (goto (reg continue))
+;; (after-fact) : (restore n)
+;; (after-fact) : (restore continue)
+;; (after-fact) : (assign val (op *) (reg n) (reg val))
+;; (after-fact) : (goto (reg continue))
+;; (after-fact) : (restore n)
+;; (after-fact) : (restore continue)
+;; (after-fact) : (assign val (op *) (reg n) (reg val))
+;; (after-fact) : (goto (reg continue))
+;; done
+
+;; 5.18
+(load "./code_from_text/ch5-regsim.scm")
+(define fact-machine
+  (make-machine
+   '(continue n val)
+   (list (list '= =) (list '- -) (list '* *))
+   '(
+     (assign continue (label fact-done))                        ;set up final return address    
+     fact-loop
+     (test (op =) (reg n) (const 1))
+     (branch (label base-case))
+     (save continue)
+     (save n)
+     (assign n (op -) (reg n) (const 1))
+     (assign continue (label after-fact))
+     (goto (label fact-loop))
+     after-fact
+     (restore n)
+     (restore continue)
+     (assign val (op *) (reg n) (reg val)) ;val now contains n(n - 1)!
+     (goto (reg continue))
+     base-case
+     (assign val (const 1))
+     (goto (reg continue))
+     fact-done)))
+(set-register-contents! fact-machine 'n 4)
+(((fact-machine 'get-register) 'n) 'trace-on)
+(start fact-machine)
+;; (reg  n : 4  ->  3)
+;; (reg  n : 3  ->  2)
+;; (reg  n : 2  ->  1)
+;; (reg  n : 1  ->  2)
+;; (reg  n : 2  ->  3)
+;; (reg  n : 3  ->  4)
+;; done

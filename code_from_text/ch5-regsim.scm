@@ -35,6 +35,27 @@
              (error "Unknown request -- REGISTER" message))))
     dispatch))
 
+;; 5.18用
+(define (make-register name)
+  (let ((contents '*unassigned*)
+		(trace #f))
+    (define (dispatch message)
+      (cond ((eq? message 'get) contents)
+            ((eq? message 'set)
+             (lambda (value)
+			   (if trace
+				   (begin
+					 (display (list "reg " name ":" contents " -> " value))
+					 (newline)))
+				   (set! contents value)))
+			((eq? message 'trace-on)
+			 (set! trace #t))
+			((eq? message 'trace-off)
+			 (set! trace #f))
+            (else
+             (error "Unknown request -- REGISTER" message))))
+    dispatch))
+
 (define (get-contents register)
   (register 'get))
 
