@@ -62,6 +62,12 @@
 (define (set-contents! register value)
   ((register 'set) value))
 
+(define (register-trace-on register)
+  (register 'trace-on))
+
+(define (register-trace-off register)
+  (register 'trace-off))
+
 ;;**original (unmonitored) version from section 5.2.1
 (define (make-stack)
   (let ((s '()))
@@ -197,7 +203,7 @@
                (lambda (ops) (set! the-ops (append the-ops ops))))
               ((eq? message 'stack) stack)
               ((eq? message 'operations) the-ops)
-              ((eq? message 'get-instruction-counter) (get-instruction-counter)) ;; 5.15で追加
+              ((eq? message 'get-instruction-counter) (get-instruction-counter)) ;; 5.15で追
               ((eq? message 'reset-instruction-counter) (reset-instruction-counter)) ;; 5.15で追加
               ((eq? message 'trace-on) (set-trace #t))
               ((eq? message 'trace-off) (set-trace #f))
@@ -217,6 +223,12 @@
 
 (define (get-register machine reg-name)
   ((machine 'get-register) reg-name))
+
+(define (set-register-trace-on machine regname)
+  (register-trace-on (get-register machine regname)))
+
+(define (set-register-trace-off machine regname)
+  (register-trace-off (get-register machine regname)))
 
 (define (assemble controller-text machine)
   (extract-labels controller-text
