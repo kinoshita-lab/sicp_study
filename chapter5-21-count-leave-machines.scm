@@ -39,3 +39,38 @@
       (assign val (const 1))
       (goto (reg continue))
 	   count-leaves-done)))
+
+
+(define count-leave-iter-machine
+  (make-machine
+   '(tree continue val tmp n)
+   (list (list 'null? null?) (list 'not-pair? not-pair?) (list 'car car) (list 'cdr cdr) (list '+ +))
+   '(
+     (assign continue (label  count-leaves-done))
+     (assign n (const 0))
+     count-leaves-loop
+     (test (op null?) (reg tree))
+     (branch (label null))
+     (test (op not-pair?) (reg tree))
+     (branch (label not-pair))
+     ;; cdrを作って呼ぶ
+     (save tree)
+     (assign tree (op cdr) (reg tree))
+     (save continue)
+     (assign continue (label aftercount-leaves-cdr))
+     (goto (label count-leaves-loop))
+     ;; carのloop
+     aftercount-leaves-cdr
+     (restore continue)
+     (restore tree)
+     (assign tree (op car) (reg tree))
+     (assign n (reg val))
+     (goto (label count-leaves-loop))
+     null
+     (assign val (reg n))
+     (goto (reg continue))
+     not-pair
+     (assign val (op +) (const 1) (reg n))
+     (goto (reg continue))
+     count-leaves-done
+   )))

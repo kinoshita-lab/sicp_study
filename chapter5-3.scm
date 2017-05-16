@@ -192,3 +192,25 @@
 (start count-leave-machine)
 (get-register-contents count-leave-machine 'val)
 ;; gosh> 6
+
+;; b
+(define (count-leaves tree)
+  (define (count-iter tree n)
+    (cond ((null? tree) n )
+          ((not (pair? tree)) (+ n 1))
+          (else
+           (count-iter (cdr tree)
+                       (count-iter (car tree)
+                                   n)))))
+  (trace count-iter)
+  (count-iter tree 0))
+
+(load "./code_from_text/ch5-regsim.scm")
+(load "./chapter5-21-count-leave-machines.scm")
+(set-register-contents! count-leave-iter-machine 'tree '((a b) (c (d e f))))
+(count-leave-iter-machine 'trace-on)
+(set-register-trace-on count-leave-iter-machine 'val)
+(start count-leave-iter-machine)
+(get-register-contents count-leave-iter-machine 'val)
+
+;; gosh> 6
