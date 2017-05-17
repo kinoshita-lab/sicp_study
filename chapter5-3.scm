@@ -214,3 +214,22 @@
 (get-register-contents count-leave-iter-machine 'val)
 
 ;; gosh> 6
+
+;; 5.22
+(load "./chapter5-22-append-machine.scm")
+(append-machine 'trace-on)
+(set-register-contents! append-machine 'x '(1 2))
+(set-register-contents! append-machine 'y '(3 4))
+(start append-machine)
+(get-register-contents append-machine 'ans)
+;; gosh> (1 2 3 4)
+
+(append!-machine 'trace-on)
+(set-register-contents! append!-machine 'x '(1 2))
+(set-register-contents! append!-machine 'y '(3 4))
+(set-register-trace-on append!-machine 'x)
+(set-register-trace-on append!-machine 'y)
+(set-register-trace-on append!-machine 'tmp)
+(set-register-trace-on append!-machine 'tmp2)
+(start append!-machine)
+(get-register-contents append!-machine 'x)
