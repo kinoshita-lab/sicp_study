@@ -77,7 +77,13 @@
    (list 'adjoin-arg adjoin-arg)
    (list 'last-operand? last-operand?)
    (list 'no-more-exps? no-more-exps?)	;for non-tail-recursive machine
-   (list 'get-global-environment get-global-environment))
+   (list 'get-global-environment get-global-environment)
+   ;; 5.23 ここ足した
+   (list 'cond? cond?)
+   (list 'cond->if cond->if)
+   (list '= =)
+   (list 'debug-print debug-print))
+   ;; 5.23 ここまで
    )
 
 (define eceval
@@ -117,6 +123,7 @@ signal-error
 
 ;;SECTION 5.4.1
 eval-dispatch
+  (perform (op user-print) (reg exp))
   (test (op self-evaluating?) (reg exp))
   (branch (label ev-self-eval))
   (test (op variable?) (reg exp))
@@ -129,6 +136,10 @@ eval-dispatch
   (branch (label ev-definition))
   (test (op if?) (reg exp))
   (branch (label ev-if))
+  ; 5.23で足した begin
+  (test (op cond?) (reg exp))
+  (branch (label ev-cond))
+  ; 5.23で足した end
   (test (op lambda?) (reg exp))
   (branch (label ev-lambda))
   (test (op begin?) (reg exp))
@@ -259,7 +270,10 @@ ev-if-alternative
 ev-if-consequent
   (assign exp (op if-consequent) (reg exp))
   (goto (label eval-dispatch))
-
+;; 5.23で足した begin
+ev-cond
+  (assign exp (op cond->if) (reg exp)) ;; ifにして
+  (goto (label ev-if)) ;; ifとして処理
 ev-assignment
   (assign unev (op assignment-variable) (reg exp))
   (save unev)
