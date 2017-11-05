@@ -270,10 +270,14 @@ ev-if-alternative
 ev-if-consequent
   (assign exp (op if-consequent) (reg exp))
   (goto (label eval-dispatch))
-;; 5.23で足した begin
+;; ;; 5.23で足した begin
+;; ev-cond
+  ;;   (assign exp (op cond->if) (reg exp)) ;; ifにして
+  ;;   (goto (label ev-if)) ;; ifとして処理
+;;   ;; 5.23で足した end
+;; 5.24のcond  
 ev-cond
-  (assign exp (op cond->if) (reg exp)) ;; ifにして
-  (goto (label ev-if)) ;; ifとして処理
+
 ev-assignment
   (assign unev (op assignment-variable) (reg exp))
   (save unev)
