@@ -4,12 +4,12 @@
 
 ;;;; **NB** The actual "load" calls are implementation dependent.
 
-(load "ch5-regsim.scm")			;reg machine simulator
+(load "./code_from_text/ch5-regsim.scm")			;reg machine simulator
 
 ;; **NB** next file contains another "load"
-(load "ch5-eceval-support.scm")		;simulation of machine operations
+(load "./code_from_text/ch5-eceval-support.scm")		;simulation of machine operations
 
-(load "ch5-eceval.scm")			;eceval itself
+(load "./code_from_text/ch5-eceval.scm")			;eceval itself
 
 
 (define the-global-environment (setup-environment))

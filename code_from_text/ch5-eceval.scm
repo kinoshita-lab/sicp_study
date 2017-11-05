@@ -78,13 +78,7 @@
    (list 'last-operand? last-operand?)
    (list 'no-more-exps? no-more-exps?)	;for non-tail-recursive machine
    (list 'get-global-environment get-global-environment)
-   ;; 5.23 ここ足した
-   (list 'cond? cond?)
-   (list 'cond->if cond->if)
-   (list '= =)
-   (list 'debug-print debug-print))
-   ;; 5.23 ここまで
-   )
+   ))
 
 (define eceval
   (make-machine
@@ -136,10 +130,6 @@ eval-dispatch
   (branch (label ev-definition))
   (test (op if?) (reg exp))
   (branch (label ev-if))
-  ; 5.23で足した begin
-  (test (op cond?) (reg exp))
-  (branch (label ev-cond))
-  ; 5.23で足した end
   (test (op lambda?) (reg exp))
   (branch (label ev-lambda))
   (test (op begin?) (reg exp))
@@ -232,23 +222,40 @@ ev-begin
   (save continue)
   (goto (label ev-sequence))
 
+;; ev-sequence
+;;   (assign exp (op first-exp) (reg unev))
+;;   (test (op last-exp?) (reg unev))
+;;   (branch (label ev-sequence-last-exp))
+;;   (save unev)
+;;   (save env)
+;;   (assign continue (label ev-sequence-continue))
+;;   (goto (label eval-dispatch))
+;; ev-sequence-continue
+;;   (restore env)
+;;   (restore unev)
+;;   (assign unev (op rest-exps) (reg unev))
+;;   (goto (label ev-sequence))
+;; ev-sequence-last-exp
+;;   (restore continue)
+;;   (goto (label eval-dispatch))
+;; 5.28用の実装(末尾再帰しない版)
 ev-sequence
-  (assign exp (op first-exp) (reg unev))
-  (test (op last-exp?) (reg unev))
-  (branch (label ev-sequence-last-exp))
-  (save unev)
-  (save env)
-  (assign continue (label ev-sequence-continue))
-  (goto (label eval-dispatch))
+(test (op no-more-exps?) (reg unev))
+(branch (label ev-sequence-end))
+(assign exp (op first-exp) (reg unev))
+(save unev)
+(save env)
+(assign continue (label ev-sequence-continue))
+(goto (label eval-dispatch ))
 ev-sequence-continue
-  (restore env)
-  (restore unev)
-  (assign unev (op rest-exps) (reg unev))
-  (goto (label ev-sequence))
-ev-sequence-last-exp
-  (restore continue)
-  (goto (label eval-dispatch))
-
+(restore env)
+(restore unev)
+(assign unev (op rest-exps) (reg unev))
+(goto (label ev-sequence))
+ev-sequence-end
+(restore continue)
+(goto (reg continue))
+;; 5.28用ここまで
 ;;;SECTION 5.4.3
 
 ev-if
@@ -270,14 +277,6 @@ ev-if-alternative
 ev-if-consequent
   (assign exp (op if-consequent) (reg exp))
   (goto (label eval-dispatch))
-;; ;; 5.23で足した begin
-;; ev-cond
-  ;;   (assign exp (op cond->if) (reg exp)) ;; ifにして
-  ;;   (goto (label ev-if)) ;; ifとして処理
-;;   ;; 5.23で足した end
-;; 5.24のcond  
-ev-cond
-
 ev-assignment
   (assign unev (op assignment-variable) (reg exp))
   (save unev)

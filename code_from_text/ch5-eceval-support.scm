@@ -2,7 +2,7 @@
 ;;;;loaded by load-eceval.scm and by load-eceval-compiler.scm
 
 ;;;;FIRST A LOT FROM 4.1.2-4.1.4
-(load "ch5-syntax.scm")
+(load "./code_from_text/ch5-syntax.scm")
 
 ;;;SECTION 4.1.3
 ;;; operations used by compiled code and eceval except as noted
