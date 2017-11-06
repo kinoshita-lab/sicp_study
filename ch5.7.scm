@@ -42,3 +42,16 @@
 
 ;(f (g 'x) 'y) 'y 不要 (g 'x) argl/proc必要 f不要
 
+;; 5.32 問題の意味が謎。英語版だとこうなってた。
+;;   Using the preserving mechanism, the compiler will avoid saving and restoring env around the evaluation of the operator of a combination in the case where the operator is a symbol. We could also build such optimizations into the evaluator. Indeed, the explicit-control evaluator of section 5.4 already performs a similar optimization, by treating combinations with no operands as a special case.
+;; 「operatorがシンボルだったら、普通の関数適用じゃなくてすぐに適用できるようにしろ、という問題。」
+;; premitive-procedure? を改造すればいいかも
+(define (primitive-procedure? proc)
+  (tagged-list? proc 'primitive))
+; ↓
+(define (primitive-procedure? proc)
+  (or (tagged-list? proc 'primitive)
+      (symbol? (cadr proc))))
+;; b
+;; ECevalでもこのような工夫をしている、ということなので、
+;; インタプリタにも多少はこういう最適化を入れていったほうがいいのではないか。あんまりやりすぎると評価に時間がかかるようになるので、その辺のトレードオフがありそう。最後は毎回コンパイルして実行する評価器になってしまう。
