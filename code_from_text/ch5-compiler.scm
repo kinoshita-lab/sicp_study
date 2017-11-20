@@ -17,7 +17,6 @@
 (define true #t) ;; これいる
 (define false #f) ;; これいる
 ;;;SECTION 5.5.1
-
 (define (compile exp target linkage)
   (cond ((self-evaluating? exp)
          (compile-self-evaluating exp target linkage))
@@ -121,6 +120,8 @@
 
 ;;;labels (from footnote)
 (define label-counter 0)
+(define (reset-counter!) 
+  (set! label-counter 0))
 
 (define (new-label-number)
   (set! label-counter (+ 1 label-counter))
