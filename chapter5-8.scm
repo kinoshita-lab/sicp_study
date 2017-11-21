@@ -361,3 +361,224 @@
 ;; この return リンクの実装で、コンパイラは末尾再帰のコードを生成します。手
 ;; 続きの本体の最後のステップとして手続き呼び出しを行うと、スタックに何の
 ;; 情報も保存せず、直接移動を行うことになります。
+
+
+;; 5.35
+;; サービス問題かな？ ↑を1回やって意味わかれば簡単だった
+(define (f x)
+  (+ x (g (+ x 2))))
+
+
+;; 5.36
+;; 右から。決めてるのは
+;; construct-arglistの2行目
+;;   (let ((operand-codes (reverse operand-codes)))
+;; だと思う。
+;; compilerのここ変えてみる
+;;
+;; 順
+(load "./code_from_text/ch5-compiler.scm")
+(use slib)
+(require 'pretty-print)
+(define pp pretty-print)
+(pp (compile
+ '(define (f x)
+    (+ x 1 2))
+ 'val
+ 'next))
+;; ((env)
+;;  (val)
+;;  ((assign
+;;     val
+;;     (op make-compiled-procedure)
+;;     (label entry1)
+;;     (reg env))
+;;   (goto (label after-lambda2))
+;;   entry1
+;;   (assign
+;;     env
+;;     (op compiled-procedure-env)
+;;     (reg proc))
+;;   (assign
+;;     env
+;;     (op extend-environment)
+;;     (const (x))
+;;     (reg argl)
+;;     (reg env))
+;;   (assign
+;;     proc
+;;     (op lookup-variable-value)
+;;     (const +)
+;;     (reg env))
+;;   (assign val (const 2))                                            ;; このへんが
+;;   (assign argl (op list) (reg val))                                 ;; わかりやすい
+;;   (assign val (const 1))                                            ;; ね
+;;   (assign argl (op cons) (reg val) (reg argl))                      ;; 逆順になってる
+;;   (assign
+;;     val
+;;     (op lookup-variable-value)
+;;     (const x)
+;;     (reg env))
+;;   (assign argl (op cons) (reg val) (reg argl))
+;;   (test (op primitive-procedure?) (reg proc))
+;;   (branch (label primitive-branch3))
+;;   compiled-branch4
+;;   (assign
+;;     val
+;;     (op compiled-procedure-entry)
+;;     (reg proc))
+;;   (goto (reg val))
+;;   primitive-branch3
+;;   (assign
+;;     val
+;;     (op apply-primitive-procedure)
+;;     (reg proc)
+;;     (reg argl))
+;;   (goto (reg continue))
+;;   after-call5
+;;   after-lambda2
+;;   (perform
+;;     (op define-variable!)
+;;     (const f)
+;;     (reg val)
+;;     (reg env))
+;;   (assign val (const ok))))
+
+;; 逆
+(load "./code_from_text/ch5-compiler-reversed-arg-order.scm")
+(use slib)
+(require 'pretty-print)
+(define pp pretty-print)
+(pp (compile
+ '(define (f x)
+    (+ x 1 2))
+ 'val
+ 'next))
+;; ((env)
+;;  (val)
+;;  ((assign
+;;     val
+;;     (op make-compiled-procedure)
+;;     (label entry1)
+;;     (reg env))
+;;   (goto (label after-lambda2))
+;;   entry1
+;;   (assign
+;;     env
+;;     (op compiled-procedure-env)
+;;     (reg proc))
+;;   (assign
+;;     env
+;;     (op extend-environment)
+;;     (const (x))
+;;     (reg argl)
+;;     (reg env))
+;;   (assign
+;;     proc
+;;     (op lookup-variable-value)
+;;     (const +)
+;;     (reg env))
+;;   (assign
+;;     val
+;;     (op lookup-variable-value)
+;;     (const x)
+;;     (reg env))
+;;   (assign argl (op list) (reg val))                    ;; このへんが
+;;   (assign val (const 1))                               ;; 逆順
+;;   (assign argl (op cons) (reg val) (reg argl))         ;; じゃ
+;;   (assign val (const 2))                               ;; なくなったね
+;;   (assign argl (op cons) (reg val) (reg argl))         ;; 。
+;;   (test (op primitive-procedure?) (reg proc))
+;;   (branch (label primitive-branch3))
+;;   compiled-branch4
+;;   (assign
+;;     val
+;;     (op compiled-procedure-entry)
+;;     (reg proc))
+;;   (goto (reg val))
+;;   primitive-branch3
+;;   (assign
+;;     val
+;;     (op apply-primitive-procedure)
+;;     (reg proc)
+;;     (reg argl))
+;;   (goto (reg continue))
+;;   after-call5
+;;   after-lambda2
+;;   (perform
+;;     (op define-variable!)
+;;     (const f)
+;;     (reg val)
+;;     (reg env))
+;;   (assign val (const ok))))
+;; 逆順にしただけだと arglの順番が逆になってしまうね。
+;; code-to-get-rest-argsも変える必要あるっぽいので変えてみた。
+;; 単にconsをappendにしただけなんだけどいいのかな。
+(load "./code_from_text/ch5-compiler-reversed-arg-order.scm")
+(use slib)
+(require 'pretty-print)
+(define pp pretty-print)
+(pp (compile
+ '(define (f x)
+    (+ x 1 2))
+ 'val
+ 'next))
+;; ((env)
+;;  (val)
+;;  ((assign
+;;     val
+;;     (op make-compiled-procedure)
+;;     (label entry1)
+;;     (reg env))
+;;   (goto (label after-lambda2))
+;;   entry1
+;;   (assign
+;;     env
+;;     (op compiled-procedure-env)
+;;     (reg proc))
+;;   (assign
+;;     env
+;;     (op extend-environment)
+;;     (const (x))
+;;     (reg argl)
+;;     (reg env))
+;;   (assign
+;;     proc
+;;     (op lookup-variable-value)
+;;     (const +)
+;;     (reg env))
+;;   (assign
+;;     val
+;;     (op lookup-variable-value)
+;;     (const x)
+;;     (reg env))
+;;   (assign argl (op list) (reg val))
+;;   (assign val (const 1))
+;;   (assign argl (op append) (reg val) (reg argl)) ;; ここが appendになった
+;;   (assign val (const 2))
+;;   (assign argl (op append) (reg val) (reg argl)) ;; ここが appendになった
+;;   (test (op primitive-procedure?) (reg proc))
+;;   (branch (label primitive-branch3))
+;;   compiled-branch4
+;;   (assign
+;;     val
+;;     (op compiled-procedure-entry)
+;;     (reg proc))
+;;   (goto (reg val))
+;;   primitive-branch3
+;;   (assign
+;;     val
+;;     (op apply-primitive-procedure)
+;;     (reg proc)
+;;     (reg argl))
+;;   (goto (reg continue))
+;;   after-call5
+;;   after-lambda2
+;;   (perform
+;;     (op define-variable!)
+;;     (const f)
+;;     (reg val)
+;;     (reg env))
+;;   (assign val (const ok))))
+;; 効率の違い は↑の例だととくにない感じになった。コンパイル時にreverseしないようにした分得してるかもという程度。実行時は関係ない。
+;; 5.4.1のインタプリタの方は「基底のschemeにひっぱられるよ」って書いてあるけどコンパイラの方は自分でのせてるから順番も自分で決める。
