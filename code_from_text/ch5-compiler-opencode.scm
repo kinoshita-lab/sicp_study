@@ -366,7 +366,6 @@
         (empty-instruction-sequence)
         (append-2-sequences (car seqs)
                             (append-seq-list (cdr seqs)))))
-  #?=seqs
   (append-seq-list seqs))
 
 (define (list-union s1 s2)
