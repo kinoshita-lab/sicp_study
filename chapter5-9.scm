@@ -101,3 +101,96 @@
 ;;   (assign val (const ok))
 ;;   (restore continue)))
 ;; すごい数のsaveとrestoreができた! ということがわかったのでこれでいいのかな。
+
+;; 5.38
+;; また新しいコンパイラ作るのか。今回はちょい大変そう
+;; ていうか a. の問題は意味があんま良くわからない
+(+ (+ 1 2) (- 3 4))
+;; みたいなのがあるときに、いいかんじにしてほしいってことだとは思う。
+;; 結果はarg1とarg2に入れればいいので、任意の数のoperandには対応しなくてよさそう
+;; こんなかな。
+(define (spread-arguments operand1 operand2)
+  (preserving '(env continue)
+              (compile operand1 'arg1 'next)
+              (compile operand2 'arg2 'next)))
+
+
+;; b
+;; 基底のschemeのやつ使える？ をこさえる
+(define (open-code-operation? exp)
+  (or (tagged-list? exp '=)
+      (tagged-list? exp '*)
+      (tagged-list? exp '-)
+      (tagged-list? exp '+)))
+
+;; compileに追加
+(define (compile exp target linkage)
+  (cond ((self-evaluating? exp)
+         (compile-self-evaluating exp target linkage))
+        ((quoted? exp) (compile-quoted exp target linkage))
+        ((variable? exp)
+         (compile-variable exp target linkage))
+        ((assignment? exp)
+         (compile-assignment exp target linkage))
+        ;; なんとなくこのへんに追加 たぶんapplicationより前ならOK begin
+        ((open-code-operation? exp)
+         (compile-open-code exp target linkage))
+        ;; なんとなくこのへんに追加 end
+        ((definition? exp)
+         (compile-definition exp target linkage))
+        ((if? exp) (compile-if exp target linkage))
+        ((lambda? exp) (compile-lambda exp target linkage))
+        ((begin? exp)
+         (compile-sequence (begin-actions exp)
+                           target
+                           linkage))
+        ((cond? exp) (compile (cond->if exp) target linkage))
+        ((application? exp)
+         (compile-application exp target linkage))
+        (else
+         (error "Unknown expression type -- COMPILE" exp))))
+
+;; んでその compile-open-codeをこさえる(compile-procedure-callから必要なところを拾ってくるかんじ)
+;; ざっくり。
+(define (compile-open-code exp target linkage)
+  (let* ((op1 (cadr exp)) ;; めんどいので
+         (op2 (caddr exp))
+         (proc-code (compile (operator exp) 'proc 'next)))
+    (end-with-linkage linkage
+      (append-instruction-sequences
+        (spread-arguments op1 op2)
+        proc-code
+        (make-instruction-sequence '(proc arg1 arg2)
+                                    (list target)
+                                    `((assign ,target
+                                              (op apply-primitive-procedure)
+                                              (reg proc)
+                                              (reg arg1)
+                                              (reg arg2))))))))
+
+;; つーのを組みこんだやつをこさえた。
+;; 組んでみたら色々理解してないことが判明したのでだいぶ戦った。
+(load "./code_from_text/ch5-compiler-opencode.scm")
+(use slib)
+(require 'pretty-print)
+(define pp pretty-print)
+(pp (compile
+ '(+ 1 2)
+ 'val
+ 'next))
+;; こんなのが出たからいいようなきがする
+;; ((env)
+;;  (arg1 arg2 proc val)
+;;  ((assign arg1 (const 1))
+;;   (assign arg2 (const 2))
+;;   (assign
+;;     proc
+;;     (op lookup-variable-value)
+;;     (const +)
+;;     (reg env))
+;;   (assign
+;;     val
+;;     (op apply-primitive-procedure)
+;;     (reg proc)
+;;     (reg arg1)
+;;     (reg arg2))))
