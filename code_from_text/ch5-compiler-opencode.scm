@@ -23,14 +23,61 @@
       (tagged-list? exp '-)
       (tagged-list? exp '+)))
 
+
+(define (long-arg-open-code-operation? exp)
+  (<= 4 (length exp)))
+
 (define (spread-arguments operand1 operand2)
-  (preserving '(env continue)
+  (preserving '(env continue arg1 arg2)
               (compile operand1 'arg1 'next)
               (compile operand2 'arg2 'next)))
+
+(define (reduce-num-argments exp)
+  (define (list-binary-operation exp)
+    (if (= 3 (length exp))
+        exp
+        (let ((operator (car exp))
+              (first-arg (cadr exp)))
+          (list operator first-arg (reduce-num-argments
+                                    (append (list operator) (cddr exp)))))))
+  (caddr (list-binary-operation exp)))
+
+
+(define (compile-open-code-arbitary-length-arg exp target linkage)
+  (let* ((op1 (cadr exp)) ;; 
+         (op2 (reduce-num-argments exp))
+         (proc-code (compile (operator exp) 'proc 'next)))
+    (end-with-linkage linkage
+      (append-instruction-sequences
+        (spread-arguments op1 op2)
+        proc-code
+        (make-instruction-sequence '(proc arg1 arg2)
+                                    (list target)
+                                    `((assign ,target
+                                              (op apply-primitive-procedure)
+                                              (reg proc)
+                                              (reg arg1)
+                                              (reg arg2))))))))
 
 (define (compile-open-code exp target linkage)
   (let* ((op1 (cadr exp)) 
          (op2 (caddr exp))
+         (proc-code (compile (operator exp) 'proc 'next)))
+    (end-with-linkage linkage
+      (append-instruction-sequences
+        (spread-arguments op1 op2)
+        proc-code
+        (make-instruction-sequence '(proc arg1 arg2)
+                                    (list target)
+                                    `((assign ,target
+                                              (op apply-primitive-procedure)
+                                              (reg proc)
+                                              (reg arg1)
+                                              (reg arg2))))))))
+
+(define (compile-open-code-arbitary-length-arg exp target linkage)
+  (let* ((op1 (cadr exp)) ;; 
+         (op2 (reduce-num-argments exp))
          (proc-code (compile (operator exp) 'proc 'next)))
     (end-with-linkage linkage
       (append-instruction-sequences
@@ -54,7 +101,9 @@
          (compile-assignment exp target linkage))
         ;; なんとなくこのへんに追加 たぶんapplicationより前ならOK begin
         ((open-code-operation? exp)
-         (compile-open-code exp target linkage))
+         (if (long-arg-open-code-operation? exp)
+             (compile-open-code-arbitary-length-arg exp target linkage) ;; ながいとき
+             (compile-open-code exp target linkage)))
         ;; なんとなくこのへんに追加 end
         ((definition? exp)
          (compile-definition exp target linkage))
@@ -366,6 +415,7 @@
         (empty-instruction-sequence)
         (append-2-sequences (car seqs)
                             (append-seq-list (cdr seqs)))))
+  #?=seqs
   (append-seq-list seqs))
 
 (define (list-union s1 s2)

@@ -153,7 +153,7 @@
 ;; んでその compile-open-codeをこさえる(compile-procedure-callから必要なところを拾ってくるかんじ)
 ;; ざっくり。
 (define (compile-open-code exp target linkage)
-  (let* ((op1 (cadr exp)) ;; めんどいので
+  (let* ((op1 (cadr exp)) ;; めんどいので let*
          (op2 (caddr exp))
          (proc-code (compile (operator exp) 'proc 'next)))
     (end-with-linkage linkage
@@ -319,3 +319,92 @@
 ;;     (reg val)
 ;;     (reg env))
 ;;   (assign val (const ok))))
+
+;; d
+;; 引数をシュリンク？ して2つにすればいいんだよね。
+;; (+ 1 2 3 4)
+;; を
+;; (+ 1 (+ 2 (+ 3 4))
+;; こういう風に変形すればよくね？ + と *だったら順番交換できるからアリだな(副作用がないことにすれば)
+;; んでそれを arg2に(+ 2 (+ 3 4))入れるやつこさえればいいんだ
+(define (reduce-num-argments exp)
+  (let ((operator (car exp)))
+    (define (list-binary-operation exp)
+      (if (= 3 (length exp))
+          exp
+          (let ((first-arg (cadr exp)))
+            (list operator first-arg (list-binary-operation
+                                      (append (list operator) (cddr exp)))))))
+    (caddr (list-binary-operation exp))))
+(reduce-num-argments '(+ 1 2 3 4))
+;; (+ 2 (+ 3 4))
+
+;; こいつをコンパイラに追加
+(define (compile-open-code-arbitary-length-arg exp target linkage)
+  (let* ((op1 (cadr exp)) ;; 
+         (op2 (reduce-num-argments exp))
+         (proc-code (compile (operator exp) 'proc 'next)))
+    (end-with-linkage linkage
+      (append-instruction-sequences
+        (spread-arguments op1 op2)
+        proc-code))))
+        (make-instruction-sequence '(proc arg1 arg2)
+                                    (list target)
+                                    `((assign ,target
+                                              (op apply-primitive-procedure)
+                                              (reg proc)
+                                              (reg arg1)
+                                              (reg arg2))))))
+
+;; これも足した
+(define (long-arg-open-code-operation? exp)
+  (<= 4 (length exp)))
+
+(define (spread-arguments operand1 operand2)
+  (list 
+   (compile operand1 'arg1 'next)
+   (compile operand2 'arg2 'next)))
+
+;; 試
+(load "./code_from_text/ch5-compiler-opencode.scm")
+(use slib)
+(require 'pretty-print)
+(define pp pretty-print)
+(pp (compile
+ '(+ 1 2 3 4)
+ 'val
+ 'next))
+;; ぜんぜんunkoみたいな結果がでるし
+;; ((env)
+;;  (arg1 arg2 proc)
+;;  ((assign arg1 (const 1)) ;;
+;;   (assign arg1 (const 2)) ;; このへんが
+;;   (assign arg1 (const 3)) ;; unko
+;;   (assign arg2 (const 4)) ;;
+;;   (assign
+;;     proc
+;;     (op lookup-variable-value)
+;;     (const +)
+;;     (reg env))
+;;   (assign
+;;     arg2
+;;     (op apply-primitive-procedure)
+;;     (reg proc)
+;;     (reg arg1)
+;;     (reg arg2))
+;;   (assign
+;;     proc
+;;     (op lookup-variable-value)
+;;     (const +)
+;;     (reg env))
+;;   (assign
+;;     arg2
+;;     (op apply-primitive-procedure)
+;;     (reg proc)
+;;     (reg arg1)
+;;     (reg arg2))
+;;   (assign
+;;     proc
+;;     (op lookup-variable-value)
+;;     (const +)
+;;     (reg env))))
