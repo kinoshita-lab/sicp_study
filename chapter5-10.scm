@@ -50,7 +50,7 @@
         '() ;; 無いときは nil返す
         (if (= 0 index)
             (car frame)
-            (get-frame (- index 1) (cdr frame)))))
+            (find-frame (- index 1) (cdr frame)))))
   
   (define (find-displacement-value displacement frame)
     (if (null? (car frame)) ;; dasai
