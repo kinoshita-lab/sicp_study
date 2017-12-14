@@ -84,3 +84,74 @@
 (lexical-address-lookup '(6 2) test-frame)
 ;; *** ERROR: Unbound variable
 ;; よさげ。
+
+
+;; 次 lexical-address-set!
+;; frameをたどってってそこだけ変えたframeを返せばいいかな。
+
+;; 必要なframeをひろってくるやつ ↑と一緒
+;; framesのほうがよさげな名前だと思った。
+(define (find-frame index frames)
+  (if (null? frames)
+      '() ;; 無いときは nil返す
+      (if (= 0 index)
+          (car frames)
+          (find-frame (- index 1) (cdr frames)))))
+
+(define test-frames '(((a b c) (1 2 3))
+                      ((d e f) (4 5 6))
+                      ((x y z) ('a 'b 'c))))
+(find-frame 1 test-frames)
+
+;; displacementの所まで行ってそこの値だけ書きかえるやつ
+(define (set-at-displacement! displacement value frame)
+  (define (iter i result rest-frame)
+    (if (null? rest-frame)
+        result ;; restなくなったらおわり
+        (if (not (= 0 i)) ;; indexが0の時以外は
+            (iter (- i 1) (append result (list (car rest-frame))) (cdr rest-frame)) ;; ただくっつける
+            (iter (- i 1) (append result (list value)) (cdr rest-frame))))) ;; そうじゃない時は更新
+ (set-cdr! frame (list (iter displacement '() (cadr frame))))
+ frame)
+
+
+(define test-set-at-displacement-frame '((d e f) (4 5 6)))
+(set-at-displacement! 1 1 test-set-at-displacement-frame)
+;; ((d e f) (4 1 6))
+;; できた。 まとめ
+
+(define (lexical-address-set! address value frames)
+
+  (define (find-frame index frames)
+    (if (null? frames)
+        '() ;; 無いときは nil返す
+        (if (= 0 index)
+            (car frames)
+            (find-frame (- index 1) (cdr frames)))))
+
+  (define (set-at-displacement! displacement value frame)
+    (define (iter i result rest-frame)
+      (if (null? rest-frame)
+          result ;; restなくなったらおわり
+          (if (not (= 0 i)) ;; indexが0の時以外は
+              (iter (- i 1) (append result (list (car rest-frame))) (cdr rest-frame)) ;; ただくっつける
+              (iter (- i 1) (append result (list value)) (cdr rest-frame))))) ;; そうじゃない時は更新
+    (set-cdr! frame (list (iter displacement '() (cadr frame))))
+    frame)
+  
+  (let ((frame (find-frame (car address) frames)))
+    (if (null? frame)
+        (error "Frame Not Found")
+        (let ((displacement (cadr address)))
+          (set-at-displacement! displacement value frame)))))
+
+
+;; 試
+(define test-frames '(((a b c) (1 2 3))
+                      ((d e f) (4 5 6))
+                      ((x y z) ('a 'b 'c))))
+
+(lexical-address-set! '(1 1) 1 test-frames)
+;; ((d e f) (4 1 6))
+;; frameを合体させなければだった。。
+
