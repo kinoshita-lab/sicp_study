@@ -118,7 +118,7 @@
 (define test-set-at-displacement-frame '((d e f) (4 5 6)))
 (set-at-displacement! 1 1 test-set-at-displacement-frame)
 ;; ((d e f) (4 1 6))
-;; できた。 まとめ
+;; できた。 
 
 (define (lexical-address-set! address value frames)
 
@@ -143,7 +143,8 @@
     (if (null? frame)
         (error "Frame Not Found")
         (let ((displacement (cadr address)))
-          (set-at-displacement! displacement value frame)))))
+          (list-set! frames (car address) (set-at-displacement! displacement value frame))
+          frames)))) ;; 便利関数list-set!をつかった。 set-at-displacement!もそうできる
 
 
 ;; 試
@@ -152,6 +153,6 @@
                       ((x y z) ('a 'b 'c))))
 
 (lexical-address-set! '(1 1) 1 test-frames)
-;; ((d e f) (4 1 6))
-;; frameを合体させなければだった。。
+;; (((a b c) (1 2 3)) ((d e f) (4 1 6)) ((x y z) ('a 'b 'c)))
+
 
