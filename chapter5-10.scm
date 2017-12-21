@@ -155,4 +155,5 @@
 (lexical-address-set! '(1 1) 1 test-frames)
 ;; (((a b c) (1 2 3)) ((d e f) (4 1 6)) ((x y z) ('a 'b 'c)))
 
-
+;;; 5.40
+;; 足して、lambdaのときに膨らませばいいのかな。
