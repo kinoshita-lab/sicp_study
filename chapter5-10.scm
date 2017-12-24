@@ -157,3 +157,75 @@
 
 ;;; 5.40
 ;; 足して、lambdaのときに膨らませばいいのかな。
+
+;; 5.41
+;; 地味シリーズだ 5.39とやることがほとんどかわんないぞ。
+;; 
+;; 何個先のcompile-time-environmentに入ってるか？
+(define (find-frame-contains-variable variable env-list)
+  (define (iter index variable env-list) 
+    (if (null? env-list)
+        '()
+        (if (memq variable (car env-list))
+            index
+            (iter (+ index 1) variable (cdr env-list)))))
+  (iter 0 variable env-list))
+
+(find-frame-contains-variable 'c '((y z) (a b c d e) (x y))) ;; => 1
+(find-frame-contains-variable 'x '((y z) (a b c d e) (x y))) ;; => 2
+(find-frame-contains-variable 'w '((y z) (a b c d e) (x y))) ;; => ()
+;; よさげ。
+
+;; listの何番目に入ってるか？
+(define (find-displacement-index variable frame)
+  (define (iter index variable frame)
+    (if (null? frame)
+        '()
+        (if (equal? variable (car frame))
+            index
+            (iter (+ index 1) variable (cdr frame)))))
+  (iter 0 variable frame))
+
+;; ここまで同じだとまとめたくなるけどとりあえずいいや。
+(find-displacement-index 'c '(a b c d e)) ;; => 2
+(find-displacement-index 'x '(x z)) ;; => 0
+(find-displacement-index 'w'(a b c d e)) ;; => ()
+
+;; これをまとめた感じのを作る
+(define (find-variable variable compile-time-environment)
+  ;; 何個先のcompile-time-environmentに入ってるか？
+  (define (find-frame-contains-variable variable env-list)
+    (define (iter index variable env-list) 
+      (if (null? env-list)
+          '()
+          (if (memq variable (car env-list))
+              index
+              (iter (+ index 1) variable (cdr env-list)))))
+    (iter 0 variable env-list))
+
+  ;; listの何番目に入ってるか？
+  (define (find-displacement-index variable frame)
+    (define (iter index variable frame)
+      (if (null? frame)
+          '()
+          (if (equal? variable (car frame))
+              index
+              (iter (+ index 1) variable (cdr frame)))))
+    (iter 0 variable frame))
+
+  ;; nth的なものが要る
+  (define (nth index l)
+    (if (= 0 index)
+        (car l)
+        (nth (- index 1) (cdr l))))
+  
+  ;; ↑の色々を使ってfind-variableを作る
+  (let ((frame-index (find-frame-contains-variable variable compile-time-environment)))
+    (if (null? frame-index)
+        'not-found
+        (let ((frame (nth frame-index compile-time-environment)))
+          (list frame-index (find-displacement-index variable frame))))))
+
+(find-variable 'c '((y z) (a b c d e) (x y))) ;; (1 2)
+(find-variable 'x '((y z) (a b c d e) (x y))) ;; (2 0)
+(find-variable 'w '((y z) (a b c d e) (x y))) ;; not-found

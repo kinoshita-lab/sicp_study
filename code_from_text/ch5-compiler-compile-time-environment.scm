@@ -163,7 +163,7 @@
       (compile (first-exp seq) target linkage)
       (preserving '(env continue)
        (compile (first-exp seq) target 'next)
-       (compile-sequence (rest-exps seq) target linkage))))
+       (compile-sequence (rest-exps seq) target linkage compile-time-environment))))
 
 ;;;lambda expressions
 
@@ -183,18 +183,10 @@
         (compile-lambda-body exp proc-entry compile-time-environment)) ;; ここで膨らませる
        after-lambda))))
 
-;; *unassigned* にするやつつくってみればいいかな。
-(define (make-compile-time-new-environment formals)
-  (define (iter result rest)
-    (if (null? rest)
-        result
-        (iter (append result (cons (car rest) '*unassigned*))
-              (cdr rest))))
-  (iter '() formals))
 
 (define (compile-lambda-body exp proc-entry compile-time-environment)
   (let ((formals (lambda-parameters exp)))
-    (set! compile-time-environment (cons (make-compile-time-new-environment formals) compile-time-environment)) ;; 膨らませ
+    (set! compile-time-environment (cons formals compile-time-environment)) ;; 膨らませ
     (append-instruction-sequences
      (make-instruction-sequence '(env proc argl) '(env)
       `(,proc-entry
@@ -204,7 +196,7 @@
                 (const ,formals)
                 (reg argl)
                 (reg env))))
-     (compile-sequence (lambda-body exp) 'val 'return))))
+     (compile-sequence (lambda-body exp) 'val 'return compile-time-environment)))) ;; 先へ
 
 
 ;;;SECTION 5.5.3
