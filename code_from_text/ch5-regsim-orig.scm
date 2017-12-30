@@ -11,9 +11,7 @@
 ;;;  one you want last, or by commenting one of them out.
 ;;; Also, comment in/out the print-stack-statistics op in make-new-machine
 ;;; To find this stack code below, look for comments with **
-;; これ必要
-(define true #t) 
-(define false #f)
+
 
 (define (make-machine register-names ops controller-text)
   (let ((machine (make-new-machine)))
@@ -35,38 +33,11 @@
              (error "Unknown request -- REGISTER" message))))
     dispatch))
 
-;; 5.18用
-(define (make-register name)
-  (let ((contents '*unassigned*)
-		(trace #f))
-    (define (dispatch message)
-      (cond ((eq? message 'get) contents)
-            ((eq? message 'set)
-             (lambda (value)
-			   (if trace
-				   (begin
-					 (display (list "reg " name ":" contents " -> " value))
-					 (newline)))
-				   (set! contents value)))
-			((eq? message 'trace-on)
-			 (set! trace #t))
-			((eq? message 'trace-off)
-			 (set! trace #f))
-            (else
-             (error "Unknown request -- REGISTER" message))))
-    dispatch))
-
 (define (get-contents register)
   (register 'get))
 
 (define (set-contents! register value)
   ((register 'set) value))
-
-(define (register-trace-on register)
-  (register 'trace-on))
-
-(define (register-trace-off register)
-  (register 'trace-off))
 
 ;;**original (unmonitored) version from section 5.2.1
 (define (make-stack)
@@ -106,8 +77,7 @@
       (set! s (cons x s))
       (set! number-pushes (+ 1 number-pushes))
       (set! current-depth (+ 1 current-depth))
-	  (set! max-depth (max current-depth max-depth))) 
-	
+      (set! max-depth (max current-depth max-depth)))
     (define (pop)
       (if (null? s)
           (error "Empty stack -- POP")
@@ -139,9 +109,7 @@
   (let ((pc (make-register 'pc))
         (flag (make-register 'flag))
         (stack (make-stack))
-        (the-instruction-sequence '())
-        (instruction-counter 0)
-        (trace #f)) ;; 5.15 で追加
+        (the-instruction-sequence '()))
     (let ((the-ops
            (list (list 'initialize-stack
                        (lambda () (stack 'initialize)))
@@ -151,7 +119,6 @@
                        (lambda () (stack 'print-statistics)))))
           (register-table
            (list (list 'pc pc) (list 'flag flag))))
-      
       (define (allocate-register name)
         (if (assoc name register-table)
             (error "Multiply defined register: " name)
@@ -159,38 +126,18 @@
                   (cons (list name (make-register name))
                         register-table)))
         'register-allocated)
-      
       (define (lookup-register name)
         (let ((val (assoc name register-table)))
           (if val
               (cadr val)
               (error "Unknown register:" name))))
-      
       (define (execute)
         (let ((insts (get-contents pc)))
           (if (null? insts)
               'done
               (begin
-                (set! instruction-counter (+ 1 instruction-counter))  ;; 5.15で追加
-                (if trace                                                 ;; 5.16 で追加
-                    (begin                                             ;; 5.16 で追加
-                      (display (list "trace:" instruction-counter (caar insts)))  
-                      (newline)))   
                 ((instruction-execution-proc (car insts)))
                 (execute)))))
-      
-      ;; 5.15で追加
-      (define (get-instruction-counter)
-        instruction-counter)
-      
-      ;; 5.15で追加
-      (define (reset-instruction-counter)
-        (set! instruction-counter 0))
-
-      ;; 5.16で追加
-      (define (set-trace onoff)
-        (set! trace onoff))
-      
       (define (dispatch message)
         (cond ((eq? message 'start)
                (set-contents! pc the-instruction-sequence)
@@ -203,10 +150,6 @@
                (lambda (ops) (set! the-ops (append the-ops ops))))
               ((eq? message 'stack) stack)
               ((eq? message 'operations) the-ops)
-              ((eq? message 'get-instruction-counter) (get-instruction-counter)) ;; 5.15で追
-              ((eq? message 'reset-instruction-counter) (reset-instruction-counter)) ;; 5.15で追加
-              ((eq? message 'trace-on) (set-trace #t))
-              ((eq? message 'trace-off) (set-trace #f))
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
 
@@ -224,12 +167,6 @@
 (define (get-register machine reg-name)
   ((machine 'get-register) reg-name))
 
-(define (set-register-trace-on machine regname)
-  (register-trace-on (get-register machine regname)))
-
-(define (set-register-trace-off machine regname)
-  (register-trace-off (get-register machine regname)))
-
 (define (assemble controller-text machine)
   (extract-labels controller-text
     (lambda (insts labels)
@@ -242,17 +179,14 @@
       (extract-labels (cdr text)
        (lambda (insts labels)
          (let ((next-inst (car text)))
-           (if (symbol? next-inst) ;; ここがlabelの時来るところ
-			   (begin
-				 (if (assoc next-inst labels) ;; labelは頭についてるのでそこひっかけて
-					 (error "duplicate label name" next-inst) ;; かぶってたらerror
-					 (receive insts
-						 (cons (make-label-entry next-inst
-												 insts)
-							   labels))))
+           (if (symbol? next-inst)
+               (receive insts
+                        (cons (make-label-entry next-inst
+                                                insts)
+                              labels))
                (receive (cons (make-instruction next-inst)
                               insts)
-				   labels)))))))
+                        labels)))))))
 
 (define (update-insts! insts labels machine)
   (let ((pc (get-register machine 'pc))
@@ -306,18 +240,9 @@
          (make-restore inst machine stack pc))
         ((eq? (car inst) 'perform)
          (make-perform inst machine labels ops pc))
-		((eq? (car inst) 'clear) ;; 5.10で足した
-		 (make-clear inst machine labels ops pc)) ;;5.10で足した
         (else (error "Unknown instruction type -- ASSEMBLE"
                      inst))))
 
-;;; この関数を 5.10で足した
-(define (make-clear inst machine labels operations pc)
-  (let ((target
-         (get-register machine (assign-reg-name inst))))
-	(lambda ()                ; execution procedure for clear
-	  (set-contents! target 0)
-	  (advance-pc pc))))
 
 (define (make-assign inst machine labels operations pc)
   (let ((target
@@ -454,9 +379,7 @@
   (let ((op (lookup-prim (operation-exp-op exp) operations))
         (aprocs
          (map (lambda (e)
-				(if (label-exp? e)
-;;					(error "cannot perform label operation!") ;; 5.9で足した
-					(make-primitive-exp e machine labels)))
+                (make-primitive-exp e machine labels))
               (operation-exp-operands exp))))
     (lambda ()
       (apply op (map (lambda (p) (p)) aprocs)))))
