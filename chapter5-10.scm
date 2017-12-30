@@ -334,3 +334,99 @@
 (extend-compile-time-environment '(x y z) (extend-compile-time-environment '(a b c) global-compile-time-environment))
 ;; (((x y z) (*unassigned* *unassigned* *unassigned*)) ((a b c) (*unassigned* *unassigned* *unassigned*)))
 ;; こんなのを作ってみたのだが、 うまくいかないのは変わらず。
+
+;; 4.43
+;; scan-out-definesを拾ってくる
+(define test-case '(lambda (var1 var2)
+					(define u 1)
+					(define v 2)
+					(display (+ var1 var2 u v))))
+
+(define (make-unassigned-set!-pair definition)
+  (let ((var (cadr definition))
+		(val (caddr definition)))
+	(cons (list var '*unassigned*)
+		  (list 'set! var val))))
+
+(define (scan-out-defines body)
+  (let* ((vars (cadr body))
+		(defines (filter definition? body))
+		(definition-pairs (map make-unassigned-set!-pair defines))
+		(unassigned-defs (map car definition-pairs))
+		(set-values (car (map cdr definition-pairs))))
+	(list 'lambda vars
+		  ('let unassigned-defs set-values 'rest))))
+
+(scan-out-defines test-case)
+(lambda (var1 var2)
+  (let ((u *unassigned*) (v *unassigned*))
+    ((set! u 1) (set! v 2)) rest))
+;; なんかまちがってるし途中でくじけてるな。
+;; やりなおし。
+
+(define (scan-out-defines body)
+  (let* ((vars (cadr body))
+		(defines (filter definition? body))
+		(definition-pairs (map make-unassigned-set!-pair defines))
+		(unassigned-defs (map car definition-pairs))
+		(set-values (map cdr definition-pairs))
+        (rest-body
+         (list (caddr
+                 (filter (lambda (x) (not (definition? x))) body)))))
+    (let ((lambda-body (cons 'let (cons unassigned-defs (append set-values rest-body))))
+          (lambda-and-formals (cons 'lambda (list vars))))
+      (append lambda-and-formals (list lambda-body)))))
+
+
+(scan-out-defines test-case)
+;; できた(これできなくて1ヶ月なやんだ)
+(lambda (var1 var2)
+  (let ((u *unassigned*) (v *unassigned*))
+    (set! u 1)
+    (set! v 2)
+    (display (+ var1 var2 u v))))
+
+;; で、これをcompilerにしこまなくてはいけないんだ。
+;; こういうの要りそう。
+(define (internal-define? exp)
+  (if (null? exp)
+      #f
+      (if (definition? (car exp))
+          #t
+          (internal-define? (cdr exp)))))
+
+(define test-case-2
+  '(lambda (x y)
+     (+ x y)))
+(internal-define? test-case)
+;; => #t
+(internal-define? test-case-2)
+;; => #f
+;; 組みこむとこんなだと思う
+
+(define (compile exp target linkage compile-time-environment) 
+  (cond ((self-evaluating? exp)
+         (compile-self-evaluating exp target linkage)) 
+        ((quoted? exp) (compile-quoted exp target linkage))
+        ((variable? exp)
+         (compile-variable exp target linkage compile-time-environment)) 
+        ((assignment? exp)
+         (compile-assignment exp target linkage compile-time-environment))
+        ((definition? exp)
+         (compile-definition exp target linkage compile-time-environment))
+        ((if? exp) (compile-if exp target linkage))
+        ((lambda? exp) (if (internal-define? exp) ;; ここを
+                           (compile (scan-out-defines exp target linkage compile-time-environment)) ;;ふやしてみた。
+                           (compile-lambda exp target linkage compile-time-environment))) 
+        ((begin? exp)
+         (compile-sequence (begin-actions exp)
+                           target
+                           linkage compile-time-environment)) 
+        ((cond? exp) (compile (cond->if exp) target linkage compile-time-environment))
+        ((application? exp)
+         (compile-application exp target linkage compile-time-environment)) 
+        (else
+         (error "Unknown expression type -- COMPILE" exp))))
+
+
+
