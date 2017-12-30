@@ -429,4 +429,42 @@
          (error "Unknown expression type -- COMPILE" exp))))
 
 
+;; 5.44
+;; compile-time-environmentに含まれているレキシカルな定義があれば、それを優先して適用するようにしてね、 ということだと思う。たしかにcompile-time-envには +とかそういうのもぶちこまれていっていたな。
+(define (lexical-defined-operation? exp)
+  (let* ((operator (car exp))
+         (result (find-variable operator)))
+    (and (not (equal? *unassigned* result))
+         (not (null? result)))))
+
+;; こんなのをつくって、 open-code-operation? の手前でひっかける感じにすればよさそう。
+(define (compile exp target linkage compile-time-environment) 
+  (cond ((self-evaluating? exp)
+         (compile-self-evaluating exp target linkage)) 
+        ((quoted? exp) (compile-quoted exp target linkage)) 
+        ((variable? exp)
+         (compile-variable exp target linkage compile-time-environment)) 
+        ((assignment? exp)
+         (compile-assignment exp target linkage compile-time-environment))
+        ;; 手前で引っかける(ここにくるときには値っぽいやつではないので関数だと思っていいとおもう)
+        ((lexycal-defined-operation? exp)
+         (compile-application exp target linkage compile-time-environment))
+        ;; 上にひっかからないときはopencodeだと見なせる
+        ((open-code-operation? exp)
+         (if (long-arg-open-code-operation? exp)
+             (compile-open-code exp target linkage compile-time-environment))) ;; というのは作ってないがあるとして…
+        ((definition? exp)
+         (compile-definition exp target linkage compile-time-environment)) 
+        ((if? exp) (compile-if exp target linkage))
+        ((lambda? exp) (compile-lambda exp target linkage compile-time-environment)) 
+        ((begin? exp)
+         (compile-sequence (begin-actions exp)
+                           target
+                           linkage compile-time-environment)) 
+        ((cond? exp) (compile (cond->if exp) target linkage compile-time-environment))
+        ((application? exp)
+         (compile-application exp target linkage compile-time-environment)) 
+        (else
+         (error "Unknown expression type -- COMPILE" exp))))
+    
 
