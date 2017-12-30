@@ -229,3 +229,108 @@
 (find-variable 'c '((y z) (a b c d e) (x y))) ;; (1 2)
 (find-variable 'x '((y z) (a b c d e) (x y))) ;; (2 0)
 (find-variable 'w '((y z) (a b c d e) (x y))) ;; not-found
+
+;; 5.42
+;; 急激にめんどいやつだ
+;; 5.40でcompile-time-environment足したやつをforkしてそこからやってみる
+(define (compile-variable exp target linkage compile-time-environment)
+  (end-with-linkage linkage
+   (make-instruction-sequence '(env) (list target)
+    `((assign ,target
+              (op lookup-variable-value)
+              (const ,exp)
+              (reg env))))))
+;; これをこんな感じに書きかえればいいのかな。
+(define (compile-variable exp target linkage compile-time-environment)
+  ;; compile時環境からindexひろえる場合はlookup-variable-valueをとばして直でassignする
+  (let ((compile-time-variable-address (find-variable exp compile-time-environment)))
+    (if (not (equal? 'not-found compile-time-variable-address))
+        (let ((lookup-ed-value (lexical-address-lookup
+                              compile-time-variable-address
+                              compile-time-environment)))
+          (end-with-linkage linkage
+                            (make-instruction-sequence '(env) (list target)
+                                                       `((assign ,target
+                                                                 ,lookup-ed-valu)))))
+        ;; 見つからなかったばあいは元々のlookup-variable-value版を使う
+        (end-with-linkage linkage
+                          (make-instruction-sequence '(env) (list target)
+                                                     `((assign ,target
+                                                               (op lookup-variable-value)
+                                                               (const ,exp)
+                                                               (reg env))))))))
+
+;; compile-assignmentの方
+(define (compile-assignment exp target linkage compile-time-environment)
+  (let ((var (assignment-variable exp))
+        (get-value-code
+         (compile (assignment-value exp) 'val 'next)))
+    (end-with-linkage linkage
+     (preserving '(env)
+      get-value-code
+      (make-instruction-sequence '(env val) (list target)
+       `((perform (op set-variable-value!)
+                  (const ,var)
+                  (reg val)
+                  (reg env))
+         (assign ,target (const ok))))))))
+;; これを
+(define (compile-assignment exp target linkage compile-time-environment)
+  (let* ((var (assignment-variable exp)) ;; let*った
+        (get-value-code
+         (compile (assignment-value exp) 'val 'next))
+        (compile-time-variable-address (find-variable var compile-time-environment)))
+    (if (not (equal? 'not-found compile-time-variable-address))
+        (end-with-linkage linkage
+                          (preserving '(env)
+                                      get-value-code
+                                      (make-instruction-sequence '(env) (list target)
+                                                                 `((perform (op lexical-address-set!) 
+                                                                            (const ,var)
+                                                                            (reg val)
+                                                                            (reg env))
+                                                                   (assign ,target (const ok)))))
+        ;; この下は元のコード
+        (end-with-linkage linkage
+                          (preserving '(env)
+                                      get-value-code
+                                      (make-instruction-sequence '(env val) (list target)
+                                                                 `((perform (op set-variable-value!)
+                                                                            (const ,var)
+                                                                            (reg val)
+                                                                            (reg env))
+                                                                   (assign ,target (const ok))))))))))
+
+;; こうすればいいのかな。
+
+;; 試
+(load "./code_from_text/ch5-compiler-find-variable.scm")
+(use slib)
+(require 'pretty-print)
+(define pp pretty-print)
+(define global-compile-time-environment '())
+(pp (compile
+     '((lambda x y)
+       (+ x y)
+       1
+       2)
+     'val
+     'next
+     global-compile-time-environment))
+;; 全然だめだ。compile-time-envの形式が根本的にまちがっている気がする。
+;; 形式はもともとのenvと同じにしてみよう。
+;; extend-environmentっぽくしないとだめだとおもう
+(define (extend-compile-time-environment new-formals compile-time-env)
+  (define (make-unassigned-vals-list formals)
+    (define (iter result formals)
+      (if (null? formals)
+          result
+          (iter (cons '*unassigned* result) (cdr formals))))
+    (iter '() formals))
+
+  (let ((new-env-frame (list new-formals (make-unassigned-vals-list new-formals))))
+    (cons new-env-frame compile-time-env)))
+
+(extend-compile-time-environment '(x y z) (extend-compile-time-environment '(a b c) global-compile-time-environment))
+;; (((x y z) (*unassigned* *unassigned* *unassigned*)) ((a b c) (*unassigned* *unassigned* *unassigned*)))
+;; こんなのを作ってみたのだが、 うまくいかないのは変わらず。
