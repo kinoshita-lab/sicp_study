@@ -231,3 +231,36 @@ max(n) = 5 + 3 * (n - 2)
 ;; (f 1)
 ;;; EC-Eval value:
 1
+
+;;;;;;;;;;; 5.48
+;; compile-and-go的なものをEC-Evalの内部的にできるやつを作ればいいのだろう
+;; これをつくっといて
+(define (compile-and-run expression)
+  (let ((instructions
+         (assemble (statements
+                    (compile expression 'val 'return))
+                   eceval)))
+    (set-register-contents! eceval 'val instructions)
+    (set-register-contents! eceval 'flag true) ;; resume用と思ってfalseにしたら動かなくなった いみふ
+    (start eceval)))
+
+;; eval-dispatchから呼べるようにする
+(define (compile-and-run? p)
+  (tagged-list? p 'compile-and-run))
+
+;; ロード
+(load "./code_from_text/ch5-eceval-compiler.scm")
+;;; EC-Eval input:
+(compile-and-run
+ '(define (factorial n)
+    (if (= n 1) 1 (* (factorial (- n 1)) n))))
+
+;;; EC-Eval value:
+ok
+
+;;; EC-Eval input:
+(factorial 1)
+;; (total-pushes = 7 maximum-depth = 3)
+;;; EC-Eval value:
+1
+
