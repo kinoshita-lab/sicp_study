@@ -92,8 +92,7 @@ void print_result()
 		const auto val = registers[VAL].front();
 		cout << val << endl;
 	}
-
-	goto_with_label("GOTO_READ_EVAL_PRINT_LOOP");
+	
 }
 
 // under construction

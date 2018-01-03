@@ -2,6 +2,9 @@
 
 int main()
 {
-	eceval();
+	while (true) {
+		eceval();
+	}
+	
 	return 0;
 }
