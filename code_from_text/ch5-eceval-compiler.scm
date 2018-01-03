@@ -70,9 +70,11 @@
 
 (define eceval-operations
   (list
-   ;; for 5.48
-   (list 'compile-and-run compile-and-run)    ;; これ足した
-   (list 'compile-and-run? compile-and-run?)  ;; これ足した
+   ;; for 5.49
+   (list 'compile-and-assemble-only compile-and-assemble-only)
+   ;; ;; for 5.48
+   ;; (list 'compile-and-run compile-and-run)    ;; これ足した
+   ;; (list 'compile-and-run? compile-and-run?)  ;; これ足した
    ;;primitive Scheme operations
    (list 'read read)			;used by eceval
 
@@ -190,8 +192,8 @@ signal-error
 
 ;;SECTION 5.4.1
 eval-dispatch
-  (test (op compile-and-run?) (reg exp)) ;; これ足した for 5.48
-  (branch (label ev-compile-and-run))    ;; これ足した for 5.48
+  ;; (test (op compile-and-run?) (reg exp)) ;; これ足した for 5.48
+  ;; (branch (label ev-compile-and-run))    ;; これ足した for 5.48
   (test (op self-evaluating?) (reg exp))
   (branch (label ev-self-eval))
   (test (op variable?) (reg exp))
@@ -212,10 +214,10 @@ eval-dispatch
   (branch (label ev-application))
   (goto (label unknown-expression-type))
 
-ev-compile-and-run                                 ;; これ足した for 5.48
-  (perform (op compile-and-run) (reg exp))         ;; これ足した for 5.48
-  (restore continue)                               ;; これ足した for 5.48
-  (goto (reg continue))                            ;; これ足した for 5.48
+;; ev-compile-and-run                                 ;; これ足した for 5.48
+;;   (perform (op compile-and-run) (reg exp))         ;; これ足した for 5.48
+;;   (restore continue)                               ;; これ足した for 5.48
+;;   (goto (reg continue))                            ;; これ足した for 5.48
 ev-self-eval
   (assign val (reg exp))
   (goto (reg continue))

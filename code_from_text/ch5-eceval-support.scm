@@ -123,7 +123,6 @@
 	(list '/ /)
 	(list '> >)
 	(list '< <)
-    (list 'compile-and-run compile-and-run) ;; for 5.48
         ))
 
 (define (primitive-procedure-names)
