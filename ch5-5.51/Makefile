@@ -1,16 +1,16 @@
 TARGET = eceval
 
 CXX = clang++
-CFLAGS = -Og # zatsu
+CFLAGS = -Og -std=c++14 # zatsu	
 RM = rm -f
 
-SRCS = main.cpp
+SRCS = $(shell ls *.cpp) #zatsu
 OBJS = $(SRCS:%.cpp=%.o)
 
 .SUFFIXES: .o .cpp
 
 $(TARGET) : $(OBJS)
-	$(CXX) $(SRCS) -o $@
+	$(CXX) $(OBJS) -o $@
 
 .cpp.o:
 	$(CXX) $(CFLAGS) -MMD -c $<
