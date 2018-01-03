@@ -115,3 +115,119 @@ n->inf      8 +  5(n - 1)
 push(n) = push(n-1) + push(n-2) + 7 ;; これは線形にならない
 max(n) = 5 + 3 * (n - 2)
 
+;; 5.47
+;;;; (3) support for compiled code to call interpreted code (exercise 5.47) --
+;;;;     (new register and 1 new instruction at start)
+;; もうやってあるやつかこれ ー> ecevalのとこだけやってあった
+;; compile-procedure-callとかはcompilerの方だった
+;; この段階でどうなるか？ をためした。
+(load "./code_from_text/ch5-eceval-compiler.scm")
+;; コードをテストするには、まず手続き g を呼ぶ手続き f を定義する。
+;; はい。
+(compile-and-go
+ '(define (f x)
+  (g x)))
+;; (total-pushes = 0 maximum-depth = 0)
+;;; EC-Eval value:
+;; ok
+
+;;; EC-Eval input:
+(define (g x) x)
+
+;; (total-pushes = 3 maximum-depth = 3)
+;; ;;; EC-Eval value:
+;; ok
+;;; EC-Eval input:
+;; (f 1)
+;; *** ERROR: pair required, but got x
+;; 0  (cdr inst)
+;;       at "./code_from_text/ch5-regsim-orig.scm":212
+;; 1  (instruction-execution-proc (car insts))
+;;       at "./code_from_text/ch5-regsim-orig.scm":139
+;; 2  ((instruction-execution-proc (car insts)))
+;;       at "./code_from_text/ch5-regsim-orig.scm":139
+;; 3  (eval expr env)
+;;       at "/usr/share/gauche-0.9/0.9.6_pre2/lib/gauche/interactive.scm":284
+;; だめだったということやな。
+;; エラーがregsimの方で出てるのはなぜだろう。コンパイル結果が欲しいやつじゃなかったということだな。
+;; compile-procedure-callはいつ呼ばれてるかというとcompile-and-goのとき。
+(load "./code_from_text/ch5-eceval-compiler.scm") ;; ロードしといて
+;; うわがき。
+(define (compile-procedure-call target linkage)
+  (let ((primitive-branch (make-label 'primitive-branch))
+        (compiled-branch (make-label 'compiled-branch))
+        (compound-branch (make-label 'compound-branch)) ;; これ足した
+        (after-call (make-label 'after-call)))
+    (let ((compiled-linkage
+           (if (eq? linkage 'next) after-call linkage)))
+      (append-instruction-sequences
+       (make-instruction-sequence '(proc) '()
+                                  `((test (op primitive-procedure?) (reg proc))
+                                    (branch (label ,primitive-branch))
+                                    (test (op compound-procedure?) (reg proc)) ;; これ足した
+                                    (branch (label ,compound-branch))))         ;; これ足した
+       (parallel-instruction-sequences
+        (parallel-instruction-sequences             ;; これ必要だった
+         (append-instruction-sequences
+          compound-branch                                          ;; これ足した
+          (compile-compound-proc-appl target compiled-linkage))    ;; これ足した
+         (append-instruction-sequences
+          compiled-branch
+          (compile-proc-appl target compiled-linkage)))
+        (append-instruction-sequences
+         primitive-branch
+         (end-with-linkage linkage
+                           (make-instruction-sequence '(proc argl)
+                                                      (list target)
+                                                      `((assign ,target
+                                                                (op apply-primitive-procedure)
+                                                                (reg proc)
+                                                                (reg argl))))))) 
+                                  after-call))))
+  
+;; compile-compound-proc-applをこさえる 謎だったのでこちらまるごと参考にした
+;; http://wat-aro.hatenablog.com/entry/2016/02/10/173919
+(define (compile-compound-proc-appl target linkage)
+  (cond ((and (eq? target 'val) (not (eq? linkage 'return)))
+         (make-instruction-sequence
+          '() all-regs
+          `((assign continue (label ,linkage))
+            (save continue)
+            (goto (reg compapp)))))
+        ((and (not (eq? target 'val))
+              (not (eq? linkage 'return)))
+         (let ((proc-return (make-label 'proc-return)))
+           (make-instruction-sequence
+            '(proc) all-regs
+            `((assign continue (label ,proc-return))
+              (save continue)
+              (goto (reg compapp))
+              ,proc-return
+              (assign ,target (reg val))
+              (goto (label ,linkage))))))
+        ((and (eq? target 'val) (eq? linkage 'return))
+         (make-instruction-sequence
+          '(proc continue) all-regs
+          `((save continue)
+            (goto (reg compapp)))))
+        ((and (not (eq? target 'val)) (eq? linkage 'return))
+         (error "return linkage, target not val -- COMPILE" target))))
+
+;; 試
+(compile-and-go
+ '(define (f x)
+  (g x)))
+;; (total-pushes = 0 maximum-depth = 0)
+;;; EC-Eval value:
+;; ok
+
+;;; EC-Eval input:
+(define (g x) x)
+
+;; (total-pushes = 3 maximum-depth = 3)
+;; ;;; EC-Eval value:
+;; ok
+;;; EC-Eval input:
+;; (f 1)
+;;; EC-Eval value:
+1
