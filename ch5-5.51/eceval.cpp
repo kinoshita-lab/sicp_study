@@ -1,34 +1,20 @@
-#include <string>
-#include <array>
-#include <list>
 #include <iostream>
-
+#include "types.h"
 #include "eceval.h"
+#include "dispatch.h"
+#include "eval.h"
 
 using namespace std;
 
 namespace
 {
-enum RegisterId
-{
-	EXP,
-	ENV,
-	VAL,
-	PROC,
-	ARGL,
-	CONTINUE,
-	UNEV,
-	NumberOfRegisters
-};
+RegisterType the_global_environment;
 
 // function protos
+void user_print(RegisterType& reg);
 void read_eval_print_loop();
 void print_result();
 void eval_dispatch();
-
-typedef list<string> RegisterType; // 前が最新
-array<RegisterType, NumberOfRegisters> registers;
-RegisterType the_global_environment;
 
 RegisterType& get_global_environment()
 {
@@ -88,18 +74,17 @@ void print_result()
 {
 	// [pending] print_stack_statistics();
 	cout << ";;; C++-EC-Eval output:" << endl;
-	if (registers[VAL].size()) {
-		const auto val = registers[VAL].front();
-		cout << val << endl;
-	}
-	
+	user_print(registers[VAL]);
 }
 
-// under construction
-void eval_dispatch()
+void user_print(RegisterType& reg)
 {
-	registers[VAL].push_front("eval'ed value");
-	goto_with_label(registers[CONTINUE].front());
+	if (reg.size()) {
+		cout << reg.front() << endl;
+		return;
+	}
+
+	cout << "Register is Empty!" << endl;
 }
 
 void read_eval_print_loop()
@@ -108,13 +93,27 @@ void read_eval_print_loop()
 	prompt_for_input(";;; C++-EC-Eval input:");
 	
 	string tmp;
-	cin >> tmp;
+	std::getline(std::cin, tmp);
+
 	assign(EXP, tmp);
 	assign(ENV, get_global_environment());
 	assign(CONTINUE, "GOTO_PRINT_RESULT");
 	goto_with_label("GOTO_EVAL_DISPATCH");
 }
 
+void eval_dispatch()
+{
+	user_print(registers[EXP]);
+
+	if (self_evaluating_p(registers[EXP])) {
+		ev_self_eval(registers[EXP]);
+		goto end_of_dispatch;
+	}
+	
+end_of_dispatch:
+	registers[VAL].push_front("eval'ed value");
+	goto_with_label(registers[CONTINUE].front());
+}
 
 }
 
