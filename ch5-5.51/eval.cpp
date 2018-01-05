@@ -1,6 +1,7 @@
 #include <iostream>
 #include "eval.h"
 #include "types.h"
+#include "global.h"
 
 using namespace std;
 

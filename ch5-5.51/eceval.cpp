@@ -5,6 +5,7 @@
 #include "parse.h"
 #include "eval.h"
 #include "user_print.h"
+#include "global.h"
 
 using namespace std;
 
@@ -14,11 +15,6 @@ namespace
 void read_eval_print_loop();
 void print_result();
 void eval_dispatch();
-
-RegisterType& get_global_environment()
-{
-	return the_global_environment;
-}
 
 void goto_with_label(const char* const label)
 {

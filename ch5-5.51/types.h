@@ -1,9 +1,11 @@
 #pragma once
+
 #include <cstring>
 #include <cstdlib>
 #include <list>
 #include <iostream>
 #include <memory>
+
 enum RegisterId
 {
 	EXP,
@@ -134,5 +136,3 @@ struct RegisterElementCore
 
 typedef std::list<RegisterElementCore> RegisterElement;
 typedef std::list<RegisterElement> RegisterType; // 前が最新
-extern RegisterType registers[NumberOfRegisters];
-extern RegisterType the_global_environment;
