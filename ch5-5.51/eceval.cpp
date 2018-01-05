@@ -2,7 +2,9 @@
 #include "types.h"
 #include "eceval.h"
 #include "dispatch.h"
+#include "parse.h"
 #include "eval.h"
+#include "user_print.h"
 
 using namespace std;
 
@@ -11,7 +13,6 @@ namespace
 RegisterType the_global_environment;
 
 // function protos
-void user_print(RegisterType& reg);
 void read_eval_print_loop();
 void print_result();
 void eval_dispatch();
@@ -24,7 +25,7 @@ RegisterType& get_global_environment()
 void goto_with_label(const char* const label)
 {
 	string l = label;
-
+	
 	if (l == "GOTO_PRINT_RESULT") {
 		print_result();
 		return;
@@ -40,7 +41,20 @@ void goto_with_label(const char* const label)
 		return;
 	}
 
-	cout << "LABEL NOT FOUND!" << l;
+	cout << "LABEL NOT FOUND!: " << l << endl;
+}
+
+void goto_with_label(RegisterType& r)
+{
+	auto& re = r.front();
+	auto& rc = re.front();
+
+	if (rc.type != RegisterElementCore::String) {
+		cout << "goto_with_label: not a label" << endl;
+		exit(0);
+	}
+	
+	goto_with_label(rc.value.stringValue);
 }
 
 void goto_with_label(string& label)
@@ -48,16 +62,20 @@ void goto_with_label(string& label)
 	goto_with_label(label.c_str());
 }
 
-
-void assign(int registerId, string& contents)
+void assign(int registerId, const char* const s)
 {
-	registers[registerId].push_front(contents);
+	RegisterElementCore rc(s);
+	RegisterElement re;
+	re.push_front(rc);
+	
+	registers[registerId].clear();
+	registers[registerId].push_front(re);
 }
 
-void assign(int registerId, const char* const contents)
+void assign(int registerId, RegisterElement& r)
 {
-	string c = contents;
-	registers[registerId].push_front(c);
+	registers[registerId].clear();
+	registers[registerId].push_front(r);
 }
 
 void assign(int registerId, RegisterType& r)
@@ -77,15 +95,6 @@ void print_result()
 	user_print(registers[VAL]);
 }
 
-void user_print(RegisterType& reg)
-{
-	if (reg.size()) {
-		cout << reg.front() << endl;
-		return;
-	}
-
-	cout << "Register is Empty!" << endl;
-}
 
 void read_eval_print_loop()
 {
@@ -95,7 +104,12 @@ void read_eval_print_loop()
 	string tmp;
 	std::getline(std::cin, tmp);
 
-	assign(EXP, tmp);
+	if (tmp == "!exit") {
+		exit(0);
+	}
+	auto parsed = parse(tmp);
+	
+	assign(EXP, parsed);
 	assign(ENV, get_global_environment());
 	assign(CONTINUE, "GOTO_PRINT_RESULT");
 	goto_with_label("GOTO_EVAL_DISPATCH");
@@ -104,15 +118,14 @@ void read_eval_print_loop()
 void eval_dispatch()
 {
 	user_print(registers[EXP]);
-
+	
 	if (self_evaluating_p(registers[EXP])) {
 		ev_self_eval(registers[EXP]);
 		goto end_of_dispatch;
 	}
 	
 end_of_dispatch:
-	registers[VAL].push_front("eval'ed value");
-	goto_with_label(registers[CONTINUE].front());
+	goto_with_label(registers[CONTINUE]);
 }
 
 }

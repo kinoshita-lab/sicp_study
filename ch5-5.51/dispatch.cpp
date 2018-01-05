@@ -1,9 +1,18 @@
+#include <iostream>
 #include "dispatch.h"
 #include "types.h"
+using namespace std;
 
 bool self_evaluating_p(RegisterType& reg)
 {
-	return true;
+	const auto& re = reg.front();
+	
+	if (re.size() != 1) {
+		return false;
+	}
+
+	const auto& rc = re.front();
+	return rc.type == RegisterElementCore::Integer || rc.type == RegisterElementCore::String;
 }
 
 

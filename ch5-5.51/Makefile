@@ -1,7 +1,7 @@
 TARGET = eceval
 
-CXX = clang++
-CFLAGS = -g3 -std=c++14 # zatsu	
+CXX = g++
+CFLAGS = -g -std=c++14 # zatsu	
 RM = rm -f
 
 SRCS = $(shell ls *.cpp) #zatsu
