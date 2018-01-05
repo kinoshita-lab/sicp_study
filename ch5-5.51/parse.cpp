@@ -19,6 +19,17 @@ bool string_p(const std::string& s)
 	return (s[0] == '\"' && s[s.length() - 1]  == '\"');
 }
 
+bool symbol_p(const std::string& s)
+{
+	for (auto&& c : s) {
+		if (!isalpha(c)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 }
 
 RegisterElement parse(const std::string& s)
@@ -31,7 +42,14 @@ RegisterElement parse(const std::string& s)
 	}
 
 	if (string_p(s)) {
-		RegisterElementCore c(s.c_str());
+		RegisterElementCore c(RegisterElementCore::String, s.c_str());
+		RegisterElement e;
+		e.push_front(c);		
+		return e;
+	}
+
+	if (symbol_p(s)) {
+		RegisterElementCore c(RegisterElementCore::Symbol, s.c_str());
 		RegisterElement e;
 		e.push_front(c);		
 		return e;

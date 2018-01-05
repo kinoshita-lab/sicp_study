@@ -7,6 +7,7 @@ void user_print(RegisterType& reg)
 {	
 	if (!reg.size()) {
 		cout << "Register is Empty!" << endl;
+		return;
 	}
 
 	const auto& top = reg.front();
@@ -18,6 +19,9 @@ void user_print(RegisterType& reg)
 		break;
 	case RegisterElementCore::String:
 		cout << first.value.stringValue << endl;
+		break;
+	case RegisterElementCore::Symbol:
+		cout << first.value.symbolValue << endl;
 		break;
 	default:
 		cout << "user_print: complex data element" << endl;

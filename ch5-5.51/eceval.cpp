@@ -10,8 +10,6 @@ using namespace std;
 
 namespace
 {
-RegisterType the_global_environment;
-
 // function protos
 void read_eval_print_loop();
 void print_result();
@@ -64,7 +62,7 @@ void goto_with_label(string& label)
 
 void assign(int registerId, const char* const s)
 {
-	RegisterElementCore rc(s);
+	RegisterElementCore rc(RegisterElementCore::String, s);
 	RegisterElement re;
 	re.push_front(rc);
 	
@@ -123,6 +121,12 @@ void eval_dispatch()
 		ev_self_eval(registers[EXP]);
 		goto end_of_dispatch;
 	}
+
+	if (variable_p(registers[EXP])) {
+		ev_variable(registers[EXP]);
+		goto end_of_dispatch;
+	}
+	
 	
 end_of_dispatch:
 	goto_with_label(registers[CONTINUE]);

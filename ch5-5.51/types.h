@@ -22,6 +22,7 @@ struct RegisterElementCore
 	{
 		Integer,
 		String,
+		Symbol,
 		Unknown
 	};
 
@@ -29,6 +30,7 @@ struct RegisterElementCore
 	{
 		int intValue;
 		char* stringValue;
+		char* symbolValue;
 		void* others;
 		
 		Value() : others(nullptr) {}
@@ -45,6 +47,9 @@ struct RegisterElementCore
 		case String:
 			std::cout << "type: String: value: " << value.stringValue << std::endl;
 			break;
+		case Symbol:
+			std::cout << "type: Symbol: value: " << value.symbolValue << std::endl;
+			break;
 		default:
 			std::cout << "type: Unknown: value: " << value.others << std::endl;
 			break;
@@ -53,14 +58,23 @@ struct RegisterElementCore
 
 	RegisterElementCore() : type(Unknown) {}
 
-	RegisterElementCore(const char* const s) : type(String) {
-		const auto length = strlen(s);
-		value.stringValue = (char*)malloc(length);
-		strcpy(value.stringValue, s);
-	}
-
 	RegisterElementCore(const int v) : type(Integer) {
 		value.intValue = v;
+	}
+
+	// string or symbol
+	RegisterElementCore(const int typeId, const char* s) : type(typeId) {
+		const auto length = strlen(s);
+		
+		if (typeId == String) {
+			value.stringValue = (char*)malloc(length);
+			strcpy(value.stringValue, s);
+		}
+
+		if (typeId == Symbol) {
+			value.symbolValue = (char*)malloc(length);
+			strcpy(value.symbolValue, s);
+		}
 	}
 
 	RegisterElementCore(const RegisterElementCore& r) {
@@ -75,11 +89,17 @@ struct RegisterElementCore
 			value.stringValue = (char*)malloc(length);
 			strcpy(value.stringValue, r.value.stringValue);
 		}
+
+		if (type == Symbol) {
+			const auto length = strlen(r.value.symbolValue);
+			value.symbolValue = (char*)malloc(length);
+			strcpy(value.symbolValue, r.value.symbolValue);
+		}
 	}
 
 	RegisterElementCore& operator=(const RegisterElementCore& r) {
-		
 		type = r.type;
+		
 		if (type == Integer) {
 			value.intValue = r.value.intValue;
 		}
@@ -90,6 +110,12 @@ struct RegisterElementCore
 			strcpy(value.stringValue, r.value.stringValue);
 		}
 
+		if (type == Symbol) {
+			const auto length = strlen(r.value.symbolValue);
+			value.symbolValue = (char*)malloc(length);
+			strcpy(value.symbolValue, r.value.symbolValue);
+		}
+
 		return *this;
 	}
 	
@@ -98,9 +124,15 @@ struct RegisterElementCore
 			free(value.stringValue);
 			return;
 		}
+
+		if (type == Symbol) {
+			free(value.symbolValue);
+			return;
+		}
 	}
 };
 
 typedef std::list<RegisterElementCore> RegisterElement;
 typedef std::list<RegisterElement> RegisterType; // 前が最新
 extern RegisterType registers[NumberOfRegisters];
+extern RegisterType the_global_environment;
