@@ -1,3 +1,14 @@
 * ざっくり作戦を考える
 ecevalの部分のみ。regsimまでやろうとすると大変なことになりそう。
 C++でのせる
+** lookup-variable-value
+each (a 1)
+frame ((a 1) (b 2) ...)
+env (
+      ((a 1) (b 2) ...)
+      ((x 1) (y 2) ...)
+    )
+
+ってやりたいのでやっぱlist的なものがregisterに入る必要があるな。
+cons cell作るか
+

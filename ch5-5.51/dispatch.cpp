@@ -4,28 +4,13 @@
 using namespace std;
 
 bool self_evaluating_p(RegisterType& reg)
-{
-	const auto& re = reg.front();
-	
-	if (re.size() != 1) {
-		return false;
-	}
-
-	const auto& rc = re.front();
-	return rc.type == RegisterElementCore::Integer || rc.type == RegisterElementCore::String;
+{	
+	return reg.type == SchemeDataType::Integer || reg.type == SchemeDataType::String;
 }
 
 bool variable_p(RegisterType& reg)
-{
-	const auto& re = reg.front();
-	
-	if (re.size() != 1) {
-		return false;
-	}
-
-	const auto& rc = re.front();
-	
-	return rc.type == RegisterElementCore::Symbol;
+{	
+	return reg.type == SchemeDataType::Symbol;
 }
 
 

@@ -1,3 +1,4 @@
+#include <string>
 #include <ctype.h>
 #include "types.h"
 
@@ -32,32 +33,23 @@ bool symbol_p(const std::string& s)
 
 }
 
-RegisterElement parse(const std::string& s)
+SchemeDataType parse(const std::string& s)
 {
 	if (numbers_p(s)) {
-		RegisterElementCore c(std::stoi(s));
-		RegisterElement e;
-		e.push_front(c);		
-		return e;
+		SchemeDataType sdt(std::stoi(s));
+		return sdt;
 	}
 
 	if (string_p(s)) {
-		RegisterElementCore c(RegisterElementCore::String, s.c_str());
-		RegisterElement e;
-		e.push_front(c);		
-		return e;
+		SchemeDataType sdt(SchemeDataType::String, s.c_str());
+		return sdt;
 	}
 
 	if (symbol_p(s)) {
-		RegisterElementCore c(RegisterElementCore::Symbol, s.c_str());
-		RegisterElement e;
-		e.push_front(c);		
-		return e;
+		SchemeDataType sdt(SchemeDataType::Symbol, s.c_str());
+		return sdt;
 	}
 
-	RegisterElementCore c;
-	RegisterElement e;
-	e.push_front(c);
-	
-	return e;
+	SchemeDataType sdt;
+	return sdt;
 }

@@ -19,7 +19,7 @@ void eval_dispatch();
 void goto_with_label(const char* const label)
 {
 	string l = label;
-	
+    
 	if (l == "GOTO_PRINT_RESULT") {
 		print_result();
 		return;
@@ -40,15 +40,12 @@ void goto_with_label(const char* const label)
 
 void goto_with_label(RegisterType& r)
 {
-	auto& re = r.front();
-	auto& rc = re.front();
-
-	if (rc.type != RegisterElementCore::String) {
+	if (r.type != SchemeDataType::String) {
 		cout << "goto_with_label: not a label" << endl;
 		exit(0);
 	}
-	
-	goto_with_label(rc.value.stringValue);
+    
+	goto_with_label(r.stringValue);
 }
 
 void goto_with_label(string& label)
@@ -58,19 +55,9 @@ void goto_with_label(string& label)
 
 void assign(int registerId, const char* const s)
 {
-	RegisterElementCore rc(RegisterElementCore::String, s);
-	RegisterElement re;
-	re.push_front(rc);
-	
-	registers[registerId].clear();
-	registers[registerId].push_front(re);
-}
-
-void assign(int registerId, RegisterElement& r)
-{
-	registers[registerId].clear();
-	registers[registerId].push_front(r);
-}
+	SchemeDataType sdt(SchemeDataType::String, s);
+	registers[registerId] = sdt;
+} 
 
 void assign(int registerId, RegisterType& r)
 {
@@ -112,7 +99,7 @@ void read_eval_print_loop()
 void eval_dispatch()
 {
 	user_print(registers[EXP]);
-	
+
 	if (self_evaluating_p(registers[EXP])) {
 		ev_self_eval(registers[EXP]);
 		goto end_of_dispatch;

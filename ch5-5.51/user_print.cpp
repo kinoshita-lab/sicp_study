@@ -5,23 +5,15 @@ using namespace std;
 
 void user_print(RegisterType& reg)
 {	
-	if (!reg.size()) {
-		cout << "Register is Empty!" << endl;
-		return;
-	}
-
-	const auto& top = reg.front();
-	const auto& first = top.front();
-	
-	switch (first.type) {
-	case RegisterElementCore::Integer:
-		cout << first.value.intValue << endl;
+	switch (reg.type) {
+	case SchemeDataType::Integer:
+		cout << reg.intValue << endl;
 		break;
-	case RegisterElementCore::String:
-		cout << first.value.stringValue << endl;
+	case SchemeDataType::String:
+		cout << reg.stringValue << endl;
 		break;
-	case RegisterElementCore::Symbol:
-		cout << first.value.symbolValue << endl;
+	case SchemeDataType::Symbol:
+		cout << reg.symbolValue << endl;
 		break;
 	default:
 		cout << "user_print: complex data element" << endl;
