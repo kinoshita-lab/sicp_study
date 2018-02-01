@@ -4,7 +4,7 @@
 #include "types.h"
 
 SchemeDataType::SchemeDataType()
-	: type(Unknown), othersValue(nullptr)
+	: type(Nil), othersValue(nullptr)
 {
 }
 
@@ -27,6 +27,12 @@ SchemeDataType::SchemeDataType(const int typeId, const char* s)
 		symbolValue = (char*)malloc(length);
 		strcpy(symbolValue, s);
 	}
+}
+
+SchemeDataType::SchemeDataType(const ConsCell &cell) 
+{ 
+	type = Cons;
+	cellValue = cell;
 }
 
 SchemeDataType::SchemeDataType(const SchemeDataType& r)

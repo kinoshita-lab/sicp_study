@@ -15,7 +15,7 @@ enum RegisterId
 };
 
 extern RegisterType registers[NumberOfRegisters];
-extern RegisterType the_global_environment;
+extern RegisterType* the_global_environment;
 
-RegisterType& get_global_environment();
+RegisterType* get_global_environment();
 

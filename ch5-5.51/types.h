@@ -7,6 +7,7 @@ struct ConsCell
 	SchemeDataType* cdr;
 
 	ConsCell() : car(nullptr), cdr(nullptr) {}
+	ConsCell(SchemeDataType* car, SchemeDataType* cdr) : car(car), cdr(cdr) {}
 
 	int length();	
 };
@@ -19,6 +20,7 @@ struct SchemeDataType
 		String,
 		Symbol,
 		Cons,
+		Nil,
 		Unknown
 	};
 	int type;
@@ -33,8 +35,10 @@ struct SchemeDataType
 	SchemeDataType();
 	SchemeDataType(const int v);
 	SchemeDataType(const int typeId, const char* s); 	// string or symbol
-	SchemeDataType(const SchemeDataType& r);
+	SchemeDataType(const ConsCell &cell);
+	SchemeDataType(const SchemeDataType &r);
 	SchemeDataType& operator=(const SchemeDataType& r);
+
 	~SchemeDataType();
 };
 
