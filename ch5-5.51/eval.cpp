@@ -6,12 +6,12 @@
 
 using namespace std;
 
-void ev_self_eval(RegisterType& reg)
+void ev_self_eval(SchemeDataType* const reg)
 {
 	registers[VAL] = reg;
 }
 
-void ev_variable(RegisterType& reg)
+void ev_variable(SchemeDataType* const reg)
 {
-	registers[VAL] = lookup_variable_value(reg);
+	registers[VAL] = lookup_variable_value(reg, get_global_environment());
 }

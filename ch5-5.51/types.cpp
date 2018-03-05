@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstdlib>
 #include "types.h"
+#include "cons_man.h"
 
 SchemeDataType::SchemeDataType()
 	: type(Nil), othersValue(nullptr)
@@ -90,6 +91,11 @@ SchemeDataType::~SchemeDataType()
 		free(symbolValue);
 		return;
 	}
+}
+
+bool SchemeDataType::operator==(SchemeDataType* const rhs)
+{
+	return eq_p(this, rhs);
 }
 
 int ConsCell::length()

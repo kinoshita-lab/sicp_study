@@ -14,7 +14,7 @@ $(TARGET) : $(OBJS)
 	$(CXX) $(OBJS) -o $@
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -MMD -c $<
+	$(CXX) $(CFLAGS) -MMD -c ./$<
 
 .phony: clean all
 clean:

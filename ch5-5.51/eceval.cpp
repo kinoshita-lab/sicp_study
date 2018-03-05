@@ -38,14 +38,14 @@ void goto_with_label(const char* const label)
 	cout << "LABEL NOT FOUND!: " << l << endl;
 }
 
-void goto_with_label(RegisterType& r)
+void goto_with_label(SchemeDataType* const reg)
 {
-	if (r.type != SchemeDataType::String) {
+	if (reg->type != SchemeDataType::String) {
 		cout << "goto_with_label: not a label" << endl;
 		exit(0);
 	}
     
-	goto_with_label(r.stringValue);
+	goto_with_label(reg->stringValue);
 }
 
 void goto_with_label(string& label)
@@ -55,11 +55,11 @@ void goto_with_label(string& label)
 
 void assign(int registerId, const char* const s)
 {
-	SchemeDataType sdt(SchemeDataType::String, s);
+	SchemeDataType* sdt = new SchemeDataType(SchemeDataType::String, s);
 	registers[registerId] = sdt;
 } 
 
-void assign(int registerId, RegisterType& r)
+void assign(int registerId, SchemeDataType* const r)
 {
 	registers[registerId] = r;
 }
@@ -88,10 +88,10 @@ void read_eval_print_loop()
 	if (tmp == "!exit") {
 		exit(0);
 	}
-	auto parsed = parse(tmp);
+	auto* parsed = parse(tmp);
 	
 	assign(EXP, parsed);
-	assign(ENV, *get_global_environment());
+	assign(ENV, get_global_environment());
 	assign(CONTINUE, "GOTO_PRINT_RESULT");
 	goto_with_label("GOTO_EVAL_DISPATCH");
 }

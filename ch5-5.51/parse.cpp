@@ -33,23 +33,20 @@ bool symbol_p(const std::string& s)
 
 }
 
-SchemeDataType parse(const std::string& s)
+SchemeDataType* parse(const std::string& s)
 {
 	if (numbers_p(s)) {
-		SchemeDataType sdt(std::stoi(s));
-		return sdt;
+		return new SchemeDataType(std::stoi(s));
 	}
 
 	if (string_p(s)) {
-		SchemeDataType sdt(SchemeDataType::String, s.c_str());
-		return sdt;
+		return new SchemeDataType(SchemeDataType::String, s.c_str());
 	}
 
 	if (symbol_p(s)) {
-		SchemeDataType sdt(SchemeDataType::Symbol, s.c_str());
-		return sdt;
+		return new SchemeDataType(SchemeDataType::Symbol, s.c_str());
 	}
 
-	SchemeDataType sdt;
-	return sdt;
+	
+	return new SchemeDataType(); // = nil
 }

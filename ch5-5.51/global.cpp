@@ -1,9 +1,9 @@
 #include "global.h"
 
-RegisterType registers[NumberOfRegisters];
-RegisterType* the_global_environment;
+SchemeDataType* registers[NumberOfRegisters];
+SchemeDataType* the_global_environment;
 
-RegisterType* get_global_environment()
+SchemeDataType* get_global_environment()
 {
 	return the_global_environment;
 }

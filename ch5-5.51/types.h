@@ -40,9 +40,10 @@ struct SchemeDataType
 	SchemeDataType& operator=(const SchemeDataType& r);
 
 	~SchemeDataType();
+
+	bool operator==(SchemeDataType* const rhs);
 };
 
+// debugging utils
 void dumpData(const SchemeDataType& data);
 void dumpConsCell(const SchemeDataType& data);
-
-typedef SchemeDataType RegisterType; // 前が最新

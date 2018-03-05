@@ -1,6 +1,6 @@
+#include "env.h"
 #include "global.h"
 #include "cons_man.h"
-#include "env.h"
 
 void setup_environment()
 { 
@@ -23,7 +23,38 @@ SchemeDataType* make_frame(SchemeDataType* const variables, SchemeDataType* cons
 	return cons(variables, values);
 }
 
-SchemeDataType lookup_variable_value(const RegisterType &reg)
+SchemeDataType* enclosing_environment(SchemeDataType* const env)
 {
-	 return SchemeDataType();
+	return cdr(env);
+}
+
+/**
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (env-loop (enclosing-environment env)))
+            ((eq? var (car vars))
+             (car vals))
+            (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable" var)
+        (let ((frame (first-frame env)))
+          (scan (frame-variables frame)
+                (frame-values frame)))))
+  (env-loop env))
+  */
+SchemeDataType* lookup_variable_value(SchemeDataType* const var, SchemeDataType* const env)
+{
+	auto env_loop = [&] (SchemeDataType* const env) -> SchemeDataType* {
+		auto scan = [&] (SchemeDataType* const vars, SchemeDataType* const vals) -> SchemeDataType* {
+			if (null_p(vars)) {
+        ;
+			}
+      return nullptr; // under construction
+		};
+
+	};
+
+	return env_loop(get_global_environment());
 }
