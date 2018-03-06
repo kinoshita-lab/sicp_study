@@ -1,8 +1,10 @@
 #include <iostream>
+#include <string>
 #include <cstring>
 #include <cstdlib>
 #include "types.h"
 #include "cons_man.h"
+#include "user_print.h"
 
 SchemeDataType::SchemeDataType()
 	: type(Nil), othersValue(nullptr)
@@ -79,6 +81,7 @@ SchemeDataType& SchemeDataType::operator=(const SchemeDataType& r)
 
 	return *this;
 }
+
 	
 SchemeDataType::~SchemeDataType()
 {
@@ -96,6 +99,25 @@ SchemeDataType::~SchemeDataType()
 bool SchemeDataType::operator==(SchemeDataType* const rhs)
 {
 	return eq_p(this, rhs);
+}
+
+
+std::string SchemeDataType::to_s()
+{
+	using namespace std;
+
+	switch (type) {
+	case SchemeDataType::Integer:
+		return to_string(intValue);
+	case SchemeDataType::String:
+		return stringValue;
+	case SchemeDataType::Symbol:
+		return symbolValue;
+	case SchemeDataType::Nil:
+		return string("nil");
+	default:
+		return string("to_s: complex data element");
+	}
 }
 
 int ConsCell::length()

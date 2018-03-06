@@ -16,6 +16,5 @@ enum RegisterId
 
 extern SchemeDataType* registers[NumberOfRegisters];
 extern SchemeDataType* the_global_environment;
-
-SchemeDataType* get_global_environment();
+extern SchemeDataType* the_empty_environment;
 

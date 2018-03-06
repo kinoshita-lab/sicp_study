@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 struct SchemeDataType;
 struct ConsCell
 {
@@ -38,6 +40,10 @@ struct SchemeDataType
 	SchemeDataType(const ConsCell &cell);
 	SchemeDataType(const SchemeDataType &r);
 	SchemeDataType& operator=(const SchemeDataType& r);
+
+	std::string to_s();
+
+
 
 	~SchemeDataType();
 

@@ -13,5 +13,5 @@ void ev_self_eval(SchemeDataType* const reg)
 
 void ev_variable(SchemeDataType* const reg)
 {
-	registers[VAL] = lookup_variable_value(reg, get_global_environment());
+	registers[VAL] = lookup_variable_value(reg, the_global_environment);
 }

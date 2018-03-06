@@ -91,7 +91,7 @@ void read_eval_print_loop()
 	auto* parsed = parse(tmp);
 	
 	assign(EXP, parsed);
-	assign(ENV, get_global_environment());
+	assign(ENV, the_global_environment);
 	assign(CONTINUE, "GOTO_PRINT_RESULT");
 	goto_with_label("GOTO_EVAL_DISPATCH");
 }

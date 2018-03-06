@@ -2,8 +2,5 @@
 
 SchemeDataType* registers[NumberOfRegisters];
 SchemeDataType* the_global_environment;
+SchemeDataType* the_empty_environment;
 
-SchemeDataType* get_global_environment()
-{
-	return the_global_environment;
-}
