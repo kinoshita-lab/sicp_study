@@ -2,6 +2,7 @@
 #include "env.h"
 #include "global.h"
 #include "cons_man.h"
+#include "frames.h"
 
 using namespace std;
 
@@ -47,26 +48,32 @@ SchemeDataType* enclosing_environment(SchemeDataType* const env)
                 (frame-values frame)))))
   (env-loop env))
   */
-SchemeDataType* env_loop(SchemeDataType* const env, SchemeDataType* const var)
-{
-/*   if (eq_p(env, the_empty_environment)) {
-    cout << "error Unbound variable:" << var->to_s() << endl;
-  }
 
-  const auto* frame = first_frame(env);
-  return scan(frame_variables(frame), frame_values(frame)); */
-}
+SchemeDataType* env_loop(SchemeDataType* const env, SchemeDataType* const var);
+SchemeDataType* scan(SchemeDataType* const env, SchemeDataType* const var, SchemeDataType* const vars, SchemeDataType* const vals);
+
 SchemeDataType* scan(SchemeDataType* const env, SchemeDataType* const var, SchemeDataType* const vars, SchemeDataType* const vals)
 {
- /*    if (null_p(vars)) {
+  if (null_p(vars)) {
       return env_loop(enclosing_environment(env), var);
-    }
+  }
 
-    if (eq_p(var, car(vars))){
-      return car(vals);
-    }
+  if (eq_p(var, car(vars))){
+    return car(vals);
+  }
 
-    return scan(env, , var, cdr(vars), cdr(vals)); */
+  return scan(env, var, cdr(vars), cdr(vals));
+}
+
+SchemeDataType* env_loop(SchemeDataType* const env, SchemeDataType* const var)
+{
+  if (eq_p(env, the_empty_environment)) {
+    cout << "error Unbound variable:" << var->to_s() << endl;
+    return new SchemeDataType(); // nil
+  }
+
+  auto* frame = first_frame(env);
+  return scan(env, var, frame_variables(frame), frame_values(frame));
 }
 
 SchemeDataType* lookup_variable_value(SchemeDataType* const var, SchemeDataType* const env)
