@@ -47,6 +47,6 @@ SchemeDataType* parse(const std::string& s)
 		return new SchemeDataType(SchemeDataType::Symbol, s.c_str());
 	}
 
-	
-	return new SchemeDataType(); // = nil
+	// error strings 
+	return new SchemeDataType(SchemeDataType::Unknown, s.c_str());
 }

@@ -30,6 +30,11 @@ SchemeDataType::SchemeDataType(const int typeId, const char* s)
 		symbolValue = (char*)malloc(length);
 		strcpy(symbolValue, s);
 	}
+
+	if (typeId == Unknown) {
+		errorMessage = (char*)malloc(length);
+		strcpy(errorMessage, s);
+	}
 }
 
 SchemeDataType::SchemeDataType(const ConsCell &cell) 
@@ -115,6 +120,8 @@ std::string SchemeDataType::to_s()
 		return symbolValue;
 	case SchemeDataType::Nil:
 		return string("nil");
+	case SchemeDataType::Unknown:
+		return string("Unknown");
 	default:
 		return string("to_s: complex data element");
 	}

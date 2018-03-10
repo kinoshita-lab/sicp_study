@@ -33,6 +33,7 @@ struct SchemeDataType
 	char* symbolValue;
 	ConsCell cellValue;
 	void* othersValue;
+	char* errorMessage;
 
 	SchemeDataType();
 	SchemeDataType(const int v);

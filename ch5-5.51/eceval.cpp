@@ -35,6 +35,12 @@ void goto_with_label(const char* const label)
 		return;
 	}
 
+    if (l == "UNKNOWN_EXPRESSION_TYPE") {
+        cout << "eval_dispatch: Unknown expression type: " << registers[EXP]->errorMessage << endl;
+        return;
+    }
+    
+
 	cout << "LABEL NOT FOUND!: " << l << endl;
 }
 
@@ -46,11 +52,6 @@ void goto_with_label(SchemeDataType* const reg)
 	}
     
 	goto_with_label(reg->stringValue);
-}
-
-void goto_with_label(string& label)
-{
-	goto_with_label(label.c_str());
 }
 
 void assign(int registerId, const char* const s)
@@ -95,21 +96,72 @@ void read_eval_print_loop()
 	assign(CONTINUE, "GOTO_PRINT_RESULT");
 	goto_with_label("GOTO_EVAL_DISPATCH");
 }
-
+/*
+  eval-dispatch
+  (perform (op user-print) (reg exp))
+  (test (op self-evaluating?) (reg exp))
+  (branch (label ev-self-eval))
+  (test (op variable?) (reg exp))
+  (branch (label ev-variable))
+  (test (op quoted?) (reg exp))
+  (branch (label ev-quoted))
+  (test (op assignment?) (reg exp))
+  (branch (label ev-assignment))
+  (test (op definition?) (reg exp))
+  (branch (label ev-definition))
+  (test (op if?) (reg exp))
+  (branch (label ev-if))
+  (test (op lambda?) (reg exp))
+  (branch (label ev-lambda))
+  (test (op begin?) (reg exp))
+  (branch (label ev-begin))
+  (test (op application?) (reg exp))
+  (branch (label ev-application))
+  (goto (label unknown-expression-type))
+*/
 void eval_dispatch()
 {
+    // (perform (op user-print) (reg exp))
 	user_print(registers[EXP]);
 
+    // (test (op self-evaluating?) (reg exp))
+    // (branch (label ev-self-eval))
 	if (self_evaluating_p(registers[EXP])) {
 		ev_self_eval(registers[EXP]);
 		goto end_of_dispatch;
 	}
-
+    
+    // (test (op variable?) (reg exp))
+    // (branch (label ev-variable))
 	if (variable_p(registers[EXP])) {
 		ev_variable(registers[EXP]);
 		goto end_of_dispatch;
 	}
-	
+
+    // (test (op quoted?) (reg exp))
+    // (branch (label ev-quoted))
+    
+    // (test (op assignment?) (reg exp))
+    // (branch (label ev-assignment))
+    
+    // (test (op definition?) (reg exp))
+    // (branch (label ev-definition))
+    
+    // (test (op if?) (reg exp))
+    // (branch (label ev-if))
+    
+    // (test (op lambda?) (reg exp))
+    // (branch (label ev-lambda))
+    
+    // (test (op begin?) (reg exp))
+    // (branch (label ev-begin))
+    
+    // (test (op application?) (reg exp))
+    // (branch (label ev-application))
+    
+    // (goto (label unknown-expression-type))
+	goto_with_label("UNKNOWN_EXPRESSION_TYPE");
+    return;
 	
 end_of_dispatch:
 	goto_with_label(registers[CONTINUE]);
