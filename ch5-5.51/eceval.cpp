@@ -1,7 +1,7 @@
 #include <iostream>
 #include "types.h"
 #include "eceval.h"
-#include "dispatch.h"
+#include "syntax.h"
 #include "parse.h"
 #include "eval.h"
 #include "user_print.h"

@@ -23,6 +23,7 @@ struct SchemeDataType
 		Symbol,
 		Cons,
 		Nil,
+		SchemeConstant,
 		Unknown
 	};
 	int type;
@@ -33,13 +34,21 @@ struct SchemeDataType
 	char* symbolValue;
 	ConsCell cellValue;
 	void* othersValue;
+	int constValue;
 	char* errorMessage;
+
+	enum Constants{
+		True, // #t
+		False // #f
+	};
 
 	SchemeDataType();
 	SchemeDataType(const int v);
 	SchemeDataType(const int typeId, const char* s); 	// string or symbol
 	SchemeDataType(const ConsCell &cell);
 	SchemeDataType(const SchemeDataType &r);
+	SchemeDataType(const int typeId, const int value); // for constants
+
 	SchemeDataType& operator=(const SchemeDataType& r);
 
 	std::string to_s();

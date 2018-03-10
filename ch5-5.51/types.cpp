@@ -87,7 +87,17 @@ SchemeDataType& SchemeDataType::operator=(const SchemeDataType& r)
 	return *this;
 }
 
-	
+SchemeDataType::SchemeDataType(const int typeId, const int value)
+{
+	if (typeId != SchemeDataType::SchemeConstant) {
+		this->type = Nil;
+		return;
+	}
+
+	type = SchemeConstant;
+	constValue = value;
+}
+
 SchemeDataType::~SchemeDataType()
 {
 	if (type == String) {

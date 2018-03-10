@@ -44,6 +44,12 @@ SchemeDataType* cdr(SchemeDataType* const data)
 	return data->cellValue.cdr;
 }
 
+// under construction
+SchemeDataType* list(...)
+{
+	return new SchemeDataType();
+}
+
 bool atom_p(SchemeDataType* const data)
 {
 	return (data->type != SchemeDataType::Cons) 
@@ -55,9 +61,14 @@ bool null_p(SchemeDataType* const data)
 	return data->type == SchemeDataType::Nil;
 }
 
-bool list_p(SchemeDataType* const data)
+bool pair_p(SchemeDataType* const data)
 {
 	return data->type == SchemeDataType::Cons;
+}
+
+bool symbol_p(SchemeDataType* const data)
+{
+	return data->type == SchemeDataType::Symbol;
 }
 
 bool eq_p(SchemeDataType* data1, SchemeDataType* data2)
@@ -70,7 +81,7 @@ bool eq_p(SchemeDataType* data1, SchemeDataType* data2)
 		return atom_eq_p(data1, data2);
 	}
 
-	if (list_p(data1) && list_p(data2)) {
+	if (pair_p(data1) && pair_p(data2)) {
 		return (eq_p(car(data1), car(data2))) 
 			&& (eq_p(cdr(data1), cdr(data2)));
 	}
