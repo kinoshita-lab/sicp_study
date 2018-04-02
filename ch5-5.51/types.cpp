@@ -6,14 +6,33 @@
 #include "cons_man.h"
 #include "user_print.h"
 
+
+void ConsCell::listPush(SchemeDataType* item) {
+	if (!car) {
+		car = item;
+		return;
+	}
+	
+	if (!cdr) {
+		auto newCons = new SchemeDataType(SchemeDataType::Cons);
+		newCons->cellValue.car = item;
+		cdr = newCons;
+		return;
+	}
+
+	cdr->cellValue.listPush(item);
+}
+
 SchemeDataType::SchemeDataType()
 	: type(Nil), othersValue(nullptr)
 {
 }
 
-SchemeDataType::SchemeDataType(const int v)
-	: type(Integer), intValue(v)
+
+SchemeDataType::SchemeDataType(const int typeId)
+	: type(typeId)
 {
+
 }
 
 SchemeDataType::SchemeDataType(const int typeId, const char* s)
@@ -89,13 +108,17 @@ SchemeDataType& SchemeDataType::operator=(const SchemeDataType& r)
 
 SchemeDataType::SchemeDataType(const int typeId, const int value)
 {
-	if (typeId != SchemeDataType::SchemeConstant) {
-		this->type = Nil;
+	if (typeId == SchemeDataType::SchemeConstant) {
+		this->type = typeId;
+		constValue = value;
 		return;
 	}
 
-	type = SchemeConstant;
-	constValue = value;
+	if (typeId == SchemeDataType::Integer) {
+		this->type = typeId;
+		intValue = value;
+		return;
+	}
 }
 
 SchemeDataType::~SchemeDataType()

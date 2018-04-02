@@ -1,9 +1,10 @@
 #pragma once
 
 #include <string>
+#include <gc_cpp.h>
 
 struct SchemeDataType;
-struct ConsCell
+struct ConsCell : public gc
 {
 	SchemeDataType* car;
 	SchemeDataType* cdr;
@@ -11,10 +12,11 @@ struct ConsCell
 	ConsCell() : car(nullptr), cdr(nullptr) {}
 	ConsCell(SchemeDataType* car, SchemeDataType* cdr) : car(car), cdr(cdr) {}
 
-	int length();	
+	int length();
+	void listPush(SchemeDataType* item); 
 };
 
-struct SchemeDataType
+struct SchemeDataType : public gc
 {
 	enum TypeId
 	{
@@ -43,11 +45,12 @@ struct SchemeDataType
 	};
 
 	SchemeDataType();
-	SchemeDataType(const int v);
+	SchemeDataType(const int typeId);
 	SchemeDataType(const int typeId, const char* s); 	// string or symbol
 	SchemeDataType(const ConsCell &cell);
 	SchemeDataType(const SchemeDataType &r);
 	SchemeDataType(const int typeId, const int value); // for constants
+	
 
 	SchemeDataType& operator=(const SchemeDataType& r);
 

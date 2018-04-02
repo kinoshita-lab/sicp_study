@@ -83,13 +83,17 @@ void read_eval_print_loop()
 	// [pending] initialize_stack();
 	prompt_for_input(";;; C++-EC-Eval input:");
 	
-	string tmp;
-	std::getline(std::cin, tmp);
+	string input;
 
-	if (tmp == "!exit") {
+	string tmp;
+	
+	std::getline(std::cin, tmp);
+		input += tmp;
+
+	if (input == "!exit") {
 		exit(0);
 	}
-	auto* parsed = parse(tmp);
+	auto* parsed = parse(input);
 	
 	assign(EXP, parsed);
 	assign(ENV, the_global_environment);

@@ -11,7 +11,7 @@ DEPS = $(SRCS:%.cpp=%.d)
 .SUFFIXES: .o .cpp
 
 $(TARGET) : $(OBJS)
-	$(CXX) $(OBJS) -o $@
+	$(CXX) $(OBJS) -o $@ -lgc
 
 .cpp.o:
 	$(CXX) $(CFLAGS) -MMD -c ./$<
