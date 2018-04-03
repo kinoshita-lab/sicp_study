@@ -59,14 +59,23 @@ SchemeDataType* atom(const std::string& s)
 std::list<std::string> tokenize(const std::string & str)
 {
     std::list<std::string> tokens;
+
     const char * s = str.c_str();
     while (*s) {
-        while (*s == ' ') // ここはかえないと "  a   b   c" みたいなのがうまくいかない
+        while (*s == ' ')
             ++s;
         if (*s == '(' || *s == ')')
             tokens.push_back(*s++ == '(' ? "(" : ")");
         else {
             const char * t = s;
+            if (*s == '\"') {
+                do {
+                    ++t;
+                } while (*t != '\"');
+                tokens.push_back(std::string(s,++t));
+                s = t;
+                continue;
+            }
             while (*t && *t != ' ' && *t != '(' && *t != ')')
                 ++t;
             tokens.push_back(std::string(s, t));
