@@ -54,19 +54,78 @@ SchemeDataType* atom(const std::string& s)
 	return new SchemeDataType(SchemeDataType::Unknown, s.c_str());
 }
 
+std::vector<std::string> make_quote(const char* s, int* increment) 
+{
+    std::vector<std::string> ret;
+    ret.push_back("(");
+    ret.push_back("quote");
+    auto internal_increment = 0;
+    auto t_increment = 0;
+    auto parenCounter = 0;
+    s++; internal_increment++;
+
+    while (*s) {
+        if (*s == ' ') {
+            if (parenCounter == 0) { // end of quote
+                break;
+            }
+            ++s; ++internal_increment;
+        }
+        if (*s == '(' || *s == ')') {
+            parenCounter += *s == '(' ? 1 : -1;
+            ret.push_back(*s++ == '(' ? "(" : ")");
+            internal_increment++;
+        } else  if (*s == '\'') {
+            int nestedQuoteIncrement = 0;
+            const auto quoted = make_quote(s, &nestedQuoteIncrement);
+            s += nestedQuoteIncrement;
+            internal_increment += nestedQuoteIncrement; 
+            for (auto && q : quoted) {
+                ret.push_back(q);
+            }
+            continue;
+        } else {
+            const char * t = s;
+            if (*s == '\"') {
+                do {
+                    ++t; t_increment++;
+                } while (*t != '\"');
+                ret.push_back(std::string(s,++t)); ++t_increment;
+                s = t; internal_increment += t_increment; t_increment = 0;
+                continue;
+            }
+            while (*t && *t != ' ' && *t != '(' && *t != ')')
+                ++t; ++t_increment;
+            ret.push_back(std::string(s, t));
+            s = t; internal_increment += t_increment; t_increment = 0;
+        }
+    }
+    ret.push_back(")");
+    *increment = internal_increment;
+    return ret;
+}
+
 // based on https://gist.github.com/ofan/721464
 // convert given string to list of tokens
 std::list<std::string> tokenize(const std::string & str)
 {
     std::list<std::string> tokens;
 
-    const char * s = str.c_str();
+    const char* s = str.c_str();
     while (*s) {
         while (*s == ' ')
             ++s;
-        if (*s == '(' || *s == ')')
+        if (*s == '(' || *s == ')') {
             tokens.push_back(*s++ == '(' ? "(" : ")");
-        else {
+        } else if (*s == '\'') {
+            int increment = 0;
+            const auto quoted = make_quote(s, &increment);
+            s += increment; 
+            for (auto && q : quoted) {
+                tokens.push_back(q);
+            }
+            continue;
+        } else {
             const char * t = s;
             if (*s == '\"') {
                 do {
@@ -84,7 +143,6 @@ std::list<std::string> tokenize(const std::string & str)
     }
     return tokens;
 }
-
 
 // based on https://gist.github.com/ofan/721464
 // return the Lisp expression in the given tokens
@@ -108,7 +166,6 @@ SchemeDataType* read_from(std::list<std::string> & tokens)
 SchemeDataType* parse(std::string& s)
 {
 	auto tokenized = tokenize(s);
-
 	SchemeDataType* parsed = read_from(tokenized);
 
 	return parsed;
