@@ -75,15 +75,6 @@ std::vector<std::string> make_quote(const char* s, int* increment)
             parenCounter += *s == '(' ? 1 : -1;
             ret.push_back(*s++ == '(' ? "(" : ")");
             internal_increment++;
-        } else  if (*s == '\'') {
-            int nestedQuoteIncrement = 0;
-            const auto quoted = make_quote(s, &nestedQuoteIncrement);
-            s += nestedQuoteIncrement;
-            internal_increment += nestedQuoteIncrement; 
-            for (auto && q : quoted) {
-                ret.push_back(q);
-            }
-            continue;
         } else {
             const char * t = s;
             if (*s == '\"') {
@@ -94,8 +85,9 @@ std::vector<std::string> make_quote(const char* s, int* increment)
                 s = t; internal_increment += t_increment; t_increment = 0;
                 continue;
             }
-            while (*t && *t != ' ' && *t != '(' && *t != ')')
+            while (*t && *t != ' ' && *t != '(' && *t != ')') {
                 ++t; ++t_increment;
+            }
             ret.push_back(std::string(s, t));
             s = t; internal_increment += t_increment; t_increment = 0;
         }
