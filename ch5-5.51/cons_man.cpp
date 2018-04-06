@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include "cons_man.h"
 
 namespace
@@ -14,7 +15,17 @@ bool atom_eq_p(SchemeDataType* const data1, SchemeDataType* data2)
 		return false;
 	}
 
-	return data1 == data2;
+	switch (data1->type) {
+		case SchemeDataType::Integer:
+		return data1->intValue == data2->intValue;
+		case SchemeDataType::String:
+		return strcmp(data1->stringValue, data2->stringValue) == 0;
+		case SchemeDataType::Symbol:
+		return strcmp(data1->symbolValue, data2->symbolValue) == 0;
+		default:
+		puts("non atomic operation@ atom_eq_p");
+		return false;
+	}
 }
 }
 
@@ -53,7 +64,7 @@ SchemeDataType* list(...)
 bool atom_p(SchemeDataType* const data)
 {
 	return (data->type != SchemeDataType::Cons) 
-		&& null_p(data);
+		&& !(null_p(data));
 }
 
 bool null_p(SchemeDataType* const data)
