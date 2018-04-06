@@ -144,6 +144,10 @@ void eval_dispatch()
 
     // (test (op quoted?) (reg exp))
     // (branch (label ev-quoted))
+	if (quoted_p(registers[EXP])) {
+		ev_quote(registers[EXP]);
+		goto end_of_dispatch;
+	}
     
     // (test (op assignment?) (reg exp))
     // (branch (label ev-assignment))

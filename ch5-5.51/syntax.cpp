@@ -42,7 +42,7 @@ SchemeDataType* text_of_quotation(SchemeDataType* const exp)
 bool tagged_list_p(SchemeDataType* const exp, const char* tag)
 {
     if (pair_p(exp)) {
-        return eq_p(car(exp), new SchemeDataType(SchemeDataType::String, tag));
+        return eq_p(car(exp), new SchemeDataType(SchemeDataType::Symbol, tag));
     }
 
     return false;

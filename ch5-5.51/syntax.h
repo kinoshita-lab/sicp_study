@@ -125,8 +125,8 @@
 */
 bool self_evaluating_p(SchemeDataType* const exp);
 bool quoted_p(SchemeDataType* const exp);
-
 SchemeDataType* text_of_quotation(SchemeDataType* const exp);
+
 bool tagged_list_p(SchemeDataType* const exp, const char* tag);
 bool variable_p(SchemeDataType* const exp);
 bool assignment_p(SchemeDataType* const exp);
