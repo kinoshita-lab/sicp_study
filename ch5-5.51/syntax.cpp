@@ -2,6 +2,7 @@
 #include "syntax.h"
 #include "types.h"
 #include "cons_man.h"
+#include "user_print.h"
 
 using namespace std;
 
@@ -396,7 +397,8 @@ SchemeDataType* const expand_clauses(SchemeDataType* const clauses)
         if (null_p(rest)) {
             return sequence_to_exp(cond_actions(first));
         } else {
-            cout << "error ELSE clause isn't last -- COND->IF "  << clauses->to_s() << endl;
+            cout << "error ELSE clause isn't last -- COND->IF ";
+            user_print(clauses);
             return new SchemeDataType();
         }
     } else {

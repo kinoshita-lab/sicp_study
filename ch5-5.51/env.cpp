@@ -3,6 +3,7 @@
 #include "global.h"
 #include "cons_man.h"
 #include "frames.h"
+#include "user_print.h"
 
 using namespace std;
 
@@ -68,7 +69,9 @@ SchemeDataType* scan(SchemeDataType* const env, SchemeDataType* const var, Schem
 SchemeDataType* env_loop(SchemeDataType* const env, SchemeDataType* const var)
 {
   if (eq_p(env, the_empty_environment)) {
-    cout << "error Unbound variable:" << var->to_s() << endl;
+
+    cout << "error Unbound variable:";
+    user_print(var);
     return new SchemeDataType(); // nil
   }
 

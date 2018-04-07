@@ -140,24 +140,56 @@ bool SchemeDataType::operator==(SchemeDataType* const rhs)
 }
 
 
-std::string SchemeDataType::to_s()
+std::vector<std::string> SchemeDataType::to_s()
 {
 	using namespace std;
+	std::vector<std::string> r;
 
 	switch (type) {
 	case SchemeDataType::Integer:
-		return to_string(intValue);
+		r.push_back(to_string(intValue));
+		break;
 	case SchemeDataType::String:
-		return stringValue;
+		r.push_back(std::string(stringValue));
+		break;
 	case SchemeDataType::Symbol:
-		return symbolValue;
+		r.push_back(symbolValue);
+		break;
 	case SchemeDataType::Nil:
-		return string("nil");
+		r.push_back(string("nil"));
+		break;
 	case SchemeDataType::Unknown:
-		return string("Unknown");
-	default:
-		return string("to_s: complex data element");
+		r.push_back(string("Unknown"));
+		break;
+	case SchemeDataType::Cons: {
+		r.push_back("(");
+		
+		std::vector<std::string> carStrings;
+		if (cellValue.car) {
+			carStrings = cellValue.car->to_s();
+		}
+		std::vector<std::string> cdrStrings;
+		if (cellValue.cdr) {
+			cdrStrings = cellValue.cdr->to_s();
+		}
+		for (auto&& ca : carStrings) {
+			r.push_back(ca);
+		}
+
+		r.push_back(".");
+
+		for (auto&& cd : cdrStrings) {
+			r.push_back(cd);
+		}
+
+		r.push_back(")");
 	}
+	break;
+	default:
+		r.push_back(string("to_s: complex data element"));
+	}
+
+	return r;
 }
 
 int ConsCell::length()

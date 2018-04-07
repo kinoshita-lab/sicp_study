@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
 #include <gc_cpp.h>
 
 struct SchemeDataType;
@@ -54,7 +56,7 @@ struct SchemeDataType : public gc
 
 	SchemeDataType& operator=(const SchemeDataType& r);
 
-	std::string to_s();
+	std::vector<std::string> to_s();
 
 
 

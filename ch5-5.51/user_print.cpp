@@ -5,7 +5,11 @@ using namespace std;
 
 void user_print(SchemeDataType* const reg)
 {	
-	cout << reg->to_s() << endl;
+	const auto strings = reg->to_s();
+	for (auto&& s : strings) {
+		cout << s << " ";
+	}
+	cout << endl;
 }
 
 
