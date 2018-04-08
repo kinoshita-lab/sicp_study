@@ -11,7 +11,7 @@ struct ConsCell : public gc
 	SchemeDataType* car;
 	SchemeDataType* cdr;
 
-	ConsCell() : car(nullptr), cdr(nullptr) {}
+	ConsCell();
 	ConsCell(SchemeDataType* car, SchemeDataType* cdr) : car(car), cdr(cdr) {}
 
 	int length();
@@ -36,7 +36,7 @@ struct SchemeDataType : public gc
 	int intValue;
 	char* stringValue;
 	char* symbolValue;
-	ConsCell cellValue;
+	ConsCell* cellValue;
 	void* othersValue;
 	int constValue;
 	char* errorMessage;
@@ -49,7 +49,7 @@ struct SchemeDataType : public gc
 	SchemeDataType();
 	SchemeDataType(const int typeId);
 	SchemeDataType(const int typeId, const char* s); 	// string or symbol
-	SchemeDataType(const ConsCell &cell);
+	SchemeDataType(ConsCell* cell);
 	SchemeDataType(const SchemeDataType &r);
 	SchemeDataType(const int typeId, const int value); // for constants
 	

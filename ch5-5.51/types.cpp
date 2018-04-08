@@ -7,24 +7,27 @@
 #include "user_print.h"
 
 
-void ConsCell::listPush(SchemeDataType* item) {
-	if (!car) {
+ConsCell::ConsCell() : car(new SchemeDataType()), cdr(new SchemeDataType()) {}
+
+void ConsCell::listPush(SchemeDataType* item) 
+{
+	if (car->type == SchemeDataType::Nil) {
 		car = item;
 		return;
 	}
 	
-	if (!cdr) {
+	if (cdr->type == SchemeDataType::Nil) {
 		auto newCons = new SchemeDataType(SchemeDataType::Cons);
-		newCons->cellValue.car = item;
+		newCons->cellValue->car = item;
 		cdr = newCons;
 		return;
 	}
 
-	cdr->cellValue.listPush(item);
+	cdr->cellValue->listPush(item);
 }
 
 SchemeDataType::SchemeDataType()
-	: type(Nil), othersValue(nullptr)
+	: type(Nil), cellValue(nullptr), othersValue(nullptr) 
 {
 }
 
@@ -32,7 +35,9 @@ SchemeDataType::SchemeDataType()
 SchemeDataType::SchemeDataType(const int typeId)
 	: type(typeId)
 {
-
+	if (type == SchemeDataType::Cons) {
+		cellValue = new ConsCell();
+	}
 }
 
 SchemeDataType::SchemeDataType(const int typeId, const char* s)
@@ -56,7 +61,7 @@ SchemeDataType::SchemeDataType(const int typeId, const char* s)
 	}
 }
 
-SchemeDataType::SchemeDataType(const ConsCell &cell) 
+SchemeDataType::SchemeDataType(ConsCell* cell) 
 { 
 	type = Cons;
 	cellValue = cell;
@@ -162,24 +167,22 @@ std::vector<std::string> SchemeDataType::to_s()
 		r.push_back(string("Unknown"));
 		break;
 	case SchemeDataType::Cons: {
+		auto* cell = cellValue;
 		r.push_back("(");
-		
-		std::vector<std::string> carStrings;
-		if (cellValue.car) {
-			carStrings = cellValue.car->to_s();
-		}
-		std::vector<std::string> cdrStrings;
-		if (cellValue.cdr) {
-			cdrStrings = cellValue.cdr->to_s();
-		}
-		for (auto&& ca : carStrings) {
-			r.push_back(ca);
-		}
 
-		r.push_back(".");
+		while (cell) {
+			auto* cellCar = cell->car;
+			auto ss = cellCar->to_s();
 
-		for (auto&& cd : cdrStrings) {
-			r.push_back(cd);
+			for (auto&& s : ss) {
+				r.push_back(s);
+			}
+
+			if (cell->cdr->type != SchemeDataType::Cons && cell->cdr->type != SchemeDataType::Nil) {
+				r.push_back(string("."));
+			}
+
+			cell = cell->cdr->cellValue;
 		}
 
 		r.push_back(")");
@@ -211,7 +214,7 @@ int ConsCell::length()
 			break;
 		}
 
-		current = cdr->cellValue.car;
+		current = cdr->cellValue->car;
 	}
 
 	return l;

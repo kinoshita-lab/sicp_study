@@ -31,8 +31,7 @@ bool atom_eq_p(SchemeDataType* const data1, SchemeDataType* data2)
 
 SchemeDataType* cons(SchemeDataType* const car, SchemeDataType* const cdr)
 {
-	ConsCell cell(car, cdr);
-	return new SchemeDataType(cell);
+	return new SchemeDataType(new ConsCell(car, cdr));
 }
 
 SchemeDataType* car(SchemeDataType* const data)
@@ -42,7 +41,7 @@ SchemeDataType* car(SchemeDataType* const data)
 		exit(0);
 	}
 
-	return data->cellValue.car;
+	return data->cellValue->car;
 }
 
 SchemeDataType* cdr(SchemeDataType* const data)
@@ -52,7 +51,7 @@ SchemeDataType* cdr(SchemeDataType* const data)
 		exit(0);
 	}
 
-	return data->cellValue.cdr;
+	return data->cellValue->cdr;
 }
 
 // under construction

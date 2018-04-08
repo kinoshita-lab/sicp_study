@@ -28,7 +28,7 @@ bool string_p(const std::string& s)
 bool symbol_p(const std::string& s)
 {
 	for (auto&& c : s) {
-		if (!isalpha(c)) {
+		if (!isalpha(c) && !isdigit(c) && c != '\'') {
 			return false;
 		}
 	}
@@ -144,10 +144,13 @@ SchemeDataType* read_from(std::list<std::string> & tokens)
     tokens.pop_front();
     if (token == "(") {
         ConsCell* c = new ConsCell;
-        while (tokens.front() != ")")
+        
+        while (tokens.front() != ")") {
             c->listPush(read_from(tokens));
+        }
+
         tokens.pop_front();
-        return new SchemeDataType(*c);
+        return new SchemeDataType(c);
     }
     else
         return atom(token);
