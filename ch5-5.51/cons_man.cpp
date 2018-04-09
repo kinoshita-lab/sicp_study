@@ -34,6 +34,16 @@ SchemeDataType* cons(SchemeDataType* const car, SchemeDataType* const cdr)
 	return new SchemeDataType(new ConsCell(car, cdr));
 }
 
+SchemeDataType* append(SchemeDataType* const l1, SchemeDataType* const l2)
+{
+    SchemeDataType* r = new SchemeDataType(SchemeDataType::Cons);
+    r->cellValue = l1->cellValue;
+    r->cellValue->listPush(l2);
+    
+    return r;    
+}
+
+
 SchemeDataType* car(SchemeDataType* const data)
 {
 	if (data->type != SchemeDataType::Cons) {

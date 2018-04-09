@@ -27,9 +27,17 @@ struct SchemeDataType : public gc
 		Symbol,
 		Cons,
 		Nil,
-		SchemeConstant,
+        SchemeBoolean,
 		Unknown
 	};
+    
+    enum SchemeBooleanValue
+    {
+        False,
+        True,
+    };
+    
+        
 	int type;
 
 	// vals
@@ -37,21 +45,14 @@ struct SchemeDataType : public gc
 	char* stringValue;
 	char* symbolValue;
 	ConsCell* cellValue;
-	void* othersValue;
-	int constValue;
-	char* errorMessage;
-
-	enum Constants{
-		True, // #t
-		False // #f
-	};
+    SchemeBooleanValue booleanValue;    
 
 	SchemeDataType();
 	SchemeDataType(const int typeId);
 	SchemeDataType(const int typeId, const char* s); 	// string or symbol
 	SchemeDataType(ConsCell* cell);
 	SchemeDataType(const SchemeDataType &r);
-	SchemeDataType(const int typeId, const int value); // for constants
+	SchemeDataType(const int typeId, const int value); // for constants, booleans
 	
 
 	SchemeDataType& operator=(const SchemeDataType& r);

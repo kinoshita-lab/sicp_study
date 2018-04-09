@@ -6,15 +6,19 @@
 #include "eval.h"
 #include "user_print.h"
 #include "global.h"
+#include "stack.h"
 
 using namespace std;
 
+Stack s; // bimyou
+
 namespace
 {
+
 // function protos
 void read_eval_print_loop();
 void print_result();
-void eval_dispatch();
+}
 
 void goto_with_label(const char* const label)
 {
@@ -36,7 +40,7 @@ void goto_with_label(const char* const label)
 	}
 
     if (l == "UNKNOWN_EXPRESSION_TYPE") {
-        cout << "eval_dispatch: Unknown expression type: " << registers[EXP]->errorMessage << endl;
+        unknown_expression_type();
         return;
     }
     
@@ -54,16 +58,56 @@ void goto_with_label(SchemeDataType* const reg)
 	goto_with_label(reg->stringValue);
 }
 
+void assign(int registerId, SchemeDataType* const r)
+{
+	registers[registerId] = r;
+}
+
+/**
+unknown-expression-type
+  (assign val (const unknown-expression-type-error))
+  (goto (label signal-error))
+  */
+void unknown_expression_type()
+{
+    assign(VAL, new SchemeDataType(SchemeDataType::String, "Unknown-expression-type-error"));
+    signal_error();
+}
+
+
+/**
+unknown-procedure-type   
+  (restore continue)
+  (assign val (const unknown-procedure-type-error))
+  (goto (label signal-error))
+  */
+void unknown_procedure_type()
+{
+    registers[CONTINUE] = s.restore();
+    assign(VAL, new SchemeDataType(SchemeDataType::String, "Unknown-procedure-type-error"));
+    signal_error();           
+}
+
+/**
+signal-error
+  (perform (op user-print) (reg val))
+  (goto (label read-eval-print-loop))
+  */
+void signal_error()
+{
+    user_print(registers[VAL]);
+    read_eval_print_loop();    
+}
+
+
+namespace
+{
 void assign(int registerId, const char* const s)
 {
 	SchemeDataType* sdt = new SchemeDataType(SchemeDataType::String, s);
 	registers[registerId] = sdt;
 } 
 
-void assign(int registerId, SchemeDataType* const r)
-{
-	registers[registerId] = r;
-}
 
 void prompt_for_input(const char* const message)
 {
@@ -72,14 +116,25 @@ void prompt_for_input(const char* const message)
 
 void print_result()
 {
-	// [pending] print_stack_statistics();
-	cout << ";;; C++-EC-Eval output:" << endl;
+	s.print_statistics();
+	cout << ";;; C++-EC-Eval value:" << endl;
 	user_print(registers[VAL]);
 }
 
-
+/**
+read-eval-print-loop
+  (perform (op initialize-stack))
+  (perform
+   (op prompt-for-input) (const ";;; EC-Eval input:"))
+  (assign exp (op read))
+  (assign env (op get-global-environment))
+  (assign continue (label print-result))
+  (goto (label eval-dispatch))
+  */
 void read_eval_print_loop()
 {
+	s.initialize();
+
 	// [pending] initialize_stack();
 	prompt_for_input(";;; C++-EC-Eval input:");
 	
@@ -100,6 +155,9 @@ void read_eval_print_loop()
 	assign(CONTINUE, "GOTO_PRINT_RESULT");
 	goto_with_label("GOTO_EVAL_DISPATCH");
 }
+
+}
+
 /*
   eval-dispatch
   (perform (op user-print) (reg exp))
@@ -132,52 +190,71 @@ void eval_dispatch()
     // (branch (label ev-self-eval))
 	if (self_evaluating_p(registers[EXP])) {
 		ev_self_eval(registers[EXP]);
-		goto end_of_dispatch;
+		return;
 	}
     
     // (test (op variable?) (reg exp))
     // (branch (label ev-variable))
 	if (variable_p(registers[EXP])) {
 		ev_variable(registers[EXP]);
-		goto end_of_dispatch;
+		return;
 	}
 
     // (test (op quoted?) (reg exp))
     // (branch (label ev-quoted))
 	if (quoted_p(registers[EXP])) {
-		ev_quote(registers[EXP]);
-		goto end_of_dispatch;
+		ev_quoted(registers[EXP]);
+		return;
 	}
     
     // (test (op assignment?) (reg exp))
     // (branch (label ev-assignment))
-    
+	if (assignment_p(registers[EXP])) {
+		ev_assignment(registers[EXP]);
+		return;
+	}
     // (test (op definition?) (reg exp))
     // (branch (label ev-definition))
+	if (definition_p(registers[EXP])) {
+		ev_definition(registers[EXP]);
+		return;
+	}
     
     // (test (op if?) (reg exp))
     // (branch (label ev-if))
+	if (if_p(registers[EXP])) {
+		ev_if(registers[EXP]);
+		return;
+	}
     
     // (test (op lambda?) (reg exp))
     // (branch (label ev-lambda))
+	if (lambda_p(registers[EXP])) {
+		ev_lambda(registers[EXP]);
+		return;
+	}
     
     // (test (op begin?) (reg exp))
     // (branch (label ev-begin))
-    
+    if (begin_p(registers[EXP])) {
+		ev_begin(registers[EXP]);
+		return;
+	}
+
     // (test (op application?) (reg exp))
     // (branch (label ev-application))
-    
+    if (application_p(registers[EXP])) {
+		ev_application(registers[EXP]);
+		return;
+	}
+	
     // (goto (label unknown-expression-type))
 	goto_with_label("UNKNOWN_EXPRESSION_TYPE");
-    return;
-	
-end_of_dispatch:
-	goto_with_label(registers[CONTINUE]);
 }
 
-}
 
 void eceval()
 {	
 	read_eval_print_loop();
 }
+

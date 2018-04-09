@@ -141,7 +141,7 @@ SchemeDataType* lambda_parameters(SchemeDataType* const exp)
 /*
  (define (lambda-body exp) (cddr exp))
  */
-SchemeDataType* lambda_boty(SchemeDataType* const exp)
+SchemeDataType* lambda_body(SchemeDataType* const exp)
 {
     return cddr(exp);
 }
@@ -192,7 +192,7 @@ SchemeDataType* if_alternative(SchemeDataType* const exp)
         return caddr(exp);
     }
 
-    return new SchemeDataType(SchemeDataType::SchemeConstant, SchemeDataType::False);
+    return new SchemeDataType(SchemeDataType::SchemeBoolean, SchemeDataType::False);
 }
 
 /*
@@ -387,7 +387,7 @@ SchemeDataType* cond_to_if(SchemeDataType* const exp)
 SchemeDataType* const expand_clauses(SchemeDataType* const clauses)
 {
     if (null_p(clauses)) {
-        return new SchemeDataType(SchemeDataType::SchemeConstant, SchemeDataType::False);
+        return new SchemeDataType(SchemeDataType::SchemeBoolean, SchemeDataType::False);
     }
 
     auto* const first = car(clauses);

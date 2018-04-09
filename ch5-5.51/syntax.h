@@ -140,7 +140,7 @@ SchemeDataType* definition_value(SchemeDataType* const exp);
 
 bool lambda_p(SchemeDataType* const exp);
 SchemeDataType* lambda_parameters(SchemeDataType* const exp);
-SchemeDataType* lambda_boty(SchemeDataType* const exp);
+SchemeDataType* lambda_body(SchemeDataType* const exp);
 SchemeDataType* make_lambda(SchemeDataType* const parameters, SchemeDataType* const body);
 
 bool if_p(SchemeDataType* const exp);

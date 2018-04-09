@@ -27,7 +27,7 @@ void ConsCell::listPush(SchemeDataType* item)
 }
 
 SchemeDataType::SchemeDataType()
-	: type(Nil), cellValue(nullptr), othersValue(nullptr) 
+	: type(Nil), cellValue(nullptr)
 {
 }
 
@@ -53,11 +53,6 @@ SchemeDataType::SchemeDataType(const int typeId, const char* s)
 	if (typeId == Symbol) {
 		symbolValue = (char*)malloc(length);
 		strcpy(symbolValue, s);
-	}
-
-	if (typeId == Unknown) {
-		errorMessage = (char*)malloc(length);
-		strcpy(errorMessage, s);
 	}
 }
 
@@ -86,6 +81,11 @@ SchemeDataType::SchemeDataType(const SchemeDataType& r)
 		symbolValue = (char*)malloc(length);
 		strcpy(symbolValue, r.symbolValue);
 	}
+
+    if (type == SchemeBoolean) {
+        booleanValue = r.booleanValue;        
+    }
+    
 }
 
 SchemeDataType& SchemeDataType::operator=(const SchemeDataType& r) 
@@ -108,14 +108,18 @@ SchemeDataType& SchemeDataType::operator=(const SchemeDataType& r)
 		strcpy(symbolValue, r.symbolValue);
 	}
 
+    if (type == SchemeBoolean) {
+        booleanValue = r.booleanValue;        
+    }
+
 	return *this;
 }
 
 SchemeDataType::SchemeDataType(const int typeId, const int value)
 {
-	if (typeId == SchemeDataType::SchemeConstant) {
+	if (typeId == SchemeDataType::SchemeBoolean) {
 		this->type = typeId;
-		constValue = value;
+		booleanValue = (SchemeBooleanValue)value;
 		return;
 	}
 
