@@ -56,6 +56,7 @@ SchemeDataType::SchemeDataType(const int typeId, const char* s)
 	}
 }
 
+
 SchemeDataType::SchemeDataType(ConsCell* cell) 
 { 
 	type = Cons;

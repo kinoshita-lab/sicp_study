@@ -64,10 +64,33 @@ SchemeDataType* cdr(SchemeDataType* const data)
 	return data->cellValue->cdr;
 }
 
-// under construction
-SchemeDataType* list(...)
+SchemeDataType* list()
 {
-	return new SchemeDataType();
+    auto* r = new SchemeDataType(SchemeDataType::Cons);
+    r->cellValue->car = new SchemeDataType(SchemeDataType::Nil);
+    r->cellValue->cdr = new SchemeDataType(SchemeDataType::Nil);
+
+    return r;    
+}
+
+SchemeDataType* list(const int number_of_items, ...)
+{
+    auto* r = new SchemeDataType(SchemeDataType::Cons);
+    va_list args;
+    va_start(args, number_of_items);
+
+    for (auto i = 0; i < number_of_items; ++i) {
+        r->cellValue->listPush(va_arg(args, SchemeDataType*));        
+    }
+    
+    va_end(args);
+
+    return r;    
+}
+
+void set_car(SchemeDataType* data, SchemeDataType* carData)
+{
+	data->cellValue->car = carData;
 }
 
 bool atom_p(SchemeDataType* const data)

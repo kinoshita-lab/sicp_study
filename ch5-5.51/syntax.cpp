@@ -152,7 +152,7 @@ SchemeDataType* lambda_body(SchemeDataType* const exp)
  */
 SchemeDataType* make_lambda(SchemeDataType* const parameters, SchemeDataType* const body)
 {
-    return cons(new SchemeDataType(SchemeDataType::String, "lambda"),
+    return cons(new SchemeDataType(SchemeDataType::Symbol, "lambda"),
                 (cons(parameters, body)));
 }
 
@@ -288,8 +288,8 @@ SchemeDataType* rest_operands(SchemeDataType* const ops)
   */
 SchemeDataType* make_if(SchemeDataType* const predicate, SchemeDataType* const consequent, SchemeDataType* const alternative)
 {
-    return list(new SchemeDataType(SchemeDataType::String, "list"),
-        consequent, alternative);
+    return list(4, new SchemeDataType(SchemeDataType::Symbol, "if"),                
+                predicate, consequent, alternative);
 }
 
 /*

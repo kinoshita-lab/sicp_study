@@ -16,7 +16,6 @@ namespace
 {
 
 // function protos
-void read_eval_print_loop();
 void print_result();
 }
 
@@ -121,6 +120,108 @@ void print_result()
 	user_print(registers[VAL]);
 }
 
+}
+
+/*
+  eval-dispatch
+  (perform (op user-print) (reg exp))
+  (test (op self-evaluating?) (reg exp))
+  (branch (label ev-self-eval))
+  (test (op variable?) (reg exp))
+  (branch (label ev-variable))
+  (test (op quoted?) (reg exp))
+  (branch (label ev-quoted))
+  (test (op assignment?) (reg exp))
+  (branch (label ev-assignment))
+  (test (op definition?) (reg exp))
+  (branch (label ev-definition))
+  (test (op if?) (reg exp))
+  (branch (label ev-if))
+  (test (op lambda?) (reg exp))
+  (branch (label ev-lambda))
+  (test (op begin?) (reg exp))
+  (branch (label ev-begin))
+  (test (op application?) (reg exp))
+  (branch (label ev-application))
+  (goto (label unknown-expression-type))
+*/
+void eval_dispatch()
+{
+    // (perform (op user-print) (reg exp))
+	user_print(registers[EXP]);
+
+    // (test (op self-evaluating?) (reg exp))
+    // (branch (label ev-self-eval))
+	if (self_evaluating_p(registers[EXP])) {
+		ev_self_eval();
+		return;
+	}
+    
+    // (test (op variable?) (reg exp))
+    // (branch (label ev-variable))
+	if (variable_p(registers[EXP])) {
+		ev_variable();
+		return;
+	}
+
+    // (test (op quoted?) (reg exp))
+    // (branch (label ev-quoted))
+	if (quoted_p(registers[EXP])) {
+		ev_quoted();
+		return;
+	}
+    
+    // (test (op assignment?) (reg exp))
+    // (branch (label ev-assignment))
+	if (assignment_p(registers[EXP])) {
+		ev_assignment();
+		return;
+	}
+    // (test (op definition?) (reg exp))
+    // (branch (label ev-definition))
+	if (definition_p(registers[EXP])) {
+		ev_definition();
+		return;
+	}
+    
+    // (test (op if?) (reg exp))
+    // (branch (label ev-if))
+	if (if_p(registers[EXP])) {
+		ev_if();
+		return;
+	}
+    
+    // (test (op lambda?) (reg exp))
+    // (branch (label ev-lambda))
+	if (lambda_p(registers[EXP])) {
+		ev_lambda();
+		return;
+	}
+    
+    // (test (op begin?) (reg exp))
+    // (branch (label ev-begin))
+    if (begin_p(registers[EXP])) {
+		ev_begin();
+		return;
+	}
+
+    // (test (op application?) (reg exp))
+    // (branch (label ev-application))
+    if (application_p(registers[EXP])) {
+		ev_application();
+		return;
+	}
+	
+    // (goto (label unknown-expression-type))
+	goto_with_label("UNKNOWN_EXPRESSION_TYPE");
+}
+
+
+void eceval()
+{	
+	read_eval_print_loop();
+}
+
 /**
 read-eval-print-loop
   (perform (op initialize-stack))
@@ -156,105 +257,4 @@ void read_eval_print_loop()
 	goto_with_label("GOTO_EVAL_DISPATCH");
 }
 
-}
-
-/*
-  eval-dispatch
-  (perform (op user-print) (reg exp))
-  (test (op self-evaluating?) (reg exp))
-  (branch (label ev-self-eval))
-  (test (op variable?) (reg exp))
-  (branch (label ev-variable))
-  (test (op quoted?) (reg exp))
-  (branch (label ev-quoted))
-  (test (op assignment?) (reg exp))
-  (branch (label ev-assignment))
-  (test (op definition?) (reg exp))
-  (branch (label ev-definition))
-  (test (op if?) (reg exp))
-  (branch (label ev-if))
-  (test (op lambda?) (reg exp))
-  (branch (label ev-lambda))
-  (test (op begin?) (reg exp))
-  (branch (label ev-begin))
-  (test (op application?) (reg exp))
-  (branch (label ev-application))
-  (goto (label unknown-expression-type))
-*/
-void eval_dispatch()
-{
-    // (perform (op user-print) (reg exp))
-	user_print(registers[EXP]);
-
-    // (test (op self-evaluating?) (reg exp))
-    // (branch (label ev-self-eval))
-	if (self_evaluating_p(registers[EXP])) {
-		ev_self_eval(registers[EXP]);
-		return;
-	}
-    
-    // (test (op variable?) (reg exp))
-    // (branch (label ev-variable))
-	if (variable_p(registers[EXP])) {
-		ev_variable(registers[EXP]);
-		return;
-	}
-
-    // (test (op quoted?) (reg exp))
-    // (branch (label ev-quoted))
-	if (quoted_p(registers[EXP])) {
-		ev_quoted(registers[EXP]);
-		return;
-	}
-    
-    // (test (op assignment?) (reg exp))
-    // (branch (label ev-assignment))
-	if (assignment_p(registers[EXP])) {
-		ev_assignment(registers[EXP]);
-		return;
-	}
-    // (test (op definition?) (reg exp))
-    // (branch (label ev-definition))
-	if (definition_p(registers[EXP])) {
-		ev_definition(registers[EXP]);
-		return;
-	}
-    
-    // (test (op if?) (reg exp))
-    // (branch (label ev-if))
-	if (if_p(registers[EXP])) {
-		ev_if(registers[EXP]);
-		return;
-	}
-    
-    // (test (op lambda?) (reg exp))
-    // (branch (label ev-lambda))
-	if (lambda_p(registers[EXP])) {
-		ev_lambda(registers[EXP]);
-		return;
-	}
-    
-    // (test (op begin?) (reg exp))
-    // (branch (label ev-begin))
-    if (begin_p(registers[EXP])) {
-		ev_begin(registers[EXP]);
-		return;
-	}
-
-    // (test (op application?) (reg exp))
-    // (branch (label ev-application))
-    if (application_p(registers[EXP])) {
-		ev_application(registers[EXP]);
-		return;
-	}
-	
-    // (goto (label unknown-expression-type))
-	goto_with_label("UNKNOWN_EXPRESSION_TYPE");
-}
-
-
-void eceval()
-{	
-	read_eval_print_loop();
-}
 

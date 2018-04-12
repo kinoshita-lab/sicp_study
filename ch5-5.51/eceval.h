@@ -11,6 +11,6 @@ void goto_with_label(SchemeDataType* const reg);
 void unknown_expression_type();
 void unknown_procedure_type();
 void signal_error();
-
+void read_eval_print_loop();
 extern Stack s;
 

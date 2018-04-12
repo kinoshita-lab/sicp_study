@@ -16,10 +16,10 @@ using namespace std;
   (assign val (reg exp))
   (goto (reg continue))
 */
-void ev_self_eval(SchemeDataType* const reg)
+void ev_self_eval()
 {
-	registers[VAL] = reg;
-  goto_with_label(registers[CONTINUE]);
+	registers[VAL] = registers[EXP];
+    goto_with_label(registers[CONTINUE]);
 }
 
 /**
@@ -27,9 +27,9 @@ void ev_self_eval(SchemeDataType* const reg)
   (assign val (op lookup-variable-value) (reg exp) (reg env))
   (goto (reg continue))
  */
-void ev_variable(SchemeDataType* const reg)
+void ev_variable()
 {
-	registers[VAL] = lookup_variable_value(reg, the_global_environment);
+	registers[VAL] = lookup_variable_value(registers[EXP], the_global_environment);
   goto_with_label(registers[CONTINUE]);
 }
 
@@ -38,10 +38,10 @@ ev-quoted
   (assign val (op text-of-quotation) (reg exp))
   (goto (reg continue))
   */
-void ev_quoted(SchemeDataType* const reg)
+void ev_quoted()
 {
-	registers[VAL] = text_of_quotation(reg);
-  goto_with_label(registers[CONTINUE]);
+	registers[VAL] = text_of_quotation(registers[EXP]);
+    goto_with_label(registers[CONTINUE]);
 }
 
 /**
@@ -52,7 +52,7 @@ void ev_quoted(SchemeDataType* const reg)
               (reg unev) (reg exp) (reg env))
   (goto (reg continue))
   */
-void ev_lambda(SchemeDataType* const reg)
+void ev_lambda()
 {
   assign(UNEV, lambda_parameters(registers[EXP]));
   assign(EXP, lambda_body(registers[EXP]));
@@ -69,7 +69,7 @@ ev-application
   (assign continue (label ev-appl-did-operator))
   (goto (label eval-dispatch))
   */
-void ev_application(SchemeDataType* const reg)
+void ev_application()
 {
   s.save(registers[CONTINUE]);
   s.save(registers[ENV]);
@@ -90,19 +90,19 @@ void ev_application(SchemeDataType* const reg)
   (branch (label apply-dispatch))
   (save proc)
 */
-void ev_appl_did_operator(SchemeDataType* const reg)
+void ev_appl_did_operator()
 {
   registers[UNEV] = s.restore();
   registers[ENV] = s.restore();
   assign(ARGL, empty_arglist());
   assign(PROC, registers[VAL]);
   if (no_operands_p(registers[UNEV])) {
-    apply_dispatch(reg);
+    apply_dispatch();
   }
 
   s.save(registers[PROC]);
 
-  ev_appl_operand_loop(reg); // (save procの後はev-appl-operand-loop)
+  ev_appl_operand_loop(); // (save procの後はev-appl-operand-loop)
 }
 
 /**
@@ -116,12 +116,12 @@ void ev_appl_did_operator(SchemeDataType* const reg)
   (assign continue (label ev-appl-accumulate-arg))
   (goto (label eval-dispatch))
  */
-void ev_appl_operand_loop(SchemeDataType* const reg)
+void ev_appl_operand_loop()
 {
   s.save(registers[ARGL]);
   assign(EXP, first_operand(registers[UNEV]));
   if (last_operand_p(registers[UNEV])) {
-    ev_appl_last_arg(reg);
+    ev_appl_last_arg();
     return;
   }
 
@@ -140,14 +140,14 @@ void ev_appl_operand_loop(SchemeDataType* const reg)
   (assign unev (op rest-operands) (reg unev))
   (goto (label ev-appl-operand-loop))
 */
-void ev_appl_accumulate_arg(SchemeDataType* const reg)
+void ev_appl_accumulate_arg()
 {
   registers[UNEV] = s.restore();
   registers[ENV] = s.restore();
   registers[ARGL] = s.restore();
   assign(ARGL, adjoin_arg(registers[VAL], registers[ARGL]));
   assign(UNEV, rest_operands(registers[UNEV]));
-  ev_appl_operand_loop(reg);
+  ev_appl_operand_loop();
 }
 
 /**
@@ -155,7 +155,7 @@ ev-appl-last-arg
   (assign continue (label ev-appl-accum-last-arg))
   (goto (label eval-dispatch))
   */
-void ev_appl_last_arg(SchemeDataType* const reg)
+void ev_appl_last_arg()
 {
   assign(CONTINUE, new SchemeDataType(SchemeDataType::String, "EV_APPL_ACCUM_LAST_ARG"));
   eval_dispatch();
@@ -169,15 +169,15 @@ apply-dispatch
   (branch (label compound-apply))
   (goto (label unknown-procedure-type))
 */
-void ev_apply_dispatch(SchemeDataType* const reg)
+void apply_dispatch()
 {
   if (primitive_procedure_p(registers[PROC])) {
-    primitive_apply(reg);
+    primitive_apply();
     return;
   }
 
   if (compound_procedure_p(registers[PROC])) {
-    compound_apply(reg);
+    compound_apply();
     return;
   }
 
@@ -192,7 +192,7 @@ primitive-apply
   (restore continue)
   (goto (reg continue))
 */
-void primitive_apply(SchemeDataType* const reg)
+void primitive_apply()
 {
   assign(VAL, apply_primitive_procedure(registers[PROC], registers[ARGL]));
   registers[CONTINUE] = s.restore();
@@ -208,13 +208,13 @@ compound-apply
   (assign unev (op procedure-body) (reg proc))
   (goto (label ev-sequence))
 */
-void compound_apply(SchemeDataType* const reg)
+void compound_apply()
 {
   assign(UNEV, procedure_parameters(registers[PROC]));
   assign(ENV, procedure_environment(registers[PROC]));
   assign(ENV, extend_environment(registers[UNEV], registers[ARGL], registers[ENV]));
   assign(UNEV, procedure_body(registers[PROC]));
-  ev_sequence(reg);
+  ev_sequence();
 }
 
 /**
@@ -223,11 +223,11 @@ ev-begin
   (save continue)
   (goto (label ev-sequence))
 */
-void ev_begin(SchemeDataType* const reg)
+void ev_begin()
 {
   assign(UNEV, begin_actions(registers[EXP]));
   s.save(registers[CONTINUE]);
-  ev_sequence(reg);
+  ev_sequence();
 }
 
 /**
@@ -240,11 +240,11 @@ ev-sequence
   (assign continue (label ev-sequence-continue))
   (goto (label eval-dispatch))
 */
-void ev_sequence(SchemeDataType* const reg)
+void ev_sequence()
 {
   assign(EXP, first_exp(registers[UNEV]));
   if (last_exp_p(registers[UNEV])) {
-    ev_sequence_last_exp(reg);
+    ev_sequence_last_exp();
     return;
   }
   s.save(registers[UNEV]);
@@ -260,12 +260,12 @@ ev-sequence-continue
   (assign unev (op rest-exps) (reg unev))
   (goto (label ev-sequence))
 */
-void ev_sequence_continue(SchemeDataType* const reg)
+void ev_sequence_continue()
 {
   registers[ENV] = s.restore();
   registers[UNEV] = s.restore();
   assign(UNEV, rest_exps(registers[UNEV]));
-  ev_sequence(reg);
+  ev_sequence();
 }
 
 /**
@@ -273,7 +273,7 @@ ev-sequence-last-exp
   (restore continue)
   (goto (label eval-dispatch))
 */
-void ev_sequence_last_exp(SchemeDataType* const reg)
+void ev_sequence_last_exp()
 {
   registers[CONTINUE] = s.restore();
   eval_dispatch();
@@ -288,7 +288,7 @@ ev-if
   (assign exp (op if-predicate) (reg exp))
   (goto (label eval-dispatch))
 */
-void ev_if(SchemeDataType* const reg)
+void ev_if()
 {
   s.save(registers[EXP]);
   s.save(registers[ENV]);
@@ -306,18 +306,18 @@ ev-if-decide
   (test (op true?) (reg val))
   (branch (label ev-if-consequent))
 */
-void ev_if_decide(SchemeDataType* const reg)
+void ev_if_decide()
 {
   registers[CONTINUE] = s.restore();
   registers[ENV] = s.restore();
   registers[EXP] = s.restore();
 
   if (true_p(registers[VAL])) {
-    ev_if_consequent(reg);
+    ev_if_consequent();
     return;
   }
 
-  ev_if_alternative(reg);  // (branch の後はev_if_alternative)
+  ev_if_alternative();  // (branch の後はev_if_alternative)
 }
 
 /**
@@ -325,7 +325,7 @@ ev-if-alternative
   (assign exp (op if-alternative) (reg exp))
   (goto (label eval-dispatch))
 */
-void ev_if_alternative(SchemeDataType* const reg)
+void ev_if_alternative()
 {
   assign(EXP, if_alternative(registers[EXP]));
   eval_dispatch();
@@ -335,7 +335,7 @@ ev-if-consequent
   (assign exp (op if-consequent) (reg exp))
   (goto (label eval-dispatch))
 */
-void ev_if_consequent(SchemeDataType* const reg)
+void ev_if_consequent()
 {
   assign(EXP, if_consequent(registers[EXP]));
   eval_dispatch();
@@ -351,7 +351,7 @@ ev-assignment
   (assign continue (label ev-assignment-1))
   (goto (label eval-dispatch))
   */
-void ev_assignment(SchemeDataType* const reg)
+void ev_assignment()
 {
   assign(UNEV, assignment_variable(registers[EXP]));
   s.save(registers[UNEV]);
@@ -372,7 +372,7 @@ ev-assignment-1
   (assign val (const ok))
   (goto (reg continue))
 */
-void ev_assignment_1(SchemeDataType* const reg)
+void ev_assignment_1()
 {
   registers[CONTINUE] = s.restore();
   registers[ENV] = s.restore();
@@ -392,7 +392,7 @@ ev-definition
   (assign continue (label ev-definition-1))
   (goto (label eval-dispatch))
   */
-void ev_definition(SchemeDataType* const reg)
+void ev_definition()
 {
   assign(UNEV, definition_variable(registers[EXP]));
   s.save(registers[UNEV]);
@@ -413,7 +413,7 @@ ev-definition-1
   (assign val (const ok))
   (goto (reg continue))
 */
-void ev_definition_1(SchemeDataType* const reg)
+void ev_definition_1()
 {
   registers[CONTINUE] = s.restore();
   registers[ENV] = s.restore();

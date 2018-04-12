@@ -12,7 +12,11 @@ SchemeDataType* append(SchemeDataType* const l1, SchemeDataType* const l2);
 SchemeDataType* car(SchemeDataType* const data);
 SchemeDataType* cdr(SchemeDataType* const data);
 
-SchemeDataType* list(...);
+SchemeDataType* list();
+SchemeDataType* list(const int number_of_items, ...);
+
+void set_car(SchemeDataType* data, SchemeDataType* carData);
+
 
 // *_p functions
 bool atom_p(SchemeDataType* const data);

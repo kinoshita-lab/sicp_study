@@ -15,6 +15,14 @@ SchemeDataType* procedure_body(SchemeDataType* const p);
 SchemeDataType* procedure_environment(SchemeDataType* const p);
 
 
+SchemeDataType* apply_primitive_procedure(SchemeDataType* const proc, SchemeDataType* const args);
+void set_variable_value(SchemeDataType* const var, SchemeDataType* const val, SchemeDataType* const env);
+void define_variable(SchemeDataType* const var, SchemeDataType* const val, SchemeDataType* const env);
+
+
+
+
+
 bool true_p(SchemeDataType* const x);
 bool last_operand_p(SchemeDataType* const ops);
 bool primitive_procedure_p(SchemeDataType* const proc);
