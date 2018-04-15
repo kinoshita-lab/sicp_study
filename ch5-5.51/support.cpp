@@ -6,6 +6,7 @@
 #include "eceval.h"
 #include "frames.h"
 #include "env.h"
+#include "frames.h"
 
 /**
 ;;following compound-procedure operations not used by compiled code
@@ -192,11 +193,27 @@ void set_variable_value_env_loop(SchemeDataType* const env, SchemeDataType* cons
     (scan (frame-variables frame)
           (frame-values frame))))
  */
+void define_variable_scan(SchemeDataType* const vars,  SchemeDataType* const vals, SchemeDataType* const var, SchemeDataType* const val, SchemeDataType* const frame);
 void define_variable(SchemeDataType* const var, SchemeDataType* const val, SchemeDataType* const env)
 {
-    // under construction
+    auto* frame = first_frame(env);
+    define_variable_scan(frame_variables(frame), frame_values(frame), var, val, frame);
 }
 
+void define_variable_scan(SchemeDataType* const vars,  SchemeDataType* const vals, SchemeDataType* const var, SchemeDataType* const val, SchemeDataType* const frame)
+{
+    if (null_p(vars)) {
+        add_bindings_to_frame(var, val, frame);
+        return;
+    }
+
+    if (eq_p(var , car(vars))) {
+        set_car(vals, val);
+        return;
+    }
+
+    define_variable_scan(cdr(vars), cdr(vals), var, val, frame);
+}
 
 
 

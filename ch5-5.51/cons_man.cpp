@@ -93,6 +93,11 @@ void set_car(SchemeDataType* data, SchemeDataType* carData)
 	data->cellValue->car = carData;
 }
 
+void set_cdr(SchemeDataType* data, SchemeDataType* cdrData)
+{
+	data->cellValue->cdr = cdrData;
+}
+
 bool atom_p(SchemeDataType* const data)
 {
 	return (data->type != SchemeDataType::Cons) 

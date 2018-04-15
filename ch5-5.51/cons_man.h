@@ -16,7 +16,7 @@ SchemeDataType* list();
 SchemeDataType* list(const int number_of_items, ...);
 
 void set_car(SchemeDataType* data, SchemeDataType* carData);
-
+void set_cdr(SchemeDataType* data, SchemeDataType* cdrData);
 
 // *_p functions
 bool atom_p(SchemeDataType* const data);

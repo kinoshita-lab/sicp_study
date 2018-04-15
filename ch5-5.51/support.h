@@ -21,8 +21,6 @@ void define_variable(SchemeDataType* const var, SchemeDataType* const val, Schem
 
 
 
-
-
 bool true_p(SchemeDataType* const x);
 bool last_operand_p(SchemeDataType* const ops);
 bool primitive_procedure_p(SchemeDataType* const proc);

@@ -42,6 +42,11 @@ void goto_with_label(const char* const label)
         unknown_expression_type();
         return;
     }
+
+	if (l == "EV_DEFINITION-1") {
+		ev_definition_1();
+		return;
+	}
     
 
 	cout << "LABEL NOT FOUND!: " << l << endl;
