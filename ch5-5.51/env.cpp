@@ -4,15 +4,16 @@
 #include "cons_man.h"
 #include "frames.h"
 #include "user_print.h"
+#include "primitives.h"
 
 using namespace std;
 
 void setup_environment()
 { 
-	the_empty_environment = new SchemeDataType;
-	SchemeDataType* primitive_procedure_names = new SchemeDataType;
-	SchemeDataType* primitive_procedure_objects = new SchemeDataType;
-	the_global_environment = extend_environment(primitive_procedure_names, primitive_procedure_objects, the_empty_environment);
+	the_empty_environment = new SchemeDataType(SchemeDataType::Cons);
+	SchemeDataType* p_names = primitive_procedure_names();
+	SchemeDataType* p_objs = primitive_procedure_objects();
+	the_global_environment = extend_environment(p_names, p_objs, the_empty_environment);
 }
 
 /**

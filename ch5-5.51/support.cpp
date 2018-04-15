@@ -115,8 +115,11 @@ SchemeDataType* primitive_implementation(SchemeDataType* const proc)
 
 SchemeDataType* apply_primitive_implementation(SchemeDataType* const proc, SchemeDataType* const args)
 {
-    // todo impl
-    return new SchemeDataType();
+    auto* f = cadr(proc);
+    auto* arg1 = args;
+    auto* arg2 = cdr(args);
+
+    return (*(f->primitive))(arg1, arg2);
 }
 
 /**

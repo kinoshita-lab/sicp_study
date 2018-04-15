@@ -47,6 +47,26 @@ void goto_with_label(const char* const label)
 		ev_definition_1();
 		return;
 	}
+
+	if (l == "EV_APPL_DID_OPERATOR") {
+		ev_appl_did_operator();
+		return;
+	}
+
+	if (l == "EV_APPL_ACCUMULATE_ARG") {
+		ev_appl_accumulate_arg();
+		return;
+	}
+
+	if (l == "EV_APPL_LAST_ARG") {
+		ev_appl_last_arg();
+		return;
+	}
+
+	if (l == "EV_APPL_ACCUM_LAST_ARG") {
+		ev_appl_accum_last_arg();
+		return;
+	}
     
 
 	cout << "LABEL NOT FOUND!: " << l << endl;

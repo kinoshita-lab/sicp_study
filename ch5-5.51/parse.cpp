@@ -28,7 +28,8 @@ bool string_p(const std::string& s)
 bool symbol_p(const std::string& s)
 {
 	for (auto&& c : s) {
-		if (!isalpha(c) && !isdigit(c) && c != '\'') {
+		if (!isalpha(c) && !isdigit(c) && c != '\''
+        && c != '+' && c != '-' && c != '=' && c != '/' && c != '>' && c != '<') {
 			return false;
 		}
 	}

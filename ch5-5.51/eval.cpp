@@ -77,7 +77,7 @@ void ev_application()
   s.save(registers[UNEV]);
   assign(EXP, operator_(registers[EXP]));
   assign(CONTINUE, new SchemeDataType(SchemeDataType::String, "EV_APPL_DID_OPERATOR"));
-  goto_with_label("EVAL_DISPATCH");
+  eval_dispatch();
 }
 
 /**
@@ -161,6 +161,20 @@ void ev_appl_last_arg()
   eval_dispatch();
 }
 
+/**
+ev-appl-accum-last-arg
+  (restore argl)
+  (assign argl (op adjoin-arg) (reg val) (reg argl))
+  (restore proc)
+  (goto (label apply-dispatch))
+ */
+void ev_appl_accum_last_arg()
+{
+  registers[ARGL] = s.restore();
+  assign(ARGL, adjoin_arg(registers[VAL], registers[ARGL]));
+  registers[PROC] = s.restore();
+  apply_dispatch();
+}
 /**
 apply-dispatch
   (test (op primitive-procedure?) (reg proc))

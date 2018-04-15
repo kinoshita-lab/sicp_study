@@ -12,6 +12,7 @@ void ev_appl_did_operator();
 void ev_appl_operand_loop();
 void ev_appl_accumulate_arg();
 void ev_appl_last_arg();
+void ev_appl_accum_last_arg();
 void apply_dispatch();
 void primitive_apply();
 void compound_apply();

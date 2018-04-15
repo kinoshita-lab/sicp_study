@@ -2,10 +2,13 @@
 
 #include <string>
 #include <vector>
-
 #include <gc_cpp.h>
 
 struct SchemeDataType;
+
+typedef SchemeDataType* (*PrimitiveFunction)(SchemeDataType* const arg1, SchemeDataType* const arg2);
+
+
 struct ConsCell : public gc
 {
 	SchemeDataType* car;
@@ -28,6 +31,7 @@ struct SchemeDataType : public gc
 		Cons,
 		Nil,
         SchemeBoolean,
+		PrimitiveProc,
 		Unknown
 	};
     
@@ -45,7 +49,8 @@ struct SchemeDataType : public gc
 	char* stringValue;
 	char* symbolValue;
 	ConsCell* cellValue;
-    SchemeBooleanValue booleanValue;    
+    SchemeBooleanValue booleanValue;
+	PrimitiveFunction primitive;  
 
 	SchemeDataType();
 	SchemeDataType(const int typeId);
@@ -53,7 +58,7 @@ struct SchemeDataType : public gc
 	SchemeDataType(ConsCell* cell);
 	SchemeDataType(const SchemeDataType &r);
 	SchemeDataType(const int typeId, const int value); // for constants, booleans
-	
+	SchemeDataType(PrimitiveFunction p);
 
 	SchemeDataType& operator=(const SchemeDataType& r);
 

@@ -44,7 +44,7 @@ SchemeDataType* append(SchemeDataType* const l1, SchemeDataType* const l2)
 }
 
 
-SchemeDataType* car(SchemeDataType* const data)
+SchemeDataType* car(SchemeDataType* const data, SchemeDataType* const)
 {
 	if (data->type != SchemeDataType::Cons) {
 		puts("Error Invalid data type @car");
@@ -54,7 +54,7 @@ SchemeDataType* car(SchemeDataType* const data)
 	return data->cellValue->car;
 }
 
-SchemeDataType* cdr(SchemeDataType* const data)
+SchemeDataType* cdr(SchemeDataType* const data, SchemeDataType* const)
 {
 	if (data->type != SchemeDataType::Cons) {
 		puts("Error Invalid data type @cdr");
@@ -109,6 +109,12 @@ bool null_p(SchemeDataType* const data)
 	return data->type == SchemeDataType::Nil;
 }
 
+SchemeDataType* null_p_primitive(SchemeDataType* const data, SchemeDataType* const)
+{
+	return new SchemeDataType(SchemeDataType::SchemeBoolean, 
+	data->type == SchemeDataType::Nil ? SchemeDataType::True : SchemeDataType::False);
+}
+
 bool pair_p(SchemeDataType* const data)
 {
 	return data->type == SchemeDataType::Cons;
@@ -135,4 +141,44 @@ bool eq_p(SchemeDataType* data1, SchemeDataType* data2)
 	}
 
 	return false;
+}
+
+
+SchemeDataType* cons_num_add(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+	return new SchemeDataType(SchemeDataType::Integer, 
+				arg1->cellValue->car->intValue 
+				+ arg2->cellValue->car->intValue);
+}
+
+SchemeDataType* cons_num_minus(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+	return new SchemeDataType(SchemeDataType::Integer, 
+				arg1->cellValue->car->intValue 
+				- arg2->cellValue->car->intValue);
+}
+
+SchemeDataType* cons_num_equal(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+	return new SchemeDataType(SchemeDataType::SchemeBoolean, 
+				arg1->cellValue->car->intValue == arg2->cellValue->car->intValue ? SchemeDataType::True : SchemeDataType::False);	
+}
+
+SchemeDataType* cons_num_div(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+return new SchemeDataType(SchemeDataType::Integer, 
+				arg1->cellValue->car->intValue 
+				/ arg2->cellValue->car->intValue);
+}
+
+SchemeDataType* cons_num_gt(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+	return new SchemeDataType(SchemeDataType::SchemeBoolean, 
+				arg1->cellValue->car->intValue > arg2->cellValue->car->intValue ? SchemeDataType::True : SchemeDataType::False);	
+}
+
+SchemeDataType* cons_num_lt(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+	return new SchemeDataType(SchemeDataType::SchemeBoolean, 
+				arg1->cellValue->car->intValue < arg2->cellValue->car->intValue ? SchemeDataType::True : SchemeDataType::False);	
 }

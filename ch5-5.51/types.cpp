@@ -131,6 +131,12 @@ SchemeDataType::SchemeDataType(const int typeId, const int value)
 	}
 }
 
+SchemeDataType::SchemeDataType(PrimitiveFunction p)
+{
+	type = SchemeDataType::PrimitiveProc;
+	primitive = p;
+}
+
 SchemeDataType::~SchemeDataType()
 {
 	if (type == String) {
