@@ -1,5 +1,6 @@
 #include <iostream>
 #include "support.h"
+#include "types.h"
 #include "cons_man.h"
 #include "syntax.h"
 #include "global.h"
@@ -15,7 +16,7 @@
   */
 SchemeDataType* make_procedure(SchemeDataType* const parameters, SchemeDataType* const body, SchemeDataType* const env)
 {
-    return list(4, new SchemeDataType(SchemeDataType::Symbol, "procedure"), parameters, body, env);
+    return list(4, new SchemeDataType(SchemeDataType::Symbol, "procedure"), parameters, body, deepCopyOf(env));
 }
 
 /**
@@ -24,7 +25,6 @@ SchemeDataType* make_procedure(SchemeDataType* const parameters, SchemeDataType*
 SchemeDataType* empty_arglist()
 {
     SchemeDataType* r = new SchemeDataType(SchemeDataType::Cons);
-    r->cellValue->car = new SchemeDataType(SchemeDataType::Nil);
     return r;
 }
 

@@ -37,6 +37,7 @@ bool eq_p(SchemeDataType* const data1, SchemeDataType* const data2);
 
 // primitive impls
 SchemeDataType* cons_num_add(SchemeDataType* const arg1, SchemeDataType* const arg2);
+SchemeDataType* cons_num_mul(SchemeDataType* const arg1, SchemeDataType* const arg2);
 SchemeDataType* cons_num_minus(SchemeDataType* const arg1, SchemeDataType* const arg2);
 SchemeDataType* cons_num_equal(SchemeDataType* const arg1, SchemeDataType* const arg2);
 SchemeDataType* cons_num_div(SchemeDataType* const arg1, SchemeDataType* const arg2);

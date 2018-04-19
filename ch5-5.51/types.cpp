@@ -177,6 +177,9 @@ std::vector<std::string> SchemeDataType::to_s()
 	case SchemeDataType::Unknown:
 		r.push_back(string("Unknown"));
 		break;
+	case SchemeDataType::PrimitiveProc:
+		r.push_back(string("C++ primitive function"));
+		break;
 	case SchemeDataType::Cons: {
 		auto* cell = cellValue;
 		r.push_back("(");
@@ -231,6 +234,54 @@ int ConsCell::length()
 	return l;
 }
 
+
+SchemeDataType* deepCopyOf(SchemeDataType* data)
+{
+	SchemeDataType* r = new SchemeDataType();
+
+	switch (data->type) {
+		case SchemeDataType::Integer:
+			r->type = SchemeDataType::Integer;
+			r->intValue = data->intValue;
+			break;
+		case SchemeDataType::Symbol: {
+			r->type = SchemeDataType::Symbol;
+			const auto length = strlen(data->symbolValue);
+			r->symbolValue = (char*)malloc(length);
+			strcpy(r->symbolValue, data->symbolValue);
+			break;
+		}
+		case SchemeDataType::String: {
+			r->type = SchemeDataType::String;
+			const auto length = strlen(data->stringValue);
+			r->stringValue = (char*)malloc(length);
+			strcpy(r->stringValue, data->stringValue);
+			break;
+		}
+		case SchemeDataType::Nil:
+			r->type = SchemeDataType::Nil;
+			break;
+		case SchemeDataType::PrimitiveProc:
+			r->type = SchemeDataType::PrimitiveProc;
+			r->primitive = data->primitive;
+			break;
+		case SchemeDataType::SchemeBoolean:
+			r->type = SchemeDataType::SchemeBoolean;
+			r->booleanValue = data->booleanValue;
+			break;
+		case SchemeDataType::Cons:
+			r->type = SchemeDataType::Cons;
+			r->cellValue = new ConsCell();
+			r->cellValue->car = deepCopyOf(data->cellValue->car);
+			r->cellValue->cdr = deepCopyOf(data->cellValue->cdr);
+			break;
+		default:
+			break;
+	}
+
+	return r;
+}
+
 void dumpData(const SchemeDataType& data)
 {
 	using namespace std;
@@ -249,7 +300,7 @@ void dumpData(const SchemeDataType& data)
 		dumpConsCell(data);
 		break;
 	default:
-		cout << "Unknow Data Element!" << endl;
+		cout << "Unknown Data Element!" << endl;
 	}
 }
 

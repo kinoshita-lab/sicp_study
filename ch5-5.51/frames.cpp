@@ -1,5 +1,6 @@
 #include "frames.h"
 #include "cons_man.h"
+#include "user_print.h"
 
 SchemeDataType* first_frame(SchemeDataType* env)
 {
@@ -25,4 +26,5 @@ void add_bindings_to_frame(SchemeDataType* const var, SchemeDataType* const val,
 {
     set_car(frame, cons(var, car(frame)));
     set_cdr(frame, cons(val, cdr(frame)));
+    user_print(frame);
 }

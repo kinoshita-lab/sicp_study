@@ -151,6 +151,12 @@ SchemeDataType* cons_num_add(SchemeDataType* const arg1, SchemeDataType* const a
 				+ arg2->cellValue->car->intValue);
 }
 
+SchemeDataType* cons_num_mul(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+	return new SchemeDataType(SchemeDataType::Integer, 
+				arg1->cellValue->car->intValue 
+				* arg2->cellValue->car->intValue);
+}
 SchemeDataType* cons_num_minus(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
 	return new SchemeDataType(SchemeDataType::Integer, 

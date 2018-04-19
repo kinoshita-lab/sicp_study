@@ -48,6 +48,7 @@ PrimitiveProcedures primitiveProcedures[NumberOfPrimitives] {
     {"cdr", cdr},
     {"null?", null_p_primitive},
     {"+", cons_num_add},
+    {"*", cons_num_mul},
     {"-", cons_num_minus},
     {"=", cons_num_equal},
     {"/", cons_num_div},

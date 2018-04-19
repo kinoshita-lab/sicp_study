@@ -59,6 +59,7 @@ struct SchemeDataType : public gc
 	SchemeDataType(const SchemeDataType &r);
 	SchemeDataType(const int typeId, const int value); // for constants, booleans
 	SchemeDataType(PrimitiveFunction p);
+	SchemeDataType* deepCopy();
 
 	SchemeDataType& operator=(const SchemeDataType& r);
 
@@ -71,6 +72,7 @@ struct SchemeDataType : public gc
 	bool operator==(SchemeDataType* const rhs);
 };
 
+SchemeDataType* deepCopyOf(SchemeDataType* data);
 // debugging utils
 void dumpData(const SchemeDataType& data);
 void dumpConsCell(const SchemeDataType& data);

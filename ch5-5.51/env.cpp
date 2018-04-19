@@ -11,9 +11,11 @@ using namespace std;
 void setup_environment()
 { 
 	the_empty_environment = new SchemeDataType(SchemeDataType::Cons);
+    user_print(the_empty_environment);
 	SchemeDataType* p_names = primitive_procedure_names();
 	SchemeDataType* p_objs = primitive_procedure_objects();
 	the_global_environment = extend_environment(p_names, p_objs, the_empty_environment);
+    user_print(the_global_environment);
 }
 
 /**
@@ -82,5 +84,11 @@ SchemeDataType* env_loop(SchemeDataType* const env, SchemeDataType* const var)
 
 SchemeDataType* lookup_variable_value(SchemeDataType* const var, SchemeDataType* const env)
 {
+  using namespace std;
+  cout << "loocup-variable-value var: ";
+  user_print(var);
+  cout << " env: ";
+  user_print(env);
+  cout << endl;
 	return env_loop(the_global_environment, var);
 }
