@@ -7,6 +7,7 @@
 #include "eceval.h"
 #include "stack.h"
 #include "support.h"
+#include "user_print.h"
 
 using namespace std;
 
@@ -29,7 +30,7 @@ void ev_self_eval()
  */
 void ev_variable()
 {
-	registers[VAL] = lookup_variable_value(registers[EXP], the_global_environment);
+	registers[VAL] = lookup_variable_value(registers[EXP], registers[ENV]);
   goto_with_label(registers[CONTINUE]);
 }
 

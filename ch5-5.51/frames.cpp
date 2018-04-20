@@ -26,5 +26,4 @@ void add_bindings_to_frame(SchemeDataType* const var, SchemeDataType* const val,
 {
     set_car(frame, cons(var, car(frame)));
     set_cdr(frame, cons(val, cdr(frame)));
-    user_print(frame);
 }

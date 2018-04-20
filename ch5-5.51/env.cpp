@@ -85,10 +85,5 @@ SchemeDataType* env_loop(SchemeDataType* const env, SchemeDataType* const var)
 SchemeDataType* lookup_variable_value(SchemeDataType* const var, SchemeDataType* const env)
 {
   using namespace std;
-  cout << "loocup-variable-value var: ";
-  user_print(var);
-  cout << " env: ";
-  user_print(env);
-  cout << endl;
-	return env_loop(the_global_environment, var);
+	return env_loop(env, var);
 }
