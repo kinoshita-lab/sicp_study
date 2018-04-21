@@ -11,11 +11,9 @@ using namespace std;
 void setup_environment()
 { 
 	the_empty_environment = new SchemeDataType(SchemeDataType::Cons);
-    user_print(the_empty_environment);
 	SchemeDataType* p_names = primitive_procedure_names();
 	SchemeDataType* p_objs = primitive_procedure_objects();
 	the_global_environment = extend_environment(p_names, p_objs, the_empty_environment);
-    user_print(the_global_environment);
 }
 
 /**

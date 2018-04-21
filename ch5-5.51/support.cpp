@@ -16,7 +16,7 @@
   */
 SchemeDataType* make_procedure(SchemeDataType* const parameters, SchemeDataType* const body, SchemeDataType* const env)
 {
-    return list(4, new SchemeDataType(SchemeDataType::Symbol, "procedure"), parameters, body, deepCopyOf(env));
+    return list(4, new SchemeDataType(SchemeDataType::Symbol, "procedure"), parameters, body, env);
 }
 
 /**

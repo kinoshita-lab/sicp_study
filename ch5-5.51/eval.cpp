@@ -30,7 +30,7 @@ void ev_self_eval()
  */
 void ev_variable()
 {
-	registers[VAL] = lookup_variable_value(registers[EXP], registers[ENV]);
+	registers[VAL] = lookup_variable_value(registers[EXP], registers[ENV]); 
   goto_with_label(registers[CONTINUE]);
 }
 

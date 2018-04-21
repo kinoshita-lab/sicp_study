@@ -67,6 +67,11 @@ void goto_with_label(const char* const label)
 		ev_appl_accum_last_arg();
 		return;
 	}
+
+	if (l == "EV_IF_DECIDE") {
+		ev_if_decide();
+		return;
+	}
     
 
 	cout << "LABEL NOT FOUND!: " << l << endl;

@@ -189,7 +189,7 @@ SchemeDataType* if_consequent(SchemeDataType* const exp)
 SchemeDataType* if_alternative(SchemeDataType* const exp)
 {
     if (!null_p(cdddr(exp))) {
-        return caddr(exp);
+        return cadddr(exp);
     }
 
     return new SchemeDataType(SchemeDataType::SchemeBoolean, SchemeDataType::False);
