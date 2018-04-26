@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+# coding: utf-8
+
+require 'strscan'
+
+def tokenize str
+  scanner = StringScanner.new(str)
+  tokenized = []
+
+  until scanner.eos?
+    scanner.scan(/\s+/) ? nil : 
+    scanner.scan(/\(/) ? tokenized << scanner.matched :
+    scanner.scan(/\)/) ? tokenized << scanner.matched :
+    scanner.scan(/[a-z0-9\-\_\?\!\/]+/) ? tokenized << scanner.matched :
+    nil                                                    
+  end
+
+  pp tokenized  
+end
+
+if ARGV.size == 0
+  puts "usage: out2cpp inputfile"
+  exit
+end
+
+inputFileName = ARGV[0]
+outputFileName = File.basename(inputFileName, ".out") + ".cpp"
+
+input = File.open(inputFileName)
+vmSource = input.read
+pp vmSource
+
+tokenize(vmSource)
+# out = open(outputFileName, "w")
+# out.puts("//")
+#out.close

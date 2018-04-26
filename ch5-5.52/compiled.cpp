@@ -1,1 +1,1 @@
-(() (val) ((assign val (const 1))))
+//
