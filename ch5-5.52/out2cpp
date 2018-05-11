@@ -3,6 +3,30 @@
 
 require 'strscan'
 
+class ConsCell
+  attr_accessor :car, :cdr
+  def initialize car=nil, cdr=nil
+    @car = car
+    @cdr = cdr
+  end
+
+  def push cell
+    if @car == nil
+      @car = cell
+      return self
+    end
+
+    if @cdr == nil
+      @cdr = ConsCell.new
+      @cdr.car = cell
+      return self
+    end
+    
+    return @cdr.push(cell)
+    
+  end
+end
+
 def tokenize str
   scanner = StringScanner.new(str)
   tokenized = []
@@ -14,8 +38,29 @@ def tokenize str
     scanner.scan(/[a-z0-9\-\_\?\!\/]+/) ? tokenized << scanner.matched :
     nil                                                    
   end
+  tokenized  
+end
 
-  pp tokenized  
+# todo implement
+def atom token
+  pp token
+  token
+end
+
+def read_from tokens
+  token = tokens[0]
+  tokens.delete_at(0)
+
+  if token == "("
+    cell = ConsCell.new
+    while tokens[0] != ")"
+      cell.push read_from tokens
+    end
+    
+    tokens.delete_at(0)
+    return cell
+  end
+  return atom token
 end
 
 if ARGV.size == 0
@@ -28,9 +73,10 @@ outputFileName = File.basename(inputFileName, ".out") + ".cpp"
 
 input = File.open(inputFileName)
 vmSource = input.read
-pp vmSource
 
-tokenize(vmSource)
+tokens = tokenize(vmSource)
+parsed = read_from tokens
+pp parsed
 # out = open(outputFileName, "w")
 # out.puts("//")
 #out.close
