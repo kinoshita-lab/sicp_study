@@ -2,40 +2,20 @@
 # coding: utf-8
 
 require 'strscan'
+require './cons'
 
-class ConsCell
-  attr_accessor :car, :cdr
-  def initialize car=nil, cdr=nil
-    @car = car
-    @cdr = cdr
-  end
 
-  def push cell
-    if @car == nil
-      @car = cell
-      return self
-    end
-
-    if @cdr == nil
-      @cdr = ConsCell.new
-      @cdr.car = cell
-      return self
-    end
-    
-    return @cdr.push(cell)
-    
-  end
-end
 
 def tokenize str
   scanner = StringScanner.new(str)
   tokenized = []
 
   until scanner.eos?
+    p scanner.charpos
     scanner.scan(/\s+/) ? nil : 
     scanner.scan(/\(/) ? tokenized << scanner.matched :
     scanner.scan(/\)/) ? tokenized << scanner.matched :
-    scanner.scan(/[a-z0-9\-\_\?\!\/]+/) ? tokenized << scanner.matched :
+    scanner.scan(/[a-z0-9A-Z\;\:\"\'\-\=\_\*\?\!\>\<\/]+/) ? tokenized << scanner.matched :
     nil                                                    
   end
   tokenized  
@@ -43,7 +23,6 @@ end
 
 # todo implement
 def atom token
-  pp token
   token
 end
 
@@ -76,7 +55,35 @@ vmSource = input.read
 
 tokens = tokenize(vmSource)
 parsed = read_from tokens
-pp parsed
-# out = open(outputFileName, "w")
+
+
+modified_registers_list = car(parsed)
+result_registers_list = cadr(parsed)
+codes_list = cddr(parsed)
+
+def linear_list_to_array list
+  r = Array.new
+  if car(list)
+    r << car(list)
+  end
+
+  if cdr(list)
+    r << linear_list_to_array(cdr(list))
+  end
+
+  r.flatten
+end
+
+# under construction
+def code_to_array list
+  list
+end
+
+modified_registers = linear_list_to_array(modified_registers_list)
+result_registers = linear_list_to_array(result_registers_list)
+codes = code_to_array(codes_list)
+
+
+out = open(outputFileName, "w")
 # out.puts("//")
-#out.close
+out.close

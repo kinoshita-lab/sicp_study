@@ -19,14 +19,14 @@
   
 
 ;; できたらfactorialでいけるようにしたい。
-;; (define compiled-fact
-;;   (compile
-;;    '(define (factorial n)
-;;       (if (= n 1)
-;;           1
-;;           (* (factorial (- n 1)) n)))
-;;    'val
-;;    'next))
+(define compiled-fact
+  (compile
+   '(define (factorial n)
+      (if (= n 1)
+          1
+          (* (factorial (- n 1)) n)))
+   'val
+   'next))
   
 ;; 最終目標
 (load "./ch4-mceval.scm")
@@ -34,7 +34,7 @@
 (output-compiled-result compiled-mceval)
 
 (define (main args)
-  (output-compiled-result compiled-constant)
+  (output-compiled-result compiled-mceval)
   0)
 
 
