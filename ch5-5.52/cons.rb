@@ -24,10 +24,37 @@ class ConsCell
       return @car == nil && @cdr == nil
     end
 
+    def atom?
+        return @car != nil && @cdr == nil
+    end
+
+    def cons?
+        return (!@car.atom?) && @cdr != nil
+    end
+
     def to_s
         if nil?
-            "nil"
+            return "nil "
         end
+
+        if atom?
+            return @car.to_s
+        end
+
+        # cons cell
+        r = "("
+        cell = self
+      
+        while cell
+            cellcar = cell.car
+            r += cell.car.to_s
+            cell = cell.cdr
+            if cell != nil 
+                r += " "
+            end
+        end
+
+        r += ")"
     end
 end
 
@@ -46,4 +73,8 @@ end
 
 def cddr cell
     cdr(cdr(cell))
+end
+
+def caddr cell
+    car(cddr(cell))
 end

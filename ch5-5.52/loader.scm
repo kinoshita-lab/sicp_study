@@ -34,7 +34,7 @@
 (output-compiled-result compiled-mceval)
 
 (define (main args)
-  (output-compiled-result compiled-mceval)
+  (output-compiled-result compiled-fact)
   0)
 
 

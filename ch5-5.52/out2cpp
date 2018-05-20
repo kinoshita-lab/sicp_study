@@ -3,15 +3,17 @@
 
 require 'strscan'
 require './cons'
+require './generator'
 
-
+# for debug
+# require 'ruby-debug-ide'
+# require 'debase'
 
 def tokenize str
   scanner = StringScanner.new(str)
   tokenized = []
 
   until scanner.eos?
-    p scanner.charpos
     scanner.scan(/\s+/) ? nil : 
     scanner.scan(/\(/) ? tokenized << scanner.matched :
     scanner.scan(/\)/) ? tokenized << scanner.matched :
@@ -23,7 +25,7 @@ end
 
 # todo implement
 def atom token
-  token
+  return token
 end
 
 def read_from tokens
@@ -42,6 +44,19 @@ def read_from tokens
   return atom token
 end
 
+def replace_scm_chars tokens
+  r = Array.new
+  # replace chars that cannot use in C++ source
+  tokens.each { |token|
+    token.gsub!("?", "_")
+    token.gsub!("!", "__")
+    token.gsub!("-", "_")
+    r << token
+  }
+  r
+end
+
+
 if ARGV.size == 0
   puts "usage: out2cpp inputfile"
   exit
@@ -53,13 +68,16 @@ outputFileName = File.basename(inputFileName, ".out") + ".cpp"
 input = File.open(inputFileName)
 vmSource = input.read
 
+puts "creating tokens..."
 tokens = tokenize(vmSource)
+tokens = replace_scm_chars(tokens)
 parsed = read_from tokens
 
 
-modified_registers_list = car(parsed)
-result_registers_list = cadr(parsed)
-codes_list = cddr(parsed)
+result_registers_list = car(parsed)
+modified_registers_list = cadr(parsed)
+codes_list = car cddr(parsed)
+puts "generating codes.."
 
 def linear_list_to_array list
   r = Array.new
@@ -74,16 +92,36 @@ def linear_list_to_array list
   r.flatten
 end
 
-# under construction
-def code_to_array list
-  list
-end
+result_registers = linear_list_to_array(result_registers_list) # maybe unnessessary
+modified_registers = linear_list_to_array(modified_registers_list) # maybe unnessessary
+codes = linear_list_to_array(codes_list)
 
-modified_registers = linear_list_to_array(modified_registers_list)
-result_registers = linear_list_to_array(result_registers_list)
-codes = code_to_array(codes_list)
+# code with labels 
+labeled_codes = Array.new
+labeled_codes << Array.new
+labeled_codes[0] << "init" # for initial non-labeled codes
 
+codes.each {|code|
+  if code.is_a?(String)
+    labeled_codes << Array.new 
+    labeled_codes[-1] << code
+  else
+    labeled_codes[-1] << code
+  end
+}
+
+prototypes = generate_prototypes labeled_codes
+functions = generate_functions labeled_codes
 
 out = open(outputFileName, "w")
-# out.puts("//")
+
+prototypes.each { |prototype|
+  out.puts prototype
+}
+
+functions.each { |function|
+  p function
+  out.puts function
+}
+
 out.close
