@@ -15,7 +15,7 @@
   (compile
    '1
    'val
-   'next))
+   'return))
   
 
 ;; できたらfactorialでいけるようにしたい。

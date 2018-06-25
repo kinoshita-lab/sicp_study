@@ -14,13 +14,13 @@ def tokenize str
   tokenized = []
 
   until scanner.eos?
-    scanner.scan(/\s+/) ? nil : 
+    scanner.scan(/\s+/) ? nil :
     scanner.scan(/\(/) ? tokenized << scanner.matched :
     scanner.scan(/\)/) ? tokenized << scanner.matched :
     scanner.scan(/[a-z0-9A-Z\;\:\"\'\-\=\_\*\?\!\>\<\/]+/) ? tokenized << scanner.matched :
-    nil                                                    
+    nil
   end
-  tokenized  
+  tokenized
 end
 
 # todo implement
@@ -37,7 +37,7 @@ def read_from tokens
     while tokens[0] != ")"
       cell.push read_from tokens
     end
-    
+
     tokens.delete_at(0)
     return cell
   end
@@ -63,7 +63,8 @@ if ARGV.size == 0
 end
 
 inputFileName = ARGV[0]
-outputFileName = File.basename(inputFileName, ".out") + ".cpp"
+outputCppFileName = File.basename(inputFileName, ".out") + ".cpp"
+outputHeaderFileName = File.basename(inputFileName, ".out") + ".h"
 
 input = File.open(inputFileName)
 vmSource = input.read
@@ -99,29 +100,27 @@ codes = linear_list_to_array(codes_list)
 # code with labels 
 labeled_codes = Array.new
 labeled_codes << Array.new
-labeled_codes[0] << "init" # for initial non-labeled codes
+labeled_codes[0] << "compiled_code_entry" 
+
 
 codes.each {|code|
-  if code.is_a?(String)
-    labeled_codes << Array.new 
-    labeled_codes[-1] << code
-  else
-    labeled_codes[-1] << code
-  end
+  labeled_codes[-1] << code
 }
 
 prototypes = generate_prototypes labeled_codes
 functions = generate_functions labeled_codes
 
-out = open(outputFileName, "w")
-
-prototypes.each { |prototype|
-  out.puts prototype
-}
-
+out = open(outputCppFileName, "w")
+out.puts "#include \"#{outputHeaderFileName}\""
 functions.each { |function|
   p function
   out.puts function
 }
-
 out.close
+
+
+out = open(outputHeaderFileName, "w")
+out.puts "#pragma once"
+prototypes.each { |prototype|
+  out.puts prototype
+}

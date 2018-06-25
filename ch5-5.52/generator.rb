@@ -8,6 +8,11 @@ def generate_prototypes labeled_codes
     prototypes
 end
 
+
+def label? code
+    code.is_a?(String)
+end
+
 def generate_functions labeled_codes
     functions = generate_prototypes labeled_codes
     functions.each_with_index {|function, i|
@@ -17,17 +22,12 @@ def generate_functions labeled_codes
         function += "{\n"
 
         labeled_codes[i][1..-1].each{ |code|
-            function += "// " + code.to_s + "\n"
+            if label? code
+                function += code + ":\n;\n"
+            else
+                function += "// " + code.to_s + "\n"
+            end
         }
-
-        # for label handling: simply call next function
-        if i != labeled_codes.length - 1
-            next_function = functions[i + 1]
-            next_function_call = next_function.gsub("void ", "")
-            function += "\t" + next_function_call + "\n"
-        else
-            function += "\treturn; \n"
-        end
 
         function += "}\n"
         functions[i] = function
