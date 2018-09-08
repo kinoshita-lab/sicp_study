@@ -111,6 +111,8 @@ prototypes = generate_prototypes labeled_codes
 functions = generate_functions labeled_codes
 
 out = open(outputCppFileName, "w")
+out.puts "#include \"types.h\""
+out.puts "#include \"global.h\""
 out.puts "#include \"#{outputHeaderFileName}\""
 functions.each { |function|
   p function

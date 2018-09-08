@@ -13,6 +13,17 @@ def label? code
     code.is_a?(String)
 end
 
+def schemeCodeToCpp code
+    case code
+        when "(goto (reg continue))"
+        return "\treturn;"
+        when "(assign val (const 1))"
+        return "\tassign(VAL, new SchemeDataType(SchemeDataType::Integer, 1));"
+    else
+        return code
+    end
+end
+
 def generate_functions labeled_codes
     functions = generate_prototypes labeled_codes
     functions.each_with_index {|function, i|
@@ -25,7 +36,7 @@ def generate_functions labeled_codes
             if label? code
                 function += code + ":\n;\n"
             else
-                function += "// " + code.to_s + "\n"
+                function += schemeCodeToCpp(code.to_s) + "\n"
             end
         }
 
