@@ -2,24 +2,39 @@
 #include "goto_with_label.h"
 #include "compiled.out.function_prototypes.h"
 
-#define call_function_if_label_eq(_labelname, _func) if (std::string(label) == _labelname) { return _func(); }
+#define call_function_if_label_eq(_labelname, _func) if (strLabel == _labelname) { return _func(); }
+
 void goto_with_label(const char* label)
 {
-    call_function_if_label_eq("AFTER_LAMBDA2", after_lambda2);
-    call_function_if_label_eq("AFTER_CALL8", after_call8);
-    call_function_if_label_eq("FALSE_BRANCH4", false_branch4);
-    call_function_if_label_eq("PRIMITIVE_BRANCH9", primitive_branch9);
-    call_function_if_label_eq("AFTER_CALL11", after_call11);
-    call_function_if_label_eq("PRIMITIVE_BRANCH12", primitive_branch12);
-    call_function_if_label_eq("AFTER_CALL14", after_call14);
-    call_function_if_label_eq("PRIMITIVE_BRANCH_15", primitive_branch15);
+    const auto strLabel = std::string(label);
+    if (strLabel == "AFTER_LAMBDA2") { 
+        return after_lambda2();
+    }
+    
+    if(strLabel == "AFTER_CALL8") return after_call8();
+    if(strLabel == "FALSE_BRANCH4") return false_branch4();
+    if(strLabel == "PRIMITIVE_BRANCH9") return primitive_branch9();
+    if(strLabel == "AFTER_CALL11") return after_call11();
+    if(strLabel == "PRIMITIVE_BRANCH12") return primitive_branch12();
+    if(strLabel == "AFTER_CALL14") return after_call14();
+    if(strLabel == "PRIMITIVE_BRANCH_15") return primitive_branch15();
+    
+    if (strLabel == "return") {
+        throw "finished";
+    }
 }
 
+// ここに entry1で来ることある
 void goto_with_label(const SchemeDataType* reg)
 {
-    if (reg->type != SchemeDataType::String) {
-        return;
+    if (reg->type == SchemeDataType::TypeId::String) {
+        return goto_with_label(reg->stringValue);
     }
 
-    goto_with_label(reg->stringValue);
+    if (reg->type == SchemeDataType::TypeId::CompiledProcedure)
+    {
+        return (*reg->compiledProcedure)();
+    }
+
+    return;
 }

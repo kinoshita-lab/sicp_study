@@ -16,11 +16,11 @@ bool atom_eq_p(SchemeDataType* const data1, SchemeDataType* data2)
 	}
 
 	switch (data1->type) {
-		case SchemeDataType::Integer:
+		case SchemeDataType::TypeId::Integer:
 		return data1->intValue == data2->intValue;
-		case SchemeDataType::String:
+		case SchemeDataType::TypeId::String:
 		return strcmp(data1->stringValue, data2->stringValue) == 0;
-		case SchemeDataType::Symbol:
+		case SchemeDataType::TypeId::Symbol:
 		return strcmp(data1->symbolValue, data2->symbolValue) == 0;
 		default:
 		puts("non atomic operation@ atom_eq_p");
@@ -36,7 +36,7 @@ SchemeDataType* cons(SchemeDataType* const car, SchemeDataType* const cdr)
 
 SchemeDataType* append(SchemeDataType* const l1, SchemeDataType* const l2)
 {
-    SchemeDataType* r = new SchemeDataType(SchemeDataType::Cons);
+    SchemeDataType* r = new SchemeDataType(SchemeDataType::TypeId::Cons);
     r->cellValue = l1->cellValue;
     r->cellValue->listPush(l2);
     
@@ -46,7 +46,7 @@ SchemeDataType* append(SchemeDataType* const l1, SchemeDataType* const l2)
 
 SchemeDataType* car(SchemeDataType* const data, SchemeDataType* const)
 {
-	if (data->type != SchemeDataType::Cons) {
+	if (data->type != SchemeDataType::TypeId::Cons) {
 		puts("Error Invalid data type @car");
 		exit(0);
 	}
@@ -56,7 +56,7 @@ SchemeDataType* car(SchemeDataType* const data, SchemeDataType* const)
 
 SchemeDataType* cdr(SchemeDataType* const data, SchemeDataType* const)
 {
-	if (data->type != SchemeDataType::Cons) {
+	if (data->type != SchemeDataType::TypeId::Cons) {
 		puts("Error Invalid data type @cdr");
 		exit(0);
 	}
@@ -66,16 +66,16 @@ SchemeDataType* cdr(SchemeDataType* const data, SchemeDataType* const)
 
 SchemeDataType* list()
 {
-    auto* r = new SchemeDataType(SchemeDataType::Cons);
-    r->cellValue->car = new SchemeDataType(SchemeDataType::Nil);
-    r->cellValue->cdr = new SchemeDataType(SchemeDataType::Nil);
+    auto* r = new SchemeDataType(SchemeDataType::TypeId::Cons);
+    r->cellValue->car = new SchemeDataType(SchemeDataType::TypeId::Nil);
+    r->cellValue->cdr = new SchemeDataType(SchemeDataType::TypeId::Nil);
 
     return r;    
 }
 
 SchemeDataType* list(const int number_of_items, ...)
 {
-    auto* r = new SchemeDataType(SchemeDataType::Cons);
+    auto* r = new SchemeDataType(SchemeDataType::TypeId::Cons);
     va_list args;
     va_start(args, number_of_items);
 
@@ -90,7 +90,13 @@ SchemeDataType* list(const int number_of_items, ...)
 
 SchemeDataType* list(SchemeDataType* data)
 {
-	// todo make cons if atom
+	// make cons if atom
+	if (data->type != SchemeDataType::TypeId::Cons)
+	{
+		auto* r = list();
+		r->cellValue->car = data;
+		return r;
+	}
 	return data;
 }
 void set_car(SchemeDataType* data, SchemeDataType* carData)
@@ -105,29 +111,29 @@ void set_cdr(SchemeDataType* data, SchemeDataType* cdrData)
 
 bool atom_p(SchemeDataType* const data)
 {
-	return (data->type != SchemeDataType::Cons) 
+	return (data->type != SchemeDataType::TypeId::Cons) 
 		&& !(null_p(data));
 }
 
 bool null_p(SchemeDataType* const data)
 {
-	return data->type == SchemeDataType::Nil;
+	return data->type == SchemeDataType::TypeId::Nil;
 }
 
 SchemeDataType* null_p_primitive(SchemeDataType* const data, SchemeDataType* const)
 {
-	return new SchemeDataType(SchemeDataType::SchemeBoolean, 
-	data->type == SchemeDataType::Nil ? SchemeDataType::True : SchemeDataType::False);
+	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, 
+	data->type == SchemeDataType::TypeId::Nil ? SchemeDataType::True : SchemeDataType::False);
 }
 
 bool pair_p(SchemeDataType* const data)
 {
-	return data->type == SchemeDataType::Cons;
+	return data->type == SchemeDataType::TypeId::Cons;
 }
 
 bool symbol_p(SchemeDataType* const data)
 {
-	return data->type == SchemeDataType::Symbol;
+	return data->type == SchemeDataType::TypeId::Symbol;
 }
 
 bool eq_p(SchemeDataType* data1, SchemeDataType* data2)
@@ -151,45 +157,45 @@ bool eq_p(SchemeDataType* data1, SchemeDataType* data2)
 
 SchemeDataType* cons_num_add(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::Integer, 
+	return new SchemeDataType(SchemeDataType::TypeId::Integer, 
 				arg1->cellValue->car->intValue 
 				+ arg2->cellValue->car->intValue);
 }
 
 SchemeDataType* cons_num_mul(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::Integer, 
+	return new SchemeDataType(SchemeDataType::TypeId::Integer, 
 				arg1->cellValue->car->intValue 
 				* arg2->cellValue->car->intValue);
 }
 SchemeDataType* cons_num_minus(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::Integer, 
+	return new SchemeDataType(SchemeDataType::TypeId::Integer, 
 				arg1->cellValue->car->intValue 
 				- arg2->cellValue->car->intValue);
 }
 
 SchemeDataType* cons_num_equal(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::SchemeBoolean, 
+	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, 
 				arg1->cellValue->car->intValue == arg2->cellValue->car->intValue ? SchemeDataType::True : SchemeDataType::False);	
 }
 
 SchemeDataType* cons_num_div(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-return new SchemeDataType(SchemeDataType::Integer, 
+return new SchemeDataType(SchemeDataType::TypeId::Integer, 
 				arg1->cellValue->car->intValue 
 				/ arg2->cellValue->car->intValue);
 }
 
 SchemeDataType* cons_num_gt(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::SchemeBoolean, 
+	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, 
 				arg1->cellValue->car->intValue > arg2->cellValue->car->intValue ? SchemeDataType::True : SchemeDataType::False);	
 }
 
 SchemeDataType* cons_num_lt(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::SchemeBoolean, 
+	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, 
 				arg1->cellValue->car->intValue < arg2->cellValue->car->intValue ? SchemeDataType::True : SchemeDataType::False);	
 }

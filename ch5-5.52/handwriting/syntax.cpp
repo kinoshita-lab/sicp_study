@@ -14,7 +14,7 @@ using namespace std;
 */
 bool self_evaluating_p(SchemeDataType* const exp)
 {	
-	return exp->type == SchemeDataType::Integer || exp->type == SchemeDataType::String;
+	return exp->type == SchemeDataType::TypeId::Integer || exp->type == SchemeDataType::TypeId::String;
 }
 
 /*
@@ -43,7 +43,7 @@ SchemeDataType* text_of_quotation(SchemeDataType* const exp)
 bool tagged_list_p(SchemeDataType* const exp, const char* tag)
 {
     if (pair_p(exp)) {
-        return eq_p(car(exp), new SchemeDataType(SchemeDataType::Symbol, tag));
+        return eq_p(car(exp), new SchemeDataType(SchemeDataType::TypeId::Symbol, tag));
     }
 
     return false;
@@ -152,7 +152,7 @@ SchemeDataType* lambda_body(SchemeDataType* const exp)
  */
 SchemeDataType* make_lambda(SchemeDataType* const parameters, SchemeDataType* const body)
 {
-    return cons(new SchemeDataType(SchemeDataType::Symbol, "lambda"),
+    return cons(new SchemeDataType(SchemeDataType::TypeId::Symbol, "lambda"),
                 (cons(parameters, body)));
 }
 
@@ -192,7 +192,7 @@ SchemeDataType* if_alternative(SchemeDataType* const exp)
         return cadddr(exp);
     }
 
-    return new SchemeDataType(SchemeDataType::SchemeBoolean, SchemeDataType::False);
+    return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, SchemeDataType::False);
 }
 
 /*
@@ -288,7 +288,7 @@ SchemeDataType* rest_operands(SchemeDataType* const ops)
   */
 SchemeDataType* make_if(SchemeDataType* const predicate, SchemeDataType* const consequent, SchemeDataType* const alternative)
 {
-    return list(4, new SchemeDataType(SchemeDataType::Symbol, "if"),                
+    return list(4, new SchemeDataType(SchemeDataType::TypeId::Symbol, "if"),                
                 predicate, consequent, alternative);
 }
 
@@ -316,7 +316,7 @@ SchemeDataType* sequence_to_exp(SchemeDataType* seq)
 */
 SchemeDataType* make_begin(SchemeDataType* const seq)
 {
-    return cons(new SchemeDataType(SchemeDataType::String, "begin"), seq);
+    return cons(new SchemeDataType(SchemeDataType::TypeId::String, "begin"), seq);
 }
 
 /*
@@ -341,7 +341,7 @@ SchemeDataType* cond_clauses(SchemeDataType* const exp)
 */
 bool cond_else_clause_p(SchemeDataType* const clause)
 {
-    return eq_p(cond_predicate(clause), new SchemeDataType(SchemeDataType::String, "else"));
+    return eq_p(cond_predicate(clause), new SchemeDataType(SchemeDataType::TypeId::String, "else"));
 }
 
 /*
@@ -387,7 +387,7 @@ SchemeDataType* cond_to_if(SchemeDataType* const exp)
 SchemeDataType* const expand_clauses(SchemeDataType* const clauses)
 {
     if (null_p(clauses)) {
-        return new SchemeDataType(SchemeDataType::SchemeBoolean, SchemeDataType::False);
+        return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, SchemeDataType::False);
     }
 
     auto* const first = car(clauses);

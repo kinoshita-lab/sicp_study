@@ -10,9 +10,14 @@ auto main() -> int
     s.initialize();
     setup_environment();
     compiled_procedure_start();
-    registers[ARGL] = list(1, new SchemeDataType(SchemeDataType::Integer, 2));
-    registers[CONTINUE] = new SchemeDataType(entry1);
-    entry1();
-    printf("Result is: %d\n", registers[VAL]->intValue);
+    registers[ARGL] = list(1, new SchemeDataType(SchemeDataType::TypeId::Integer, 10));
+    registers[CONTINUE] = new SchemeDataType(SchemeDataType::TypeId::String, "return");
+    try {
+        entry1();
+    }
+    catch (const char*) { 
+        printf("Result is: %d\n", registers[VAL]->intValue);
+    }
+
     return 0;    
 }

@@ -60,10 +60,10 @@ PrimitiveProcedures primitiveProcedures[NumberOfPrimitives] {
 
 SchemeDataType* primitive_procedure_names()
 {
-    SchemeDataType* r = new SchemeDataType(SchemeDataType::Cons);
+    SchemeDataType* r = new SchemeDataType(SchemeDataType::TypeId::Cons);
 
     for (auto i = 0; i < NumberOfPrimitives; ++i) {
-        SchemeDataType* l = new SchemeDataType(SchemeDataType::Symbol, 
+        SchemeDataType* l = new SchemeDataType(SchemeDataType::TypeId::Symbol, 
             primitiveProcedures[i].name.c_str());
         r->cellValue->listPush(l);
     }
@@ -73,12 +73,12 @@ SchemeDataType* primitive_procedure_names()
 
 SchemeDataType* primitive_procedure_objects()
 {
-     SchemeDataType* r = new SchemeDataType(SchemeDataType::Cons);
+     SchemeDataType* r = new SchemeDataType(SchemeDataType::TypeId::Cons);
     
     for (auto i = 0; i < NumberOfPrimitives; ++i) {
 
-        SchemeDataType* l = new SchemeDataType(SchemeDataType::Cons);
-        l->cellValue->listPush(new SchemeDataType(SchemeDataType::Symbol, std::string("primitive").c_str()));
+        SchemeDataType* l = new SchemeDataType(SchemeDataType::TypeId::Cons);
+        l->cellValue->listPush(new SchemeDataType(SchemeDataType::TypeId::Symbol, std::string("primitive").c_str()));
         l->cellValue->listPush(new SchemeDataType(primitiveProcedures[i].primitiveFunction));
         r->cellValue->listPush(l);
     }

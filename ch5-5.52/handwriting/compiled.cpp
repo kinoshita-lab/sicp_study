@@ -8,7 +8,7 @@
   */
 SchemeDataType* make_compiled_procedure(const char* label, CompiledProcedureFunction entry, SchemeDataType* reg)
 {
-    return list(3, new SchemeDataType(SchemeDataType::Symbol, "compiled-procedure"), new SchemeDataType(entry), reg);
+    return list(3, new SchemeDataType(SchemeDataType::TypeId::Symbol, "compiled-procedure"), new SchemeDataType(entry), reg);
 }
 
 /**

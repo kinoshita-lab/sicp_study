@@ -23,7 +23,7 @@ struct ConsCell : public gc
 
 struct SchemeDataType : public gc
 {
-	enum TypeId
+	enum class TypeId
 	{
 		Integer,
 		String,
@@ -43,7 +43,7 @@ struct SchemeDataType : public gc
     };
     
         
-	int type;
+	TypeId type;
 
 	// vals
 	int intValue;
@@ -55,11 +55,11 @@ struct SchemeDataType : public gc
 	CompiledProcedureFunction compiledProcedure;
 
 	SchemeDataType();
-	SchemeDataType(const int typeId);
-	SchemeDataType(const int typeId, const char* s); 	// string or symbol
+	SchemeDataType(const TypeId typeId);
+	SchemeDataType(const TypeId typeId, const char* s); 	// string or symbol
 	SchemeDataType(ConsCell* cell);
 	SchemeDataType(const SchemeDataType &r);
-	SchemeDataType(const int typeId, const int value); // for constants, booleans
+	SchemeDataType(const TypeId typeId, const int value); // for constants, booleans
 	SchemeDataType(PrimitiveFunction p);
 	SchemeDataType(CompiledProcedureFunction p);
 	SchemeDataType* deepCopy();

@@ -15,7 +15,7 @@
   */
 SchemeDataType* make_procedure(SchemeDataType* const parameters, SchemeDataType* const body, SchemeDataType* const env)
 {
-    return list(4, new SchemeDataType(SchemeDataType::Symbol, "procedure"), parameters, body, env);
+    return list(4, new SchemeDataType(SchemeDataType::TypeId::Symbol, "procedure"), parameters, body, env);
 }
 
 /**
@@ -23,7 +23,7 @@ SchemeDataType* make_procedure(SchemeDataType* const parameters, SchemeDataType*
 */
 SchemeDataType* empty_arglist()
 {
-    SchemeDataType* r = new SchemeDataType(SchemeDataType::Cons);
+    SchemeDataType* r = new SchemeDataType(SchemeDataType::TypeId::Cons);
     return r;
 }
 
@@ -69,7 +69,7 @@ SchemeDataType* procedure_environment(SchemeDataType* const p)
  */
 bool true_p(SchemeDataType* const x)
 {
-    if (x->type != SchemeDataType::SchemeBoolean) {
+    if (x->type != SchemeDataType::TypeId::SchemeBoolean) {
         return true;        
     }
 
@@ -87,7 +87,7 @@ bool false_p(SchemeDataType* const x)
  */
 bool last_operand_p(SchemeDataType* const ops)
 {
-    return cdr(ops)->type == SchemeDataType::Nil;    // 違うかも
+    return cdr(ops)->type == SchemeDataType::TypeId::Nil;    // 違うかも
 }
 
 /**
@@ -120,8 +120,8 @@ SchemeDataType* primitive_implementation(SchemeDataType* const proc)
 SchemeDataType* apply_primitive_implementation(SchemeDataType* const proc, SchemeDataType* const args)
 {
     auto* f = cadr(proc);
-    auto* arg1 = list(1, car(args)); // なんか変
-    auto* arg2 = list(1, cdr(args)); // なんか変2
+    auto* arg1 = args;
+    auto* arg2 = cdr(args);
 
     return (*(f->primitive))(arg1, arg2);
 }

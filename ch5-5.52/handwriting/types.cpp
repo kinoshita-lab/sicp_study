@@ -12,13 +12,13 @@ ConsCell::ConsCell() : car(new SchemeDataType()), cdr(new SchemeDataType()) {}
 
 void ConsCell::listPush(SchemeDataType* item) 
 {
-	if (car->type == SchemeDataType::Nil) {
+	if (car->type == SchemeDataType::TypeId::Nil) {
 		car = item;
 		return;
 	}
 	
-	if (cdr->type == SchemeDataType::Nil) {
-		auto newCons = new SchemeDataType(SchemeDataType::Cons);
+	if (cdr->type == SchemeDataType::TypeId::Nil) {
+		auto newCons = new SchemeDataType(SchemeDataType::TypeId::Cons);
 		newCons->cellValue->car = item;
 		cdr = newCons;
 		return;
@@ -28,30 +28,30 @@ void ConsCell::listPush(SchemeDataType* item)
 }
 
 SchemeDataType::SchemeDataType()
-	: type(Nil), cellValue(nullptr)
+	: type(TypeId::Nil), cellValue(nullptr)
 {
 }
 
 
-SchemeDataType::SchemeDataType(const int typeId)
+SchemeDataType::SchemeDataType(const TypeId typeId)
 	: type(typeId)
 {
-	if (type == SchemeDataType::Cons) {
+	if (type == SchemeDataType::TypeId::Cons) {
 		cellValue = new ConsCell();
 	}
 }
 
-SchemeDataType::SchemeDataType(const int typeId, const char* s)
+SchemeDataType::SchemeDataType(const TypeId typeId, const char* s)
 	: type(typeId)
 {
 	const auto length = strlen(s);
 		
-	if (typeId == String) {
+	if (typeId == TypeId::String) {
 		stringValue = (char*)malloc(length);
 		strcpy(stringValue, s);
 	}
 
-	if (typeId == Symbol) {
+	if (typeId == TypeId::Symbol) {
 		symbolValue = (char*)malloc(length);
 		strcpy(symbolValue, s);
 	}
@@ -60,7 +60,7 @@ SchemeDataType::SchemeDataType(const int typeId, const char* s)
 
 SchemeDataType::SchemeDataType(ConsCell* cell) 
 { 
-	type = Cons;
+	type = TypeId::Cons;
 	cellValue = cell;
 }
 
@@ -68,23 +68,23 @@ SchemeDataType::SchemeDataType(const SchemeDataType& r)
  {
 	type = r.type;
 
-	if (type == Integer) {
+	if (type == TypeId::Integer) {
 		intValue = r.intValue;
 	}
 		
-	if (type == String) {
+	if (type == TypeId::String) {
 		const auto length = strlen(r.stringValue);
 		stringValue = (char*)malloc(length);
 		strcpy(stringValue, r.stringValue);
 	}
 
-	if (type == Symbol) {
+	if (type == TypeId::Symbol) {
 		const auto length = strlen(r.symbolValue);
 		symbolValue = (char*)malloc(length);
 		strcpy(symbolValue, r.symbolValue);
 	}
 
-    if (type == SchemeBoolean) {
+    if (type == TypeId::SchemeBoolean) {
         booleanValue = r.booleanValue;        
     }
     
@@ -94,38 +94,38 @@ SchemeDataType& SchemeDataType::operator=(const SchemeDataType& r)
 {
 	type = r.type;
 		
-	if (type == Integer) {
+	if (type == TypeId::Integer) {
 		intValue = r.intValue;
 	}
 		
-	if (type == String) {
+	if (type == TypeId::String) {
 		const auto length = strlen(r.stringValue);
 		stringValue = (char*)malloc(length);
 		strcpy(stringValue, r.stringValue);
 	}
 
-	if (type == Symbol) {
+	if (type == TypeId::Symbol) {
 		const auto length = strlen(r.symbolValue);
 		symbolValue = (char*)malloc(length);
 		strcpy(symbolValue, r.symbolValue);
 	}
 
-    if (type == SchemeBoolean) {
+    if (type == TypeId::SchemeBoolean) {
         booleanValue = r.booleanValue;        
     }
 
 	return *this;
 }
 
-SchemeDataType::SchemeDataType(const int typeId, const int value)
+SchemeDataType::SchemeDataType(const TypeId typeId, const int value)
 {
-	if (typeId == SchemeDataType::SchemeBoolean) {
+	if (typeId == SchemeDataType::TypeId::SchemeBoolean) {
 		this->type = typeId;
 		booleanValue = (SchemeBooleanValue)value;
 		return;
 	}
 
-	if (typeId == SchemeDataType::Integer) {
+	if (typeId == SchemeDataType::TypeId::Integer) {
 		this->type = typeId;
 		intValue = value;
 		return;
@@ -134,24 +134,24 @@ SchemeDataType::SchemeDataType(const int typeId, const int value)
 
 SchemeDataType::SchemeDataType(PrimitiveFunction p)
 {
-	type = SchemeDataType::PrimitiveProc;
+	type = SchemeDataType::TypeId::PrimitiveProc;
 	primitive = p;
 }
 
 SchemeDataType::SchemeDataType(CompiledProcedureFunction p)
 {
-	type = SchemeDataType::CompiledProcedure;
+	type = SchemeDataType::TypeId::CompiledProcedure;
 	compiledProcedure = p;
 }
 
 SchemeDataType::~SchemeDataType()
 {
-	if (type == String) {
+	if (type == TypeId::String) {
 		free(stringValue);
 		return;
 	}
 
-	if (type == Symbol) {
+	if (type == TypeId::Symbol) {
 		free(symbolValue);
 		return;
 	}
@@ -169,25 +169,25 @@ std::vector<std::string> SchemeDataType::to_s()
 	std::vector<std::string> r;
 
 	switch (type) {
-	case SchemeDataType::Integer:
+	case SchemeDataType::TypeId::Integer:
 		r.push_back(to_string(intValue));
 		break;
-	case SchemeDataType::String:
+	case SchemeDataType::TypeId::String:
 		r.push_back(std::string(stringValue));
 		break;
-	case SchemeDataType::Symbol:
+	case SchemeDataType::TypeId::Symbol:
 		r.push_back(symbolValue);
 		break;
-	case SchemeDataType::Nil:
+	case SchemeDataType::TypeId::Nil:
 		r.push_back(string("nil"));
 		break;
-	case SchemeDataType::Unknown:
+	case SchemeDataType::TypeId::Unknown:
 		r.push_back(string("Unknown"));
 		break;
-	case SchemeDataType::PrimitiveProc:
+	case SchemeDataType::TypeId::PrimitiveProc:
 		r.push_back(string("C++ primitive function"));
 		break;
-	case SchemeDataType::Cons: {
+	case SchemeDataType::TypeId::Cons: {
 		auto* cell = cellValue;
 		r.push_back("(");
 
@@ -199,7 +199,7 @@ std::vector<std::string> SchemeDataType::to_s()
 				r.push_back(s);
 			}
 
-			if (cell->cdr->type != SchemeDataType::Cons && cell->cdr->type != SchemeDataType::Nil) {
+			if (cell->cdr->type != SchemeDataType::TypeId::Cons && cell->cdr->type != SchemeDataType::TypeId::Nil) {
 				r.push_back(string("."));
 			}
 
@@ -230,7 +230,7 @@ int ConsCell::length()
 			break;
 		}
 
-		if (current->type != SchemeDataType::Cons) {
+		if (current->type != SchemeDataType::TypeId::Cons) {
 			l++;
 			break;
 		}
@@ -247,37 +247,37 @@ SchemeDataType* deepCopyOf(SchemeDataType* data)
 	SchemeDataType* r = new SchemeDataType();
 
 	switch (data->type) {
-		case SchemeDataType::Integer:
-			r->type = SchemeDataType::Integer;
+		case SchemeDataType::TypeId::Integer:
+			r->type = SchemeDataType::TypeId::Integer;
 			r->intValue = data->intValue;
 			break;
-		case SchemeDataType::Symbol: {
-			r->type = SchemeDataType::Symbol;
+		case SchemeDataType::TypeId::Symbol: {
+			r->type = SchemeDataType::TypeId::Symbol;
 			const auto length = strlen(data->symbolValue);
 			r->symbolValue = (char*)malloc(length);
 			strcpy(r->symbolValue, data->symbolValue);
 			break;
 		}
-		case SchemeDataType::String: {
-			r->type = SchemeDataType::String;
+		case SchemeDataType::TypeId::String: {
+			r->type = SchemeDataType::TypeId::String;
 			const auto length = strlen(data->stringValue);
 			r->stringValue = (char*)malloc(length);
 			strcpy(r->stringValue, data->stringValue);
 			break;
 		}
-		case SchemeDataType::Nil:
-			r->type = SchemeDataType::Nil;
+		case SchemeDataType::TypeId::Nil:
+			r->type = SchemeDataType::TypeId::Nil;
 			break;
-		case SchemeDataType::PrimitiveProc:
-			r->type = SchemeDataType::PrimitiveProc;
+		case SchemeDataType::TypeId::PrimitiveProc:
+			r->type = SchemeDataType::TypeId::PrimitiveProc;
 			r->primitive = data->primitive;
 			break;
-		case SchemeDataType::SchemeBoolean:
-			r->type = SchemeDataType::SchemeBoolean;
+		case SchemeDataType::TypeId::SchemeBoolean:
+			r->type = SchemeDataType::TypeId::SchemeBoolean;
 			r->booleanValue = data->booleanValue;
 			break;
-		case SchemeDataType::Cons:
-			r->type = SchemeDataType::Cons;
+		case SchemeDataType::TypeId::Cons:
+			r->type = SchemeDataType::TypeId::Cons;
 			r->cellValue = new ConsCell();
 			r->cellValue->car = deepCopyOf(data->cellValue->car);
 			r->cellValue->cdr = deepCopyOf(data->cellValue->cdr);
@@ -294,16 +294,16 @@ void dumpData(const SchemeDataType& data)
 	using namespace std;
 
 	switch (data.type) {
-	case SchemeDataType::Integer:
+	case SchemeDataType::TypeId::Integer:
 		cout << "Integer: " << data.intValue << endl;
 		break;
-	case SchemeDataType::String:
+	case SchemeDataType::TypeId::String:
 		cout << "String: " << data.stringValue << endl;
 		break;
-	case SchemeDataType::Symbol:
+	case SchemeDataType::TypeId::Symbol:
 		cout << "Symbol: " << data.symbolValue << endl;
 		break;
-	case SchemeDataType::Cons:
+	case SchemeDataType::TypeId::Cons:
 		cout << "Cons Cell" << endl;
 		break;
 	default:
