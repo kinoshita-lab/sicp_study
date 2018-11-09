@@ -4,11 +4,11 @@ goto_with_label("AFTER_LAMBDA2"); // (goto (label after-lambda2))
 }
 void entry1() {// entry1
 assign(ENV, compiled_procedure_env(PROC));// (assign env (op compiled-procedure-env) (reg proc))
-assign(ENV, extend_environment(new SchemeDataType(SchemeDataType::Symbol, "n"),  registers[ARGL], registers[ENV]));// (assign env (op extend-environment) (const (n)) (reg argl) (reg env))
+assign(ENV, extend_environment(list(1, new SchemeDataType(SchemeDataType::Symbol, "n")),  registers[ARGL], registers[ENV]));// (assign env (op extend-environment) (const (n)) (reg argl) (reg env))
 s.save(registers[CONTINUE]);// (save continue)
 s.save(registers[ENV]);// (save env)
 assign(PROC, lookup_variable_value(new SchemeDataType(SchemeDataType::Symbol, "="), registers[ENV])); // (assign proc (op lookup-variable-value) (const =) (reg env))
-assign(VAL, new SchemeDataType(1)); // (assign val (const 1))
+assign(VAL, new SchemeDataType(SchemeDataType::Integer, 1)); // (assign val (const 1))
 assign(ARGL, list(registers[VAL])); // (assign argl (op list) (reg val))
 assign(VAL, lookup_variable_value(new SchemeDataType(SchemeDataType::Symbol, "n"), registers[ENV]));// (assign val (op lookup-variable-value) (const n) (reg env))
 assign(ARGL, cons(registers[VAL], registers[ARGL])); // (assign argl (op cons) (reg val) (reg argl))
@@ -35,7 +35,7 @@ return goto_with_label("FALSE_BRANCH4");// (branch (label false-branch4))
 true_branch3();
 }
 void true_branch3() {// true-branch3
-assign(VAL, new SchemeDataType(1));// (assign val (const 1))
+assign(VAL, new SchemeDataType(SchemeDataType::Integer, 1));// (assign val (const 1))
 goto_with_label(registers[CONTINUE]);// (goto (reg continue))
 }
 void false_branch4() {// false-branch4

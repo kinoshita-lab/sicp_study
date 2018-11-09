@@ -7,7 +7,7 @@
 struct SchemeDataType;
 
 typedef SchemeDataType* (*PrimitiveFunction)(SchemeDataType* const arg1, SchemeDataType* const arg2);
-
+typedef void (*CompiledProcedureFunction)();
 
 struct ConsCell : public gc
 {
@@ -32,6 +32,7 @@ struct SchemeDataType : public gc
 		Nil,
         SchemeBoolean,
 		PrimitiveProc,
+		CompiledProcedure,
 		Unknown
 	};
     
@@ -51,6 +52,7 @@ struct SchemeDataType : public gc
 	ConsCell* cellValue;
     SchemeBooleanValue booleanValue;
 	PrimitiveFunction primitive;  
+	CompiledProcedureFunction compiledProcedure;
 
 	SchemeDataType();
 	SchemeDataType(const int typeId);
@@ -59,6 +61,7 @@ struct SchemeDataType : public gc
 	SchemeDataType(const SchemeDataType &r);
 	SchemeDataType(const int typeId, const int value); // for constants, booleans
 	SchemeDataType(PrimitiveFunction p);
+	SchemeDataType(CompiledProcedureFunction p);
 	SchemeDataType* deepCopy();
 
 	SchemeDataType& operator=(const SchemeDataType& r);

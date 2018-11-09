@@ -5,6 +5,7 @@
 #include "frames.h"
 #include "user_print.h"
 #include "primitives.h"
+#include "global.h"
 
 using namespace std;
 
@@ -14,6 +15,7 @@ void setup_environment()
 	SchemeDataType* p_names = primitive_procedure_names();
 	SchemeDataType* p_objs = primitive_procedure_objects();
 	the_global_environment = extend_environment(p_names, p_objs, the_empty_environment);
+  registers[ENV] = the_global_environment;
 }
 
 /**

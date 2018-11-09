@@ -2,9 +2,9 @@
 #include "types.h"
 #include "global.h"
 
-typedef void (*compiledProcedure)();
 
-SchemeDataType* make_compiled_procedure(const char* label, compiledProcedure, SchemeDataType* reg);
+
+SchemeDataType* make_compiled_procedure(const char* label, CompiledProcedureFunction entry, SchemeDataType* reg);
 
 SchemeDataType* compiled_procedure_env(const RegisterId id);
 

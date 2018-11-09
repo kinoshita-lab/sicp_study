@@ -18,7 +18,6 @@ void goto_with_label(const char* label)
 void goto_with_label(const SchemeDataType* reg)
 {
     if (reg->type != SchemeDataType::String) {
-        puts("error not a label: goto_with_label");
         return;
     }
 

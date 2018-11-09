@@ -138,6 +138,12 @@ SchemeDataType::SchemeDataType(PrimitiveFunction p)
 	primitive = p;
 }
 
+SchemeDataType::SchemeDataType(CompiledProcedureFunction p)
+{
+	type = SchemeDataType::CompiledProcedure;
+	compiledProcedure = p;
+}
+
 SchemeDataType::~SchemeDataType()
 {
 	if (type == String) {
