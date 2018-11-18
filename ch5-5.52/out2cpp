@@ -9,18 +9,26 @@ require './generator'
 # require 'ruby-debug-ide'
 # require 'debase'
 
-def tokenize str
-  scanner = StringScanner.new(str)
-  tokenized = []
+def tokenize strArray
+  tokenizedArray = []
 
-  until scanner.eos?
-    scanner.scan(/\s+/) ? nil :
-    scanner.scan(/\(/) ? tokenized << scanner.matched :
-    scanner.scan(/\)/) ? tokenized << scanner.matched :
-    scanner.scan(/[a-z0-9A-Z\;\:\"\'\-\=\_\*\?\!\>\<\/]+/) ? tokenized << scanner.matched :
-    nil
-  end
-  tokenized
+  strArray.each {|str|
+    scanner = StringScanner.new(str)
+    tokenized = []
+
+    until scanner.eos?
+      scanner.scan(/\".*\"/) ? tokenized << scanner.matched :
+      scanner.scan(/\s+/) ? nil :
+      scanner.scan(/\(/) ? tokenized << scanner.matched :
+      scanner.scan(/\)/) ? tokenized << scanner.matched :
+      scanner.scan(/[a-z0-9A-Z\;\:\"\'\-\=\_\+\*\?\!\>\<\/]+/) ? tokenized << scanner.matched :
+      nil
+    end
+    
+    tokenizedArray << tokenized
+  }
+
+  tokenizedArray
 end
 
 # todo implement
@@ -28,14 +36,14 @@ def atom token
   return token
 end
 
-def read_from tokens
+def read_from_each tokens
   token = tokens[0]
   tokens.delete_at(0)
 
   if token == "("
     cell = ConsCell.new
     while tokens[0] != ")"
-      cell.push read_from tokens
+      cell.push read_from_each tokens
     end
 
     tokens.delete_at(0)
@@ -44,16 +52,38 @@ def read_from tokens
   return atom token
 end
 
-def replace_scm_chars tokens
-  r = Array.new
-  # replace chars that cannot use in C++ source
-  tokens.each { |token|
-    token.gsub!("?", "_")
-    token.gsub!("!", "__")
-    token.gsub!("-", "_")
-    r << token
+def read_from tokensArray
+  r = []
+  tokensArray.each {|tokens|
+    r << read_from_each(tokens)
   }
+
   r
+end
+
+def replace_scm_chars tokensArray
+  replacedArray = []
+
+  tokensArray.each {|tokens|
+  
+    r = []
+  
+    # replace chars that cannot use in C++ source
+    tokens.each { |token|
+      if (token === "-") # 引き算の - は許す
+        r << token
+        next
+      end
+      token.gsub!("?", "_p")
+      token.gsub!("!", "")
+      token.gsub!("-", "_")
+      r << token
+    }
+    
+    replacedArray << r
+  }
+
+  replacedArray
 end
 
 
@@ -63,66 +93,30 @@ if ARGV.size == 0
 end
 
 inputFileName = ARGV[0]
-outputCppFileName = File.basename(inputFileName, ".out") + ".cpp"
-outputHeaderFileName = File.basename(inputFileName, ".out") + ".h"
 
-input = File.open(inputFileName)
-vmSource = input.read
+vmSource = File.open(inputFileName) {|f|
+  r = []
+  f.each_line {|line|
+    r << line.chomp
+  }
+  
+  r
+}
+
 
 puts "creating tokens..."
 tokens = tokenize(vmSource)
 tokens = replace_scm_chars(tokens)
-parsed = read_from tokens
+parsed = read_from(tokens)
 
-
-result_registers_list = car(parsed)
-modified_registers_list = cadr(parsed)
-codes_list = car cddr(parsed)
 puts "generating codes.."
 
-def linear_list_to_array list
-  r = Array.new
-  if car(list)
-    r << car(list)
-  end
+labels = ["compiled_procedure_start"]
+labels.concat parsed.select {|p| p.class === "String"}
+labels.flatten
 
-  if cdr(list)
-    r << linear_list_to_array(cdr(list))
-  end
+output_function_prototypes(labels)
+output_goto_with_label(labels)
 
-  r.flatten
-end
-
-result_registers = linear_list_to_array(result_registers_list) # maybe unnessessary
-modified_registers = linear_list_to_array(modified_registers_list) # maybe unnessessary
-codes = linear_list_to_array(codes_list)
-
-# code with labels 
-labeled_codes = Array.new
-labeled_codes << Array.new
-labeled_codes[0] << "compiled_code_entry" 
-
-
-codes.each {|code|
-  labeled_codes[-1] << code
-}
-
-prototypes = generate_prototypes labeled_codes
-functions = generate_functions labeled_codes
-
-out = open(outputCppFileName, "w")
-out.puts "#include \"types.h\""
-out.puts "#include \"global.h\""
-out.puts "#include \"#{outputHeaderFileName}\""
-functions.each { |function|
-  p function
-  out.puts function
-}
-out.close
-
-
-out = open(outputHeaderFileName, "w")
-out.puts "#pragma once"
-prototypes.each { |prototype|
-  out.puts prototype
-}
+functionCodeGenerator = FunctionCodeGenerator.new labels, parsed
+functionCodeGenerator.generate

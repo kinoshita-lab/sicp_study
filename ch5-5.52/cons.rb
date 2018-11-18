@@ -56,6 +56,18 @@ class ConsCell
 
         r += ")"
     end
+
+    def length
+        length = 0
+        if (! @car.nil?)
+            length += 1
+        end
+        if (! @cdr.nil?)
+            length += @cdr.length
+        end
+
+        length
+    end
 end
 
 
