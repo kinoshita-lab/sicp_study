@@ -2,25 +2,11 @@
 #include "primitives.h"
 #include "cons_man.h"
 #include "env.h"
+#include "support.h"
 
-/*
-(define primitive-procedures
-        (list 'cdr cdr)
-        (list 'cons cons)
-        (list 'null? null?)
-	;;above from book -- here are some more
-	(list '+ +)
-	(list '- -)
-	(list '* *)
-	(list '= =)
-	(list '/ /)
-	(list '> >)
-	(list '< <)
-        ))
-*/
 enum 
 {
-    NumberOfPrimitives = 21,
+    NumberOfPrimitives = 25,
 };
 
 struct PrimitiveProcedures
@@ -29,21 +15,6 @@ struct PrimitiveProcedures
     PrimitiveFunction primitiveFunction;
 };
 
-/**
-(define primitive-procedures
-        (list 'cdr cdr)
-        (list 'cons cons)
-        (list 'null? null?)
-	;;above from book -- here are some more
-	(list '+ +)
-	(list '- -)
-	(list '* *)
-	(list '= =)
-	(list '/ /)
-	(list '> >)
-	(list '< <)
-        ))
-*/
 PrimitiveProcedures primitiveProcedures[NumberOfPrimitives] {
     {"car", car},
     {"cdr", cdr},
@@ -65,7 +36,11 @@ PrimitiveProcedures primitiveProcedures[NumberOfPrimitives] {
     {"read", primitive_read},
     {"number_p", primitive_num_p},
     {"string_p", primitive_string_p},
-    {"symbol_p", primitive_symbol_p}
+    {"symbol_p", primitive_symbol_p},
+    {"lookup_variable_value", lookup_variable_value},
+    {"primitive_procedure_p", primitive_procedure_p},
+    {"apply_primitive_proedure", apply_primitive_procedure},
+    {"list_of_values", primitive_list_of_values},
 };
 
 

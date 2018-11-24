@@ -10,21 +10,22 @@
 
 auto main() -> int
 {
+
     s.initialize();
     setup_environment();
     define_variable(new SchemeDataType(SchemeDataType::TypeId::Symbol, "the_empty_environment"), the_empty_environment, registers[ENV]);
     define_variable(new SchemeDataType(SchemeDataType::TypeId::Symbol, "the_global_environment"), registers[ENV], registers[ENV]);
-
-
-
-    compiled_procedure_start();
-    registers[ENV]->print();
-
-
+    
     define_variable(new SchemeDataType(SchemeDataType::TypeId::Symbol, "true"), 
         new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, true), registers[ENV]);
     define_variable(new SchemeDataType(SchemeDataType::TypeId::Symbol, "false"), 
         new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, false), registers[ENV]);        
+
+
+    compiled_procedure_start();
+
+    primitive_objects = registers[ENV];
+    registers[ENV] = new SchemeDataType(SchemeDataType::TypeId::Environment);
 
     while (true) {
         // set driver-loop to val

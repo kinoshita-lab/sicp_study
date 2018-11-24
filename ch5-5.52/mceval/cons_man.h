@@ -54,3 +54,6 @@ SchemeDataType* primitive_read(SchemeDataType* const arg1, SchemeDataType* const
 SchemeDataType* primitive_num_p(SchemeDataType* const arg1, SchemeDataType* const arg2);
 SchemeDataType* primitive_string_p(SchemeDataType* const arg1, SchemeDataType* const arg2);
 SchemeDataType* primitive_symbol_p(SchemeDataType* const arg1, SchemeDataType* const arg2);
+SchemeDataType* primitive_procedure_p(SchemeDataType* const arg1, SchemeDataType* const arg2);
+
+SchemeDataType* primitive_list_of_values(SchemeDataType* const arg1, SchemeDataType* const arg2);

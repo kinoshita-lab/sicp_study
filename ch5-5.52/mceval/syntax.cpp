@@ -4,7 +4,6 @@
 #include "cons_man.h"
 #include "user_print.h"
 
-using namespace std;
 
 /*
 (define (self-evaluating? exp)
@@ -397,7 +396,7 @@ SchemeDataType* const expand_clauses(SchemeDataType* const clauses)
         if (null_p(rest)) {
             return sequence_to_exp(cond_actions(first));
         } else {
-            cout << "error ELSE clause isn't last -- COND->IF ";
+            std::cout << "error ELSE clause isn't last -- COND->IF ";
             user_print(clauses);
             return new SchemeDataType();
         }

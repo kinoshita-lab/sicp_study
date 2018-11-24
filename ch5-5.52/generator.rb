@@ -136,17 +136,6 @@ class FunctionCodeGenerator
         "registers[#{cadr(car(cdr(cdr(code)))).upcase}]"
     end
 
-    def multiple_symbols_to_schemedata symbols
-        s = ""
-
-        symbols.each_with_index{|symbol, i|
-        s += "new SchemeDataType(SchemeDataType::TypeId::Symbol, \"#{symbol}\")"
-        if i != symbols.length - 1
-            s += ", "
-        end
-        }
-        s
-    end
 
     def opcode opname, code
         case opname
@@ -173,21 +162,37 @@ class FunctionCodeGenerator
         when 'extend_environment'
             symbol = car(cadr(cadr(code)))
             symbol2 = cadr(cadr(code))
+            s = []
             if symbol.nil?
-                return "extend_environment(list(1, new SchemeDataType(SchemeDataType::TypeId::Nil)), registers[ARGL], registers[ENV])"
+                s << "extend_environment(new SchemeDataType(SchemeDataType::TypeId::Nil), registers[ARGL], registers[ENV])"
+                return s
             end
             length = symbol2.length
 
-#            if length == 1
-#                return "extend_environment(list(1, new SchemeDataType(SchemeDataType::TypeId::Symbol, \"#{symbol}\")), registers[ARGL], registers[ENV])"
-#            end
+            if length == 1
+                return "extend_environment(new SchemeDataType(SchemeDataType::TypeId::Symbol, \"#{symbol}\"), registers[ARGL], registers[ENV])"
+            end
 
             symbols = symbol2.to_s
             symbols.gsub!("(", "")
             symbols.gsub!(")", "")
             symbols = symbols.split(" ")
 
-            return "extend_environment(list(#{length}, #{multiple_symbols_to_schemedata(symbols)}), registers[ARGL], registers[ENV])"
+            ss = []
+            
+            symbols.each {|symbol|
+                ss << "new SchemeDataType(SchemeDataType::TypeId::Symbol, \"#{symbol}\") "
+            }
+
+            l = ""
+            ss.each_with_index { |s, i|
+                l += s
+                if i != ss.length - 1
+                    l += ", "
+                end
+            }
+            
+            return "extend_environment(list(#{ss.length}, #{l}), registers[ARGL], registers[ENV])"
         else
             opname #
         end
@@ -251,6 +256,15 @@ class FunctionCodeGenerator
        
         case source
         when 'op'
+            op  = opcode(cadr(car(rest)), rest)
+            if op.class === "String"
+                s = "#{opcode(cadr(car(rest)), rest)}"
+            else
+                op.each {|o|
+                    s += "assign(#{dest.upcase}, #{o});\n"
+                }
+                return s
+            end
             s = "#{opcode(cadr(car(rest)), rest)}"
         when 'const'
             s = const car(rest)

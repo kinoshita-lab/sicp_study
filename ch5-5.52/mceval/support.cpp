@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "support.h"
 #include "types.h"
 #include "cons_man.h"
@@ -120,7 +121,7 @@ SchemeDataType* primitive_implementation(SchemeDataType* const proc)
 SchemeDataType* apply_primitive_implementation(SchemeDataType* const proc, SchemeDataType* const args)
 {
     auto* f = cadr(proc);
-    auto* arg1 = args;
+    auto* arg1 = car(args);
     auto* arg2 = cdr(args);
 
     return (*(f->primitive))(arg1, arg2);
@@ -137,77 +138,41 @@ SchemeDataType* apply_primitive_procedure(SchemeDataType* const proc, SchemeData
 }
 
 
-/**
- (define (set-variable-value! var val env)
-  (define (env-loop env)
-    (define (scan vars vals)
-      (cond ((null? vars)
-             (env-loop (enclosing-environment env)))
-            ((eq? var (car vars))
-             (set-car! vals val))
-            (else (scan (cdr vars) (cdr vals)))))
-    (if (eq? env the-empty-environment)
-        (error "Unbound variable -- SET!" var)
-        (let ((frame (first-frame env)))
-          (scan (frame-variables frame)
-                (frame-values frame)))))
-  (env-loop env))
-  */
-void set_variable_value_env_loop(SchemeDataType* const env, SchemeDataType* const var, SchemeDataType* const val);
-void set_variable_value_scan(SchemeDataType* vars, SchemeDataType* const vals, SchemeDataType* const env, SchemeDataType* const var, SchemeDataType* const val);
 void set_variable_value(SchemeDataType* const var, SchemeDataType* const val, SchemeDataType* const env)
 {
-    set_variable_value_env_loop(env, var, val);
+    auto& frames = env->environmentFrames;
+
+    for (auto&& frame : frames) {
+        auto val_candidate = std::find_if(frame.begin(), frame.end(), [&](auto item) {
+            return *(item->variable) == var;
+        });
+        if (val_candidate != frame.end()) {
+            (*val_candidate)->value = val;
+        }
+    }
 }
 
-void set_variable_value_scan(SchemeDataType* vars, SchemeDataType* const vals, SchemeDataType* const env, SchemeDataType* const var, SchemeDataType* const val)
-{
-    if (null_p(vars)) {
-        set_variable_value_env_loop(enclosing_environment(env), var, val);
-        return;
-    }
-
-    if (eq_p(var, car(vars))) {
-        set_car(vals, val);
-        return;
-    }
-
-    set_variable_value_scan(cdr(vars), cdr(vals), env, var, val);
-}
-
-void set_variable_value_env_loop(SchemeDataType* const env, SchemeDataType* const var, SchemeDataType* const val)
-{
-    using namespace std;
-
-    if (eq_p(env, the_empty_environment)) {
-        cout << "error: Unbound variable -- set-variable-value" << endl;
-    }
-
-    auto* frame = first_frame(env);
-    set_variable_value_scan(frame_variables(frame), frame_values(frame), env, var, val);
-}
-
-/**
-(define (define-variable! var val env)
-  (let ((frame (first-frame env)))
-    (define (scan vars vals)
-      (cond ((null? vars)
-             (add-binding-to-frame! var val frame))
-            ((eq? var (car vars))
-             (set-car! vals val))
-            (else (scan (cdr vars) (cdr vals)))))
-    (scan (frame-variables frame)
-          (frame-values frame))))
- */
-void define_variable_scan(SchemeDataType* const vars,  SchemeDataType* const vals, SchemeDataType* const var, SchemeDataType* const val, SchemeDataType* const frame);
 void define_variable(SchemeDataType* const var, SchemeDataType* const val, SchemeDataType* const env)
 {
-    auto* frame = first_frame(env);
-    define_variable_scan(frame_variables(frame), frame_values(frame), var, val, frame);
-}
+    auto& frames = env->environmentFrames;
 
-void define_variable_scan(SchemeDataType* const vars,  SchemeDataType* const vals, SchemeDataType* const var, SchemeDataType* const val, SchemeDataType* const frame)
-{
+    for (auto&& frame : frames) {
+        auto val_candidate = std::find_if(frame.begin(), frame.end(), [&](auto item) {
+            return *(item->variable) == var;
+        });
+        if (val_candidate != frame.end()) {
+            (*val_candidate)->value = val;
+        }
+    }
+
+    if (!env->environmentFrames.size()) {
+        EnvironmentFrame ef;
+        env->environmentFrames.push_front(EnvironmentFrame());
+    }
+    env->environmentFrames.front().push_front(new EnvironmentItem(var, val));
+    
+#if 0
+    これに相当するものをのせる
     if (null_p(vars)) {
         add_bindings_to_frame(var, val, frame);
         return;
@@ -217,8 +182,7 @@ void define_variable_scan(SchemeDataType* const vars,  SchemeDataType* const val
         set_car(vals, val);
         return;
     }
-
-    define_variable_scan(cdr(vars), cdr(vals), var, val, frame);
+#endif
 }
 
 

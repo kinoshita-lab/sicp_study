@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <gc_cpp.h>
 
 struct SchemeDataType;
@@ -9,7 +10,7 @@ struct SchemeDataType;
 typedef SchemeDataType* (*PrimitiveFunction)(SchemeDataType* const arg1, SchemeDataType* const arg2);
 typedef void (*CompiledProcedureFunction)();
 
-struct ConsCell : public gc
+struct ConsCell 
 {
 	SchemeDataType* car;
 	SchemeDataType* cdr;
@@ -21,7 +22,19 @@ struct ConsCell : public gc
 	void listPush(SchemeDataType* item); 
 };
 
-struct SchemeDataType : public gc
+struct EnvironmentItem
+{
+	SchemeDataType* variable;
+	SchemeDataType* value;	
+
+	EnvironmentItem(SchemeDataType* const variable, SchemeDataType* const value);
+	EnvironmentItem() : variable(nullptr), value(nullptr) {}
+};
+
+using EnvironmentFrame = std::list<EnvironmentItem*>;
+using EnvironmentFrames = std::list<EnvironmentFrame>;
+
+struct SchemeDataType 
 {
 	enum class TypeId
 	{
@@ -33,6 +46,7 @@ struct SchemeDataType : public gc
         SchemeBoolean,
 		PrimitiveProc,
 		CompiledProcedure,
+		Environment,
 		Unknown
 	};
     
@@ -53,6 +67,7 @@ struct SchemeDataType : public gc
     SchemeBooleanValue booleanValue;
 	PrimitiveFunction primitive;  
 	CompiledProcedureFunction compiledProcedure;
+	EnvironmentFrames environmentFrames;
 
 	SchemeDataType();
 	SchemeDataType(const TypeId typeId);
@@ -62,6 +77,7 @@ struct SchemeDataType : public gc
 	SchemeDataType(const TypeId typeId, const int value); // for constants, booleans
 	SchemeDataType(PrimitiveFunction p);
 	SchemeDataType(CompiledProcedureFunction p);
+	SchemeDataType(const TypeId typeId, SchemeDataType* const var, SchemeDataType* const val); // for environment frame
 	SchemeDataType* deepCopy();
 
 	SchemeDataType& operator=(const SchemeDataType& r);

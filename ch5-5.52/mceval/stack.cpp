@@ -24,7 +24,11 @@ void Stack::print_statistics()
 
 void Stack::save(SchemeDataType* reg)
 {
-    s.push(reg);
+    if (reg->type == SchemeDataType::TypeId::Environment) {
+        s.push(deepCopyOf(reg));
+    } else {
+        s.push(reg);
+    }
 
     number_pushes++;
     current_depth = s.size();

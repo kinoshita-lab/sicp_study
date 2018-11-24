@@ -6,9 +6,9 @@
 (define (make-compiled-procedure entry env)
   (list 'compiled-procedure entry env))
   */
-SchemeDataType* make_compiled_procedure(const char* label, CompiledProcedureFunction entry, SchemeDataType* reg)
+SchemeDataType* make_compiled_procedure(const char* label, CompiledProcedureFunction entry, SchemeDataType* /**/) // ignore compile time env
 {
-    return list(3, new SchemeDataType(SchemeDataType::TypeId::Symbol, "compiled-procedure"), new SchemeDataType(entry), reg);
+    return list(2, new SchemeDataType(SchemeDataType::TypeId::Symbol, "compiled-procedure"), new SchemeDataType(entry));
 }
 
 /**
@@ -16,9 +16,9 @@ SchemeDataType* make_compiled_procedure(const char* label, CompiledProcedureFunc
 */
 SchemeDataType* compiled_procedure_env(const RegisterId id)
 {
-//    if (registers[id]) {
-//        return caddr(registers[id]);        
-//    }
+    //if (registers[id]) {
+    //    return caddr(registers[id]);        
+    //}
     return registers[ENV]; // こうでいいのか謎
 }
 /**

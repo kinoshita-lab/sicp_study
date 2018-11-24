@@ -4,6 +4,10 @@
 #include <cstring>
 #include "cons_man.h"
 #include "parse.h"
+#include "global.h"
+#include "env.h"
+#include "compiled.h"
+#include "goto_with_label.h"
 
 namespace
 {
@@ -90,6 +94,10 @@ SchemeDataType* list(const int number_of_items, ...)
 
 SchemeDataType* list(SchemeDataType* data)
 {
+	if (data == nullptr)
+	{
+		return new SchemeDataType(SchemeDataType::TypeId::Nil);
+	}
 	// make cons if atom
 	if (data->type != SchemeDataType::TypeId::Cons)
 	{
@@ -97,7 +105,9 @@ SchemeDataType* list(SchemeDataType* data)
 		r->cellValue->car = data;
 		return r;
 	}
-	return data;
+	auto* r = list();
+	r->cellValue->car = data;
+	return r;
 }
 void set_car(SchemeDataType* data, SchemeDataType* carData)
 {
@@ -117,6 +127,14 @@ bool atom_p(SchemeDataType* const data)
 
 bool null_p(SchemeDataType* const data)
 {
+	if (data->type == SchemeDataType::TypeId::Cons) {
+		if (data->cellValue->cdr == nullptr) {
+			return data->cellValue->car->type == SchemeDataType::TypeId::Nil;
+		}
+
+		return data->cellValue->car->type == data->cellValue->cdr->type && data->cellValue->car->type == SchemeDataType::TypeId::Nil;
+	}
+
 	return data->type == SchemeDataType::TypeId::Nil;
 }
 
@@ -143,6 +161,9 @@ bool symbol_p(SchemeDataType* const data)
 
 bool eq_p(SchemeDataType* data1, SchemeDataType* data2)
 {
+	if (!data1) {
+		return false;
+	}
 	if (null_p(data1) && null_p(data2)) {
 		return true;
 	}
@@ -223,7 +244,7 @@ SchemeDataType* primitive_newline(SchemeDataType* const, SchemeDataType* const)
 
 SchemeDataType* primitive_display(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	auto strs = car(arg1)->to_s();
+	auto strs = arg1->to_s();
 
 	for (auto&& str : strs) {
 		std::cout << str;
@@ -234,7 +255,7 @@ SchemeDataType* primitive_display(SchemeDataType* const arg1, SchemeDataType* co
 
 SchemeDataType* primitive_pair_p(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::TypeId::Nil);
+	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, arg1->type == SchemeDataType::TypeId::Cons);
 }
 
 SchemeDataType* primitive_eq_p(SchemeDataType* const arg1, SchemeDataType* const arg2)
@@ -250,32 +271,66 @@ SchemeDataType* primitive_read(SchemeDataType* const arg1, SchemeDataType* const
 	std::string tmp;
 	
 	std::getline(std::cin, tmp);
-		input += tmp;
-#endif
-	auto input = std::string("(+ 1 1)");
+	input += tmp;
+	
 	if (input == "!exit") {
 		exit(0);
 	}
-
+#endif
+	auto input = std::string("1");
 	auto* parsed = parse(input);
-
+	input = std::string("(+ 1 1)");
+	parsed = parse(input);
 	return parsed;
 }
 
 SchemeDataType* primitive_num_p(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	bool isInteger = car(arg1)->type == SchemeDataType::TypeId::Integer;
+	bool isInteger = arg1->type == SchemeDataType::TypeId::Integer;
 	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, isInteger);
 }
 
 SchemeDataType* primitive_string_p(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	bool isString = car(arg1)->type == SchemeDataType::TypeId::String;
+	bool isString = arg1->type == SchemeDataType::TypeId::String;
 	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, isString);
 }
 
 SchemeDataType* primitive_symbol_p(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	bool isSymbol = car(arg1)->type == SchemeDataType::TypeId::Symbol;
+	bool isSymbol = arg1->type == SchemeDataType::TypeId::Symbol;
 	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, isSymbol);
+}
+
+SchemeDataType* primitive_procedure_p(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+	return new SchemeDataType();
+}
+
+
+SchemeDataType* list_of_values_eval(SchemeDataType* const argl, SchemeDataType* const env)
+{
+	assign(PROC, lookup_variable_value(new SchemeDataType(SchemeDataType::TypeId::Symbol, "eval"), registers[ENV]));
+    assign(VAL, compiled_procedure_entry(registers[PROC]));
+	registers[CONTINUE] = new SchemeDataType(SchemeDataType::TypeId::String, "return");
+	assign(ARGL, argl);
+
+	try {
+            goto_with_label(registers[VAL]);
+    }
+    catch (const char*) {
+        ;
+	}
+
+	return registers[VAL];
+}
+SchemeDataType* primitive_list_of_values(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+	if (null_p(arg1)) {
+		return new SchemeDataType();
+	}
+	auto* env = car(arg2);
+	auto* argl = arg1;
+
+	return cons(list_of_values_eval(argl, env), primitive_list_of_values(cdr(arg1), env));
 }

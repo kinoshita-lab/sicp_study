@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <algorithm>
 #include <cstring>
 #include <cstdlib>
 #include "types.h"
@@ -9,6 +10,12 @@
 
 
 ConsCell::ConsCell() : car(new SchemeDataType()), cdr(new SchemeDataType()) {}
+
+EnvironmentItem::EnvironmentItem(SchemeDataType* const variable, SchemeDataType* const value)
+: variable(new SchemeDataType(*variable)), value(new SchemeDataType(*value))
+{
+}
+
 
 void ConsCell::listPush(SchemeDataType* item) 
 {
@@ -49,12 +56,12 @@ SchemeDataType::SchemeDataType(const TypeId typeId, const char* s)
 	const auto length = strlen(s);
 		
 	if (typeId == TypeId::String) {
-		stringValue = (char*)malloc(length);
+		stringValue = (char*)GC_MALLOC(length);
 		strcpy(stringValue, s);
 	}
 
 	if (typeId == TypeId::Symbol) {
-		symbolValue = (char*)malloc(length);
+		symbolValue = (char*)GC_MALLOC(length);
 		strcpy(symbolValue, s);
 	}
 }
@@ -76,19 +83,27 @@ SchemeDataType::SchemeDataType(const SchemeDataType& r)
 		
 	if (type == TypeId::String) {
 		const auto length = strlen(r.stringValue);
-		stringValue = (char*)malloc(length);
+		stringValue = (char*)GC_MALLOC(length);
 		strcpy(stringValue, r.stringValue);
 	}
 
 	if (type == TypeId::Symbol) {
 		const auto length = strlen(r.symbolValue);
-		symbolValue = (char*)malloc(length);
+		symbolValue = (char*)GC_MALLOC(length);
 		strcpy(symbolValue, r.symbolValue);
 	}
 
     if (type == TypeId::SchemeBoolean) {
         booleanValue = r.booleanValue;        
     }
+
+	if (type == TypeId::Environment) {
+		environmentFrames = r.environmentFrames;
+	}
+
+	if (type == TypeId::Cons) {
+		cellValue = r.cellValue;
+	}
     
 }
 
@@ -102,13 +117,13 @@ SchemeDataType& SchemeDataType::operator=(const SchemeDataType& r)
 		
 	if (type == TypeId::String) {
 		const auto length = strlen(r.stringValue);
-		stringValue = (char*)malloc(length);
+		stringValue = (char*)GC_MALLOC(length);
 		strcpy(stringValue, r.stringValue);
 	}
 
 	if (type == TypeId::Symbol) {
 		const auto length = strlen(r.symbolValue);
-		symbolValue = (char*)malloc(length);
+		symbolValue = (char*)GC_MALLOC(length);
 		strcpy(symbolValue, r.symbolValue);
 	}
 
@@ -146,6 +161,7 @@ SchemeDataType::SchemeDataType(CompiledProcedureFunction p)
 	compiledProcedure = p;
 }
 
+
 SchemeDataType::~SchemeDataType()
 {
 	if (type == TypeId::String) {
@@ -164,9 +180,17 @@ bool SchemeDataType::operator==(SchemeDataType* const rhs)
 	return eq_p(this, rhs);
 }
 
+namespace
+{
+std::vector<SchemeDataType*> loopDetetor;
+
+}
+
 std::vector<std::string> SchemeDataType::to_s()
 {
 	to_s_counter = 0; 
+	loopDetetor.clear();
+	
 	auto r = to_s_inner();
 	return r;
 }
@@ -176,12 +200,18 @@ std::vector<std::string> SchemeDataType::to_s_inner()
 	using namespace std;
 	std::vector<std::string> r;
 	to_s_counter++;
+	r.reserve(16777216);
 
-	if (to_s_counter >= 80) {
-		r.push_back("too many elems");
+	auto it = find_if(loopDetetor.begin(), loopDetetor.end(), [this](auto x){
+		return x == this;
+	});
+
+	if (it != loopDetetor.end()) {
+		r.emplace_back("#loop detected");
 		return r;
 	}
 
+	loopDetetor.emplace_back(this);
 
 	switch (type) {
 	case SchemeDataType::TypeId::Integer:
@@ -280,14 +310,14 @@ SchemeDataType* deepCopyOf(SchemeDataType* data)
 		case SchemeDataType::TypeId::Symbol: {
 			r->type = SchemeDataType::TypeId::Symbol;
 			const auto length = strlen(data->symbolValue);
-			r->symbolValue = (char*)malloc(length);
+			r->symbolValue = (char*)GC_MALLOC(length);
 			strcpy(r->symbolValue, data->symbolValue);
 			break;
 		}
 		case SchemeDataType::TypeId::String: {
 			r->type = SchemeDataType::TypeId::String;
 			const auto length = strlen(data->stringValue);
-			r->stringValue = (char*)malloc(length);
+			r->stringValue = (char*)GC_MALLOC(length);
 			strcpy(r->stringValue, data->stringValue);
 			break;
 		}
@@ -307,6 +337,18 @@ SchemeDataType* deepCopyOf(SchemeDataType* data)
 			r->cellValue = new ConsCell();
 			r->cellValue->car = deepCopyOf(data->cellValue->car);
 			r->cellValue->cdr = deepCopyOf(data->cellValue->cdr);
+			break;
+		case SchemeDataType::TypeId::Environment:
+			r->type = SchemeDataType::TypeId::Environment;
+			for (auto&& frame : data->environmentFrames) {
+				EnvironmentFrame f;
+				
+				for (auto&& item: frame) {
+					f.push_back(item);
+				}
+
+				r->environmentFrames.push_back(f);
+			}
 			break;
 		default:
 			break;
