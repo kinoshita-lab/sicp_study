@@ -200,40 +200,78 @@ SchemeDataType* primitive_num_add(SchemeDataType* const arg1, SchemeDataType* co
 
 SchemeDataType* primitive_num_mul(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::TypeId::Integer, 
-				arg1->cellValue->car->intValue 
-				* arg2->cellValue->car->intValue);
+	auto* arg = arg1;
+	auto product = 1;
+	while (true) {
+		auto* n = car(arg);
+		if (null_p(n)) {
+			break;
+		}
+
+		product *= n->intValue;
+		arg = cdr(arg);
+	}
+
+	return new SchemeDataType(SchemeDataType::TypeId::Integer, product);
 }
 SchemeDataType* primitive_num_minus(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::TypeId::Integer, 
-				arg1->cellValue->car->intValue 
-				- arg2->cellValue->car->intValue);
+	auto* arg = arg1;
+	auto sub = car(arg1)->intValue;
+	arg = cdr(arg);
+	while (true) {
+		auto* n = car(arg);
+		if (null_p(n)) {
+			break;
+		}
+
+		sub -= n->intValue;
+		arg = cdr(arg);
+	}
+
+	return new SchemeDataType(SchemeDataType::TypeId::Integer, sub);
 }
 
 SchemeDataType* primitive_num_equal(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, 
-				arg1->cellValue->car->intValue == arg2->cellValue->car->intValue ? SchemeDataType::True : SchemeDataType::False);	
+	const auto n1 = car(arg1)->intValue;
+	const auto n2 = cadr(arg1)->intValue;
+
+	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, n1 == n2);
 }
 
 SchemeDataType* primitive_num_div(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-return new SchemeDataType(SchemeDataType::TypeId::Integer, 
-				arg1->cellValue->car->intValue 
-				/ arg2->cellValue->car->intValue);
+	auto* arg = arg1;
+	auto div = car(arg1)->intValue;
+	arg = cdr(arg);
+	while (true) {
+		auto* n = car(arg);
+		if (null_p(n)) {
+			break;
+		}
+
+		div /= n->intValue;
+		arg = cdr(arg);
+	}
+
+	return new SchemeDataType(SchemeDataType::TypeId::Integer, div);
 }
 
 SchemeDataType* primitive_num_gt(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, 
-				arg1->cellValue->car->intValue > arg2->cellValue->car->intValue ? SchemeDataType::True : SchemeDataType::False);	
+	const auto n1 = car(arg1)->intValue;
+	const auto n2 = cadr(arg1)->intValue;
+
+	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, n1 > n2);	
 }
 
 SchemeDataType* primitive_num_lt(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, 
-				arg1->cellValue->car->intValue < arg2->cellValue->car->intValue ? SchemeDataType::True : SchemeDataType::False);	
+	const auto n1 = car(arg1)->intValue;
+	const auto n2 = cadr(arg1)->intValue;
+
+	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, n1 < n2);	
 }
 
 SchemeDataType* primitive_list(SchemeDataType* const arg1, SchemeDataType* const arg2)

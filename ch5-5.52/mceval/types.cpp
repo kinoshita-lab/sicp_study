@@ -229,6 +229,9 @@ std::vector<std::string> SchemeDataType::to_s_inner()
 	case SchemeDataType::TypeId::Unknown:
 		r.push_back(string("Unknown"));
 		break;
+	case SchemeDataType::TypeId::SchemeBoolean:
+		r.push_back(booleanValue == True ? "true" : "false");
+		break;
 	case SchemeDataType::TypeId::PrimitiveProc:
 		r.push_back(string("C++ primitive function"));
 		break;
