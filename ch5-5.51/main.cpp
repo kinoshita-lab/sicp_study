@@ -1,3 +1,4 @@
+#include <cstdio>
 #include "eceval.h"
 #include "env.h"
 
@@ -8,6 +9,6 @@ int main()
 	while (true) {
 		eceval();
 	}
-	
+
 	return 0;
 }

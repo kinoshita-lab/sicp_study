@@ -1,7 +1,8 @@
 TARGET = eceval
 
 CXX = clang++
-CFLAGS = -g3 -std=c++14 # zatsu	
+CFLAGS = -g3 -std=c++14 
+CFLAGS += -DGC_NEW_ABORTS_ON_OOM # workaround for link error	
 RM = rm -f
 
 SRCS = $(shell ls *.cpp) #zatsu
