@@ -275,8 +275,6 @@ SchemeDataType* primitive_eq_p(SchemeDataType* const arg1, SchemeDataType* const
 
 SchemeDataType* primitive_read(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	
-#if 0	
 	std::string input;
 	std::string tmp;
 	
@@ -286,11 +284,8 @@ SchemeDataType* primitive_read(SchemeDataType* const arg1, SchemeDataType* const
 	if (input == "!exit") {
 		exit(0);
 	}
-#endif
-	auto input = std::string("1");
-	auto* parsed = parse(input);
-	input = std::string("(+ 1 1)");
-	parsed = parse(input);
+
+	const auto parsed = parse(input);
 	return parsed;
 }
 
