@@ -57,3 +57,6 @@ SchemeDataType* primitive_symbol_p(SchemeDataType* const arg1, SchemeDataType* c
 SchemeDataType* primitive_procedure_p(SchemeDataType* const arg1, SchemeDataType* const arg2);
 
 SchemeDataType* primitive_list_of_values(SchemeDataType* const arg1, SchemeDataType* const arg2);
+
+SchemeDataType* primitive_apply(SchemeDataType* const arg1, SchemeDataType* const arg2);
+

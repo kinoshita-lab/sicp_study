@@ -6,7 +6,7 @@
 
 enum 
 {
-    NumberOfPrimitives = 25,
+    NumberOfPrimitives = 26,
 };
 
 struct PrimitiveProcedures
@@ -41,6 +41,7 @@ PrimitiveProcedures primitiveProcedures[NumberOfPrimitives] {
     {"primitive_procedure_p", primitive_procedure_p},
     {"apply_primitive_proedure", apply_primitive_procedure},
     {"list_of_values", primitive_list_of_values},
+    {"apply_primitive_procedure", primitive_apply}
 };
 
 

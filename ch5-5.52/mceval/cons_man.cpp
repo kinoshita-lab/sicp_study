@@ -183,9 +183,19 @@ bool eq_p(SchemeDataType* data1, SchemeDataType* data2)
 
 SchemeDataType* primitive_num_add(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType(SchemeDataType::TypeId::Integer, 
-				arg1->cellValue->car->intValue 
-				+ arg2->cellValue->car->intValue);
+	auto* arg = arg1;
+	auto sum = 0;
+	while (true) {
+		auto* n = car(arg);
+		if (null_p(n)) {
+			break;
+		}
+
+		sum += n->intValue;
+		arg = cdr(arg);
+	}
+
+	return new SchemeDataType(SchemeDataType::TypeId::Integer, sum);
 }
 
 SchemeDataType* primitive_num_mul(SchemeDataType* const arg1, SchemeDataType* const arg2)
@@ -304,7 +314,9 @@ SchemeDataType* primitive_symbol_p(SchemeDataType* const arg1, SchemeDataType* c
 
 SchemeDataType* primitive_procedure_p(SchemeDataType* const arg1, SchemeDataType* const arg2)
 {
-	return new SchemeDataType();
+	const std::string argSymbol = car(arg1)->symbolValue;
+	bool isPrimitive =  argSymbol == "primitive";
+	return new SchemeDataType(SchemeDataType::TypeId::SchemeBoolean, isPrimitive);
 }
 
 
@@ -333,4 +345,13 @@ SchemeDataType* primitive_list_of_values(SchemeDataType* const arg1, SchemeDataT
 	auto* argl = arg1;
 
 	return cons(list_of_values_eval(argl, env), primitive_list_of_values(cdr(arg1), env));
+}
+
+SchemeDataType* primitive_apply(SchemeDataType* const arg1, SchemeDataType* const arg2)
+{
+	auto* f = cadr(arg1);
+    auto* function_arg1 = car(arg2);
+    auto* function_arg2 = cdr(arg2);
+
+	return (*(f->primitive))(function_arg1, function_arg2);
 }
